@@ -138,4 +138,44 @@ void main() {
 
     expect(find.byKey(const Key('select_room_title')), findsOneWidget);
   });
+
+  testWidgets('Confirm Booking opens Add Card and back restores checkout', (
+    tester,
+  ) async {
+    await tester.pumpWidget(const MaterialApp(home: MainShell()));
+
+    await tester.tap(find.text('Ocean Pearl Hotel'));
+    await tester.pumpAndSettle();
+    tester
+        .widget<FilledButton>(find.byKey(const Key('property_book_now_button')))
+        .onPressed!();
+    await tester.pumpAndSettle();
+    await tester.tap(find.text('Deluxe Ocean View'));
+    await tester.pump();
+    tester
+        .widget<FilledButton>(
+          find.byKey(const Key('continue_to_payment_button')),
+        )
+        .onPressed!();
+    await tester.pumpAndSettle();
+    tester
+        .widget<FilledButton>(find.byKey(const Key('confirm_booking_button')))
+        .onPressed!();
+    await tester.pumpAndSettle();
+
+    expect(find.byKey(const Key('add_card_title')), findsOneWidget);
+    expect(find.byKey(const Key('save_card_switch_on')), findsOneWidget);
+
+    tester.widget<Switch>(find.byKey(const Key('save_card_switch'))).onChanged!(
+      false,
+    );
+    await tester.pump();
+
+    expect(find.byKey(const Key('save_card_switch_off')), findsOneWidget);
+
+    await tester.tap(find.byKey(const Key('add_card_back_button')));
+    await tester.pumpAndSettle();
+
+    expect(find.byKey(const Key('checkout_title')), findsOneWidget);
+  });
 }

@@ -24,4 +24,7 @@ abstract final class AppAssets {
   static const checkoutDigitalWallet = '$_checkoutRoot/digital-wallet.svg';
   static const checkoutBankTransfer = '$_checkoutRoot/bank-transfer.svg';
   static const checkoutBed = '$_checkoutRoot/bed.svg';
+  static const checkoutPci = '$_checkoutRoot/pci.svg';
+  static const checkoutSsl = '$_checkoutRoot/ssl.svg';
+  static const checkoutSecure = '$_checkoutRoot/secure.svg';
 }

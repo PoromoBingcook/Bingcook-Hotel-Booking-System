@@ -194,17 +194,19 @@ code.
 - Inside `MainShell`, Explore can switch to Search or Property Details without
   changing the selected Explore bottom-navigation destination. Property
   Details can open Select Room through its Book Now callback. Select Room can
-  open Checkout and Payment through its Continue to Payment callback.
+  open Checkout and Payment through its Continue to Payment callback. Checkout
+  can open Add Card Details through its Confirm Booking callback.
 - Views request navigation through callbacks or the chosen routing boundary.
 - Do not spread hardcoded route strings across feature widgets.
 - Navigation decisions based on business state belong in the app flow or
   presentation coordination layer, not repositories.
 - `MainShell` owns the selected bottom-navigation destination.
-- `MainShell` owns Search, Property Details, Select Room, and Checkout display
-  modes and clears those modes when another bottom-navigation destination is
-  selected.
-- Select Room and Checkout hide bottom navigation. Checkout back restores
-  Select Room; Select Room back restores Property Details.
+- `MainShell` owns Search, Property Details, Select Room, Checkout, and Add Card
+  display modes and clears those modes when another bottom-navigation
+  destination is selected.
+- Select Room, Checkout, and Add Card hide bottom navigation. Add Card back
+  restores Checkout; Checkout back restores Select Room; Select Room back
+  restores Property Details.
 - `AppBottomNavigation` is the reusable visual navigation component and must
   not own page content or feature state.
 - Use `IndexedStack` in the main shell when tab state must survive navigation.
@@ -225,7 +227,8 @@ code.
   booking footer.
 - `ui/features/checkout/`: reusable Checkout and Payment view, immutable local
   summary and pricing data, editable guest fields, selectable payment methods,
-  terms, and fixed confirmation footer.
+  terms, fixed confirmation footer, and reusable Add Card Details form with
+  live card preview, save toggle, trust badges, and sticky action footer.
 - `ui/features/navigation/`: application shell for Explore, Saved, Bookings,
   and Profile destinations.
 
@@ -239,6 +242,9 @@ and back/continue callbacks. No room is selected initially; selecting a room
 updates the total for the configured number of nights. `CheckoutView` receives
 immutable `CheckoutData`, a `CheckoutViewModel`, and back/confirm callbacks.
 Guest controllers remain view-owned; payment selection remains ViewModel-owned.
+`AddCardView` receives an `AddCardViewModel` and navigation callbacks. Card
+field controllers remain view-owned, while save-for-future state remains
+ViewModel-owned. No card details are persisted or submitted yet.
 
 ## Testing
 

@@ -1,7 +1,9 @@
 import 'package:bingcook/ui/core/theme/app_colors.dart';
 import 'package:bingcook/ui/core/widgets/app_bottom_navigation.dart';
 import 'package:bingcook/ui/features/checkout/models/checkout_content.dart';
+import 'package:bingcook/ui/features/checkout/view_models/add_card_view_model.dart';
 import 'package:bingcook/ui/features/checkout/view_models/checkout_view_model.dart';
+import 'package:bingcook/ui/features/checkout/views/add_card_view.dart';
 import 'package:bingcook/ui/features/checkout/views/checkout_view.dart';
 import 'package:bingcook/ui/features/explore/views/explore_view.dart';
 import 'package:bingcook/ui/features/property_details/models/property_details_content.dart';
@@ -27,6 +29,7 @@ class _MainShellState extends State<MainShell> {
   bool _showSearch = false;
   bool _showSelectRoom = false;
   bool _showCheckout = false;
+  bool _showAddCard = false;
   PropertyDetailsData? _selectedProperty;
   final SearchViewModel _searchViewModel = SearchViewModel();
   final PropertyDetailsViewModel _propertyDetailsViewModel =
@@ -35,6 +38,7 @@ class _MainShellState extends State<MainShell> {
     nights: SelectRoomContent.oceanPearl.nights,
   );
   final CheckoutViewModel _checkoutViewModel = CheckoutViewModel();
+  final AddCardViewModel _addCardViewModel = AddCardViewModel();
 
   static const _pendingDestinations = [
     _PendingDestination(
@@ -57,18 +61,25 @@ class _MainShellState extends State<MainShell> {
     _propertyDetailsViewModel.dispose();
     _selectRoomViewModel.dispose();
     _checkoutViewModel.dispose();
+    _addCardViewModel.dispose();
     super.dispose();
   }
 
   @override
   Widget build(BuildContext context) {
     final destinations = [
-      if (_showCheckout)
+      if (_showAddCard)
+        AddCardView(
+          viewModel: _addCardViewModel,
+          onBack: () => setState(() => _showAddCard = false),
+          onSave: () {},
+        )
+      else if (_showCheckout)
         CheckoutView(
           data: CheckoutContent.oceanPearl,
           viewModel: _checkoutViewModel,
           onBack: () => setState(() => _showCheckout = false),
-          onConfirm: () {},
+          onConfirm: () => setState(() => _showAddCard = true),
         )
       else if (_showSelectRoom)
         SelectRoomView(
@@ -104,7 +115,7 @@ class _MainShellState extends State<MainShell> {
 
     return Scaffold(
       body: IndexedStack(index: _selectedIndex, children: destinations),
-      bottomNavigationBar: _showSelectRoom || _showCheckout
+      bottomNavigationBar: _showSelectRoom || _showCheckout || _showAddCard
           ? null
           : AppBottomNavigation(
               selectedIndex: _selectedIndex,
@@ -114,6 +125,7 @@ class _MainShellState extends State<MainShell> {
                   _showSearch = false;
                   _showSelectRoom = false;
                   _showCheckout = false;
+                  _showAddCard = false;
                   _selectedProperty = null;
                 });
               },
