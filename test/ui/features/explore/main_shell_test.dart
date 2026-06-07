@@ -42,4 +42,26 @@ void main() {
     expect(find.text('Saved stays'), findsOneWidget);
     expect(find.byKey(const Key('search_title')), findsNothing);
   });
+
+  testWidgets('Ocean Pearl opens details, toggles favorite, and returns', (
+    tester,
+  ) async {
+    await tester.pumpWidget(const MaterialApp(home: MainShell()));
+
+    await tester.tap(find.text('Ocean Pearl Hotel'));
+    await tester.pumpAndSettle();
+
+    expect(find.byKey(const Key('property_details_title')), findsOneWidget);
+    expect(find.text('Book Now'), findsOneWidget);
+
+    await tester.tap(find.byKey(const Key('property_favorite_button')));
+    await tester.pump();
+
+    expect(find.byIcon(Icons.favorite_rounded), findsOneWidget);
+
+    await tester.tap(find.byKey(const Key('property_back_button')));
+    await tester.pumpAndSettle();
+
+    expect(find.text('Find your next stay'), findsOneWidget);
+  });
 }

@@ -1,6 +1,10 @@
 import 'package:bingcook/ui/core/theme/app_colors.dart';
 import 'package:bingcook/ui/core/widgets/app_bottom_navigation.dart';
 import 'package:bingcook/ui/features/explore/views/explore_view.dart';
+import 'package:bingcook/ui/features/property_details/models/property_details_content.dart';
+import 'package:bingcook/ui/features/property_details/models/property_details_data.dart';
+import 'package:bingcook/ui/features/property_details/view_models/property_details_view_model.dart';
+import 'package:bingcook/ui/features/property_details/views/property_details_view.dart';
 import 'package:bingcook/ui/features/search/view_models/search_view_model.dart';
 import 'package:bingcook/ui/features/search/views/search_view.dart';
 import 'package:flutter/material.dart';
@@ -15,7 +19,10 @@ class MainShell extends StatefulWidget {
 class _MainShellState extends State<MainShell> {
   int _selectedIndex = 0;
   bool _showSearch = false;
+  PropertyDetailsData? _selectedProperty;
   final SearchViewModel _searchViewModel = SearchViewModel();
+  final PropertyDetailsViewModel _propertyDetailsViewModel =
+      PropertyDetailsViewModel();
 
   static const _pendingDestinations = [
     _PendingDestination(
@@ -35,13 +42,21 @@ class _MainShellState extends State<MainShell> {
   @override
   void dispose() {
     _searchViewModel.dispose();
+    _propertyDetailsViewModel.dispose();
     super.dispose();
   }
 
   @override
   Widget build(BuildContext context) {
     final destinations = [
-      if (_showSearch)
+      if (_selectedProperty != null)
+        PropertyDetailsView(
+          data: _selectedProperty!,
+          viewModel: _propertyDetailsViewModel,
+          onBack: () => setState(() => _selectedProperty = null),
+          onBookNow: () {},
+        )
+      else if (_showSearch)
         SearchView(
           viewModel: _searchViewModel,
           onClose: () => setState(() => _showSearch = false),
@@ -49,6 +64,12 @@ class _MainShellState extends State<MainShell> {
       else
         ExploreView(
           onSearchRequested: () => setState(() => _showSearch = true),
+          onStaySelected: (_) {
+            setState(() {
+              _showSearch = false;
+              _selectedProperty = PropertyDetailsContent.oceanPearl;
+            });
+          },
         ),
       ..._pendingDestinations,
     ];
@@ -61,6 +82,7 @@ class _MainShellState extends State<MainShell> {
           setState(() {
             _selectedIndex = index;
             _showSearch = false;
+            _selectedProperty = null;
           });
         },
       ),

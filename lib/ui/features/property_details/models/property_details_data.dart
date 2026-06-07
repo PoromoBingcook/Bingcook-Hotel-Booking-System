@@ -1,0 +1,59 @@
+class PropertyDetailsData {
+  const PropertyDetailsData({
+    required this.imageAsset,
+    required this.name,
+    required this.location,
+    required this.rating,
+    required this.reviewCount,
+    required this.checkIn,
+    required this.checkOut,
+    required this.amenities,
+    required this.ratingDistribution,
+    required this.summaryRating,
+    required this.summaryReviewCount,
+    required this.reviews,
+  });
+
+  final String imageAsset;
+  final String name;
+  final String location;
+  final double rating;
+  final int reviewCount;
+  final String checkIn;
+  final String checkOut;
+  final List<PropertyAmenityData> amenities;
+  final List<RatingDistributionData> ratingDistribution;
+  final double summaryRating;
+  final int summaryReviewCount;
+  final List<GuestReviewData> reviews;
+}
+
+class PropertyAmenityData {
+  const PropertyAmenityData({required this.type, required this.label});
+
+  final PropertyAmenityType type;
+  final String label;
+}
+
+enum PropertyAmenityType { wifi, pool, gym, parking }
+
+class RatingDistributionData {
+  const RatingDistributionData({required this.stars, required this.fraction});
+
+  final int stars;
+  final double fraction;
+}
+
+class GuestReviewData {
+  const GuestReviewData({
+    required this.author,
+    required this.rating,
+    required this.timeAgo,
+    required this.comment,
+  });
+
+  final String author;
+  final int rating;
+  final String timeAgo;
+  final String comment;
+}

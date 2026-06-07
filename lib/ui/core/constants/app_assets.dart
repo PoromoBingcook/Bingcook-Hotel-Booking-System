@@ -12,4 +12,5 @@ abstract final class AppAssets {
   static const _exploreRoot = 'assets/svg/explore';
   static const oceanPearlHotel = '$_exploreRoot/hotel1.png';
   static const blueGardenHomestay = '$_exploreRoot/Blue Garden Homestay.png';
+  static const propertyDetails = '$_exploreRoot/detail.png';
 }

@@ -5,9 +5,10 @@ import 'package:bingcook/ui/features/explore/widgets/stay_card.dart';
 import 'package:flutter/material.dart';
 
 class ExploreView extends StatelessWidget {
-  const ExploreView({super.key, this.onSearchRequested});
+  const ExploreView({super.key, this.onSearchRequested, this.onStaySelected});
 
   final VoidCallback? onSearchRequested;
+  final ValueChanged<StayCardData>? onStaySelected;
 
   static const _stays = [
     StayCardData(
@@ -155,7 +156,15 @@ class ExploreView extends StatelessWidget {
                 ),
                 const SizedBox(height: 16),
                 ..._stays.expand(
-                  (stay) => [StayCard(data: stay), const SizedBox(height: 16)],
+                  (stay) => [
+                    StayCard(
+                      data: stay,
+                      onTap: stay.name == 'Ocean Pearl Hotel'
+                          ? () => onStaySelected?.call(stay)
+                          : null,
+                    ),
+                    const SizedBox(height: 16),
+                  ],
                 ),
               ],
             ),
