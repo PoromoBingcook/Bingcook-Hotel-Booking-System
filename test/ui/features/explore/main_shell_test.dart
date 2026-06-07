@@ -64,4 +64,31 @@ void main() {
 
     expect(find.text('Find your next stay'), findsOneWidget);
   });
+
+  testWidgets('Book Now opens room selection and updates total', (
+    tester,
+  ) async {
+    await tester.pumpWidget(const MaterialApp(home: MainShell()));
+
+    await tester.tap(find.text('Ocean Pearl Hotel'));
+    await tester.pumpAndSettle();
+    final bookNowButton = tester.widget<FilledButton>(
+      find.byKey(const Key('property_book_now_button')),
+    );
+    bookNowButton.onPressed!();
+    await tester.pumpAndSettle();
+
+    expect(find.byKey(const Key('select_room_title')), findsOneWidget);
+    expect(find.byKey(const Key('select_room_total_0')), findsOneWidget);
+
+    await tester.tap(find.text('Deluxe Ocean View'));
+    await tester.pump();
+
+    expect(find.byKey(const Key('select_room_total_255')), findsOneWidget);
+
+    await tester.tap(find.byKey(const Key('select_room_back_button')));
+    await tester.pumpAndSettle();
+
+    expect(find.byKey(const Key('property_details_title')), findsOneWidget);
+  });
 }

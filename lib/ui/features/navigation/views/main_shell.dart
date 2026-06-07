@@ -7,6 +7,9 @@ import 'package:bingcook/ui/features/property_details/view_models/property_detai
 import 'package:bingcook/ui/features/property_details/views/property_details_view.dart';
 import 'package:bingcook/ui/features/search/view_models/search_view_model.dart';
 import 'package:bingcook/ui/features/search/views/search_view.dart';
+import 'package:bingcook/ui/features/select_room/models/select_room_content.dart';
+import 'package:bingcook/ui/features/select_room/view_models/select_room_view_model.dart';
+import 'package:bingcook/ui/features/select_room/views/select_room_view.dart';
 import 'package:flutter/material.dart';
 
 class MainShell extends StatefulWidget {
@@ -19,10 +22,14 @@ class MainShell extends StatefulWidget {
 class _MainShellState extends State<MainShell> {
   int _selectedIndex = 0;
   bool _showSearch = false;
+  bool _showSelectRoom = false;
   PropertyDetailsData? _selectedProperty;
   final SearchViewModel _searchViewModel = SearchViewModel();
   final PropertyDetailsViewModel _propertyDetailsViewModel =
       PropertyDetailsViewModel();
+  final SelectRoomViewModel _selectRoomViewModel = SelectRoomViewModel(
+    nights: SelectRoomContent.oceanPearl.nights,
+  );
 
   static const _pendingDestinations = [
     _PendingDestination(
@@ -43,18 +50,26 @@ class _MainShellState extends State<MainShell> {
   void dispose() {
     _searchViewModel.dispose();
     _propertyDetailsViewModel.dispose();
+    _selectRoomViewModel.dispose();
     super.dispose();
   }
 
   @override
   Widget build(BuildContext context) {
     final destinations = [
-      if (_selectedProperty != null)
+      if (_showSelectRoom)
+        SelectRoomView(
+          data: SelectRoomContent.oceanPearl,
+          viewModel: _selectRoomViewModel,
+          onBack: () => setState(() => _showSelectRoom = false),
+          onContinue: () {},
+        )
+      else if (_selectedProperty != null)
         PropertyDetailsView(
           data: _selectedProperty!,
           viewModel: _propertyDetailsViewModel,
           onBack: () => setState(() => _selectedProperty = null),
-          onBookNow: () {},
+          onBookNow: () => setState(() => _showSelectRoom = true),
         )
       else if (_showSearch)
         SearchView(
@@ -76,16 +91,19 @@ class _MainShellState extends State<MainShell> {
 
     return Scaffold(
       body: IndexedStack(index: _selectedIndex, children: destinations),
-      bottomNavigationBar: AppBottomNavigation(
-        selectedIndex: _selectedIndex,
-        onSelected: (index) {
-          setState(() {
-            _selectedIndex = index;
-            _showSearch = false;
-            _selectedProperty = null;
-          });
-        },
-      ),
+      bottomNavigationBar: _showSelectRoom
+          ? null
+          : AppBottomNavigation(
+              selectedIndex: _selectedIndex,
+              onSelected: (index) {
+                setState(() {
+                  _selectedIndex = index;
+                  _showSearch = false;
+                  _showSelectRoom = false;
+                  _selectedProperty = null;
+                });
+              },
+            ),
     );
   }
 }
