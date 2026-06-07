@@ -18,4 +18,10 @@ abstract final class AppAssets {
   static const deluxeOceanView = '$_selectRoomRoot/deluxe-ocean-view.png';
   static const doubleRoom = '$_selectRoomRoot/double-room.png';
   static const executiveSuite = '$_selectRoomRoot/executive-suit.png';
+
+  static const _checkoutRoot = 'assets/svg/checkout';
+  static const checkoutCredit = '$_checkoutRoot/credit.svg';
+  static const checkoutDigitalWallet = '$_checkoutRoot/digital-wallet.svg';
+  static const checkoutBankTransfer = '$_checkoutRoot/bank-transfer.svg';
+  static const checkoutBed = '$_checkoutRoot/bed.svg';
 }

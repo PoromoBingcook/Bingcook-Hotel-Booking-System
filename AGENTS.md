@@ -193,16 +193,18 @@ code.
   Explore`.
 - Inside `MainShell`, Explore can switch to Search or Property Details without
   changing the selected Explore bottom-navigation destination. Property
-  Details can open Select Room through its Book Now callback.
+  Details can open Select Room through its Book Now callback. Select Room can
+  open Checkout and Payment through its Continue to Payment callback.
 - Views request navigation through callbacks or the chosen routing boundary.
 - Do not spread hardcoded route strings across feature widgets.
 - Navigation decisions based on business state belong in the app flow or
   presentation coordination layer, not repositories.
 - `MainShell` owns the selected bottom-navigation destination.
-- `MainShell` owns Search, Property Details, and Select Room display modes and
-  clears those modes when another bottom-navigation destination is selected.
-- Select Room hides bottom navigation, and its back action restores Property
-  Details.
+- `MainShell` owns Search, Property Details, Select Room, and Checkout display
+  modes and clears those modes when another bottom-navigation destination is
+  selected.
+- Select Room and Checkout hide bottom navigation. Checkout back restores
+  Select Room; Select Room back restores Property Details.
 - `AppBottomNavigation` is the reusable visual navigation component and must
   not own page content or feature state.
 - Use `IndexedStack` in the main shell when tab state must survive navigation.
@@ -221,17 +223,22 @@ code.
 - `ui/features/select_room/`: reusable data-driven room selection view,
   nullable room selection state, computed stay total, room cards, and compact
   booking footer.
+- `ui/features/checkout/`: reusable Checkout and Payment view, immutable local
+  summary and pricing data, editable guest fields, selectable payment methods,
+  terms, and fixed confirmation footer.
 - `ui/features/navigation/`: application shell for Explore, Saved, Bookings,
   and Profile destinations.
 
-Until backend work begins, Login, Explore, Search, Property Details, and Select
-Room remain presentation-only. Do not add repositories, services, or use cases
-for static Figma content. `PropertyDetailsView` receives immutable
+Until backend work begins, Login, Explore, Search, Property Details, Select
+Room, and Checkout remain presentation-only. Do not add repositories, services,
+or use cases for static Figma content. `PropertyDetailsView` receives immutable
 `PropertyDetailsData`, a `PropertyDetailsViewModel`, and navigation callbacks
 so future properties and booking navigation can reuse the same component.
 `SelectRoomView` receives immutable `SelectRoomData`, a `SelectRoomViewModel`,
 and back/continue callbacks. No room is selected initially; selecting a room
-updates the total for the configured number of nights.
+updates the total for the configured number of nights. `CheckoutView` receives
+immutable `CheckoutData`, a `CheckoutViewModel`, and back/confirm callbacks.
+Guest controllers remain view-owned; payment selection remains ViewModel-owned.
 
 ## Testing
 

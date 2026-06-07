@@ -59,6 +59,7 @@ flutter:
     - assets/svg/splash+login_screen/
     - assets/svg/explore/
     - assets/svg/select-room/
+    - assets/svg/checkout/
 
   # To add assets to your application, add an assets section, like this:
   # assets:
