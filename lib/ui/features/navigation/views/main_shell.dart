@@ -1,6 +1,8 @@
 import 'package:bingcook/ui/core/theme/app_colors.dart';
 import 'package:bingcook/ui/core/widgets/app_bottom_navigation.dart';
 import 'package:bingcook/ui/features/explore/views/explore_view.dart';
+import 'package:bingcook/ui/features/search/view_models/search_view_model.dart';
+import 'package:bingcook/ui/features/search/views/search_view.dart';
 import 'package:flutter/material.dart';
 
 class MainShell extends StatefulWidget {
@@ -12,9 +14,10 @@ class MainShell extends StatefulWidget {
 
 class _MainShellState extends State<MainShell> {
   int _selectedIndex = 0;
+  bool _showSearch = false;
+  final SearchViewModel _searchViewModel = SearchViewModel();
 
-  static const _destinations = [
-    ExploreView(),
+  static const _pendingDestinations = [
     _PendingDestination(
       icon: Icons.favorite_border_rounded,
       title: 'Saved stays',
@@ -30,12 +33,36 @@ class _MainShellState extends State<MainShell> {
   ];
 
   @override
+  void dispose() {
+    _searchViewModel.dispose();
+    super.dispose();
+  }
+
+  @override
   Widget build(BuildContext context) {
+    final destinations = [
+      if (_showSearch)
+        SearchView(
+          viewModel: _searchViewModel,
+          onClose: () => setState(() => _showSearch = false),
+        )
+      else
+        ExploreView(
+          onSearchRequested: () => setState(() => _showSearch = true),
+        ),
+      ..._pendingDestinations,
+    ];
+
     return Scaffold(
-      body: IndexedStack(index: _selectedIndex, children: _destinations),
+      body: IndexedStack(index: _selectedIndex, children: destinations),
       bottomNavigationBar: AppBottomNavigation(
         selectedIndex: _selectedIndex,
-        onSelected: (index) => setState(() => _selectedIndex = index),
+        onSelected: (index) {
+          setState(() {
+            _selectedIndex = index;
+            _showSearch = false;
+          });
+        },
       ),
     );
   }

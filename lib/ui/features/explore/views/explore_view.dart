@@ -5,7 +5,9 @@ import 'package:bingcook/ui/features/explore/widgets/stay_card.dart';
 import 'package:flutter/material.dart';
 
 class ExploreView extends StatelessWidget {
-  const ExploreView({super.key});
+  const ExploreView({super.key, this.onSearchRequested});
+
+  final VoidCallback? onSearchRequested;
 
   static const _stays = [
     StayCardData(
@@ -66,58 +68,63 @@ class ExploreView extends StatelessWidget {
                   ),
                 ),
                 const SizedBox(height: 24),
-                Container(
-                  padding: const EdgeInsets.all(16),
-                  decoration: BoxDecoration(
-                    color: Colors.white,
-                    borderRadius: BorderRadius.circular(12),
-                    boxShadow: const [
-                      BoxShadow(
-                        color: Color(0x0D000000),
-                        blurRadius: 2,
-                        offset: Offset(0, 1),
-                      ),
-                    ],
-                  ),
-                  child: const Row(
-                    children: [
-                      SizedBox(
-                        width: 34,
-                        child: Icon(
-                          Icons.search_rounded,
-                          color: AppColors.gray600,
-                          size: 22,
+                InkWell(
+                  key: const Key('explore_search_card'),
+                  onTap: onSearchRequested,
+                  borderRadius: BorderRadius.circular(12),
+                  child: Container(
+                    padding: const EdgeInsets.all(16),
+                    decoration: BoxDecoration(
+                      color: Colors.white,
+                      borderRadius: BorderRadius.circular(12),
+                      boxShadow: const [
+                        BoxShadow(
+                          color: Color(0x0D000000),
+                          blurRadius: 2,
+                          offset: Offset(0, 1),
                         ),
-                      ),
-                      SizedBox(width: 16),
-                      Expanded(
-                        child: Column(
-                          crossAxisAlignment: CrossAxisAlignment.start,
-                          children: [
-                            Text(
-                              'Location',
-                              style: TextStyle(
-                                color: AppColors.gray900,
-                                fontFamily: 'Manrope',
-                                fontSize: 18,
-                                fontWeight: FontWeight.w700,
-                              ),
-                            ),
-                            SizedBox(height: 2),
-                            Text(
-                              'Jun 14 - Jun 15 (1 night) · 2 adults',
-                              style: TextStyle(
-                                color: AppColors.gray600,
-                                fontFamily: 'Manrope',
-                                fontSize: 14,
-                                height: 1.43,
-                                fontWeight: FontWeight.w500,
-                              ),
-                            ),
-                          ],
+                      ],
+                    ),
+                    child: const Row(
+                      children: [
+                        SizedBox(
+                          width: 34,
+                          child: Icon(
+                            Icons.search_rounded,
+                            color: AppColors.gray600,
+                            size: 22,
+                          ),
                         ),
-                      ),
-                    ],
+                        SizedBox(width: 16),
+                        Expanded(
+                          child: Column(
+                            crossAxisAlignment: CrossAxisAlignment.start,
+                            children: [
+                              Text(
+                                'Location',
+                                style: TextStyle(
+                                  color: AppColors.gray900,
+                                  fontFamily: 'Manrope',
+                                  fontSize: 18,
+                                  fontWeight: FontWeight.w700,
+                                ),
+                              ),
+                              SizedBox(height: 2),
+                              Text(
+                                'Jun 14 - Jun 15 (1 night) · 2 adults',
+                                style: TextStyle(
+                                  color: AppColors.gray600,
+                                  fontFamily: 'Manrope',
+                                  fontSize: 14,
+                                  height: 1.43,
+                                  fontWeight: FontWeight.w500,
+                                ),
+                              ),
+                            ],
+                          ),
+                        ),
+                      ],
+                    ),
                   ),
                 ),
                 const SizedBox(height: 24),
