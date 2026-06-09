@@ -2,11 +2,14 @@ import 'package:bingcook/app/routes/app_routes.dart';
 import 'package:bingcook/ui/core/constants/app_assets.dart';
 import 'package:bingcook/ui/core/theme/app_colors.dart';
 import 'package:bingcook/ui/core/widgets/app_button.dart';
+import 'package:bingcook/ui/features/auth/view_models/login_view_model.dart';
 import 'package:bingcook/ui/features/auth/widgets/login_text_field.dart';
 import 'package:flutter/material.dart';
 
 class LoginView extends StatefulWidget {
-  const LoginView({super.key});
+  const LoginView({required this.viewModel, super.key});
+
+  final LoginViewModel viewModel;
 
   @override
   State<LoginView> createState() => _LoginViewState();
@@ -15,13 +18,12 @@ class LoginView extends StatefulWidget {
 class _LoginViewState extends State<LoginView> {
   final _emailController = TextEditingController();
   final _passwordController = TextEditingController();
-  bool _rememberMe = true;
-  bool _showPassword = false;
 
   @override
   void dispose() {
     _emailController.dispose();
     _passwordController.dispose();
+    widget.viewModel.dispose();
     super.dispose();
   }
 
@@ -47,118 +49,136 @@ class _LoginViewState extends State<LoginView> {
                         child: Column(
                           crossAxisAlignment: CrossAxisAlignment.start,
                           children: [
-                            const _LoginHeader(),
-                            const SizedBox(height: 42),
-                            LoginTextField(
-                              fieldKey: const Key('login_identity_field'),
-                              controller: _emailController,
-                              label: 'Email or phone number',
-                              hint: 'customer@email.com',
-                              iconAsset: AppAssets.email,
-                              keyboardType: TextInputType.emailAddress,
-                            ),
-                            const SizedBox(height: 20),
-                            LoginTextField(
-                              fieldKey: const Key('login_password_field'),
-                              controller: _passwordController,
-                              label: 'Password',
-                              hint: '........',
-                              iconAsset: AppAssets.password,
-                              obscureText: !_showPassword,
-                              suffixIcon: IconButton(
-                                onPressed: () {
-                                  setState(
-                                    () => _showPassword = !_showPassword,
-                                  );
-                                },
-                                icon: Icon(
-                                  _showPassword
-                                      ? Icons.visibility_off_outlined
-                                      : Icons.visibility_outlined,
-                                  size: 20,
-                                ),
-                                color: AppColors.slate400,
-                                tooltip: _showPassword
-                                    ? 'Hide password'
-                                    : 'Show password',
-                              ),
-                            ),
-                            const SizedBox(height: 20),
-                            Row(
-                              children: [
-                                SizedBox(
-                                  width: 22,
-                                  height: 22,
-                                  child: Checkbox(
-                                    value: _rememberMe,
-                                    onChanged: (value) {
-                                      setState(
-                                        () => _rememberMe = value ?? false,
-                                      );
-                                    },
-                                    activeColor: AppColors.primary,
-                                    shape: RoundedRectangleBorder(
-                                      borderRadius: BorderRadius.circular(4),
+                            ListenableBuilder(
+                              listenable: widget.viewModel,
+                              builder: (context, _) {
+                                return Column(
+                                  crossAxisAlignment: CrossAxisAlignment.start,
+                                  children: [
+                                    const _LoginHeader(),
+                                    const SizedBox(height: 42),
+                                    LoginTextField(
+                                      fieldKey: const Key(
+                                        'login_identity_field',
+                                      ),
+                                      controller: _emailController,
+                                      label: 'Email or phone number',
+                                      hint: 'customer@email.com',
+                                      iconAsset: AppAssets.email,
+                                      keyboardType: TextInputType.emailAddress,
                                     ),
-                                    side: BorderSide.none,
-                                  ),
-                                ),
-                                const SizedBox(width: 8),
-                                const Text(
-                                  'Remember me',
-                                  style: TextStyle(
-                                    color: AppColors.slate500,
-                                    fontFamily: 'Manrope',
-                                    fontSize: 14,
-                                    fontWeight: FontWeight.w500,
-                                  ),
-                                ),
-                                const Spacer(),
-                                TextButton(
-                                  onPressed: () {},
-                                  style: TextButton.styleFrom(
-                                    padding: EdgeInsets.zero,
-                                    minimumSize: Size.zero,
-                                    tapTargetSize:
-                                        MaterialTapTargetSize.shrinkWrap,
-                                  ),
-                                  child: const Text(
-                                    'Forgot password?',
-                                    style: TextStyle(
-                                      color: AppColors.primary,
-                                      fontFamily: 'Manrope',
-                                      fontSize: 14,
+                                    const SizedBox(height: 20),
+                                    LoginTextField(
+                                      fieldKey: const Key(
+                                        'login_password_field',
+                                      ),
+                                      controller: _passwordController,
+                                      label: 'Password',
+                                      hint: '........',
+                                      iconAsset: AppAssets.password,
+                                      obscureText:
+                                          !widget.viewModel.isPasswordVisible,
+                                      suffixIcon: IconButton(
+                                        onPressed: widget
+                                            .viewModel
+                                            .togglePasswordVisibility,
+                                        icon: Icon(
+                                          widget.viewModel.isPasswordVisible
+                                              ? Icons.visibility_off_outlined
+                                              : Icons.visibility_outlined,
+                                          size: 20,
+                                        ),
+                                        color: AppColors.slate400,
+                                        tooltip:
+                                            widget.viewModel.isPasswordVisible
+                                            ? 'Hide password'
+                                            : 'Show password',
+                                      ),
+                                    ),
+                                    const SizedBox(height: 20),
+                                    Row(
+                                      children: [
+                                        SizedBox(
+                                          width: 22,
+                                          height: 22,
+                                          child: Checkbox(
+                                            value: widget.viewModel.rememberMe,
+                                            onChanged: (value) {
+                                              widget.viewModel.setRememberMe(
+                                                value ?? false,
+                                              );
+                                            },
+                                            activeColor: AppColors.primary,
+                                            shape: RoundedRectangleBorder(
+                                              borderRadius:
+                                                  BorderRadius.circular(4),
+                                            ),
+                                            side: BorderSide.none,
+                                          ),
+                                        ),
+                                        const SizedBox(width: 8),
+                                        const Text(
+                                          'Remember me',
+                                          style: TextStyle(
+                                            color: AppColors.slate500,
+                                            fontFamily: 'Manrope',
+                                            fontSize: 14,
+                                            fontWeight: FontWeight.w500,
+                                          ),
+                                        ),
+                                        const Spacer(),
+                                        TextButton(
+                                          onPressed: () {},
+                                          style: TextButton.styleFrom(
+                                            padding: EdgeInsets.zero,
+                                            minimumSize: Size.zero,
+                                            tapTargetSize: MaterialTapTargetSize
+                                                .shrinkWrap,
+                                          ),
+                                          child: const Text(
+                                            'Forgot password?',
+                                            style: TextStyle(
+                                              color: AppColors.primary,
+                                              fontFamily: 'Manrope',
+                                              fontSize: 14,
+                                              fontWeight: FontWeight.w700,
+                                            ),
+                                          ),
+                                        ),
+                                      ],
+                                    ),
+                                    const SizedBox(height: 28),
+                                    AppButton(
+                                      key: const Key('login_button'),
+                                      label: widget.viewModel.isSubmitting
+                                          ? 'Logging in...'
+                                          : 'Login',
+                                      height: 58,
+                                      borderRadius: 8,
                                       fontWeight: FontWeight.w700,
+                                      backgroundColor: AppColors.primary,
+                                      shadowColor: AppColors.primary,
+                                      onPressed: widget.viewModel.isSubmitting
+                                          ? null
+                                          : _submit,
                                     ),
-                                  ),
-                                ),
-                              ],
-                            ),
-                            const SizedBox(height: 28),
-                            AppButton(
-                              key: const Key('login_button'),
-                              label: 'Login',
-                              height: 58,
-                              borderRadius: 8,
-                              fontWeight: FontWeight.w700,
-                              backgroundColor: AppColors.primary,
-                              shadowColor: AppColors.primary,
-                              onPressed: () {
-                                Navigator.of(
-                                  context,
-                                ).pushReplacementNamed(AppRoutes.loginSuccess);
+                                    if (widget.viewModel.errorMessage !=
+                                        null) ...[
+                                      const SizedBox(height: 12),
+                                      Text(
+                                        widget.viewModel.errorMessage!,
+                                        style: const TextStyle(
+                                          color: Color(0xFFF43F5E),
+                                          fontFamily: 'Manrope',
+                                          fontSize: 14,
+                                          height: 1.43,
+                                          fontWeight: FontWeight.w500,
+                                        ),
+                                      ),
+                                    ],
+                                  ],
+                                );
                               },
-                            ),
-                            const SizedBox(height: 12),
-                            const Text(
-                              'Email or password is incorrect',
-                              style: TextStyle(
-                                color: Color(0xFFF43F5E),
-                                fontFamily: 'Manrope',
-                                fontSize: 14,
-                                height: 1.43,
-                                fontWeight: FontWeight.w500,
-                              ),
                             ),
                             const SizedBox(height: 124),
                             AppButton(
@@ -222,6 +242,20 @@ class _LoginViewState extends State<LoginView> {
         ],
       ),
     );
+  }
+
+  Future<void> _submit() async {
+    final isValid = await widget.viewModel.submit(
+      identity: _emailController.text,
+      password: _passwordController.text,
+    );
+
+    if (!isValid || !mounted) {
+      return;
+    }
+
+    FocusScope.of(context).unfocus();
+    Navigator.of(context).pushReplacementNamed(AppRoutes.loginSuccess);
   }
 }
 

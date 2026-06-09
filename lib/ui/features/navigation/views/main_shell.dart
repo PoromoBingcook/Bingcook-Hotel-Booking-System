@@ -1,3 +1,7 @@
+import 'dart:async';
+
+import 'package:bingcook/domain/repositories/auth_repository.dart';
+import 'package:bingcook/domain/repositories/product_repository.dart';
 import 'package:bingcook/ui/core/theme/app_colors.dart';
 import 'package:bingcook/ui/core/widgets/app_bottom_navigation.dart';
 import 'package:bingcook/ui/features/checkout/models/checkout_content.dart';
@@ -5,11 +9,14 @@ import 'package:bingcook/ui/features/checkout/view_models/add_card_view_model.da
 import 'package:bingcook/ui/features/checkout/view_models/checkout_view_model.dart';
 import 'package:bingcook/ui/features/checkout/views/add_card_view.dart';
 import 'package:bingcook/ui/features/checkout/views/checkout_view.dart';
+import 'package:bingcook/ui/features/explore/view_models/explore_view_model.dart';
 import 'package:bingcook/ui/features/explore/views/explore_view.dart';
 import 'package:bingcook/ui/features/property_details/models/property_details_content.dart';
 import 'package:bingcook/ui/features/property_details/models/property_details_data.dart';
 import 'package:bingcook/ui/features/property_details/view_models/property_details_view_model.dart';
 import 'package:bingcook/ui/features/property_details/views/property_details_view.dart';
+import 'package:bingcook/ui/features/profile/view_models/profile_view_model.dart';
+import 'package:bingcook/ui/features/profile/views/profile_view.dart';
 import 'package:bingcook/ui/features/search/view_models/search_view_model.dart';
 import 'package:bingcook/ui/features/search/views/search_view.dart';
 import 'package:bingcook/ui/features/select_room/models/select_room_content.dart';
@@ -18,7 +25,16 @@ import 'package:bingcook/ui/features/select_room/views/select_room_view.dart';
 import 'package:flutter/material.dart';
 
 class MainShell extends StatefulWidget {
-  const MainShell({super.key});
+  const MainShell({
+    required this.authRepository,
+    required this.productRepository,
+    required this.onLogoutCompleted,
+    super.key,
+  });
+
+  final AuthRepository authRepository;
+  final ProductRepository productRepository;
+  final VoidCallback onLogoutCompleted;
 
   @override
   State<MainShell> createState() => _MainShellState();
@@ -32,6 +48,7 @@ class _MainShellState extends State<MainShell> {
   bool _showAddCard = false;
   PropertyDetailsData? _selectedProperty;
   final SearchViewModel _searchViewModel = SearchViewModel();
+  late final ExploreViewModel _exploreViewModel;
   final PropertyDetailsViewModel _propertyDetailsViewModel =
       PropertyDetailsViewModel();
   final SelectRoomViewModel _selectRoomViewModel = SelectRoomViewModel(
@@ -39,6 +56,7 @@ class _MainShellState extends State<MainShell> {
   );
   final CheckoutViewModel _checkoutViewModel = CheckoutViewModel();
   final AddCardViewModel _addCardViewModel = AddCardViewModel();
+  late final ProfileViewModel _profileViewModel;
 
   static const _pendingDestinations = [
     _PendingDestination(
@@ -49,19 +67,27 @@ class _MainShellState extends State<MainShell> {
       icon: Icons.confirmation_number_outlined,
       title: 'Your bookings',
     ),
-    _PendingDestination(
-      icon: Icons.person_outline_rounded,
-      title: 'Your profile',
-    ),
   ];
+
+  @override
+  void initState() {
+    super.initState();
+    _exploreViewModel = ExploreViewModel(
+      productRepository: widget.productRepository,
+    );
+    unawaited(_exploreViewModel.loadProducts());
+    _profileViewModel = ProfileViewModel(authRepository: widget.authRepository);
+  }
 
   @override
   void dispose() {
     _searchViewModel.dispose();
+    _exploreViewModel.dispose();
     _propertyDetailsViewModel.dispose();
     _selectRoomViewModel.dispose();
     _checkoutViewModel.dispose();
     _addCardViewModel.dispose();
+    _profileViewModel.dispose();
     super.dispose();
   }
 
@@ -102,6 +128,7 @@ class _MainShellState extends State<MainShell> {
         )
       else
         ExploreView(
+          viewModel: _exploreViewModel,
           onSearchRequested: () => setState(() => _showSearch = true),
           onStaySelected: (_) {
             setState(() {
@@ -111,6 +138,10 @@ class _MainShellState extends State<MainShell> {
           },
         ),
       ..._pendingDestinations,
+      ProfileView(
+        viewModel: _profileViewModel,
+        onLoggedOut: widget.onLogoutCompleted,
+      ),
     ];
 
     return Scaffold(

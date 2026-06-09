@@ -35,12 +35,7 @@ class StayCard extends StatelessWidget {
             children: [
               ClipRRect(
                 borderRadius: BorderRadius.circular(8),
-                child: Image.asset(
-                  data.imageAsset,
-                  width: 128,
-                  height: 128,
-                  fit: BoxFit.cover,
-                ),
+                child: _StayImage(data: data),
               ),
               const SizedBox(width: 16),
               Expanded(
@@ -156,6 +151,45 @@ class StayCard extends StatelessWidget {
           ),
         ),
       ),
+    );
+  }
+}
+
+class _StayImage extends StatelessWidget {
+  const _StayImage({required this.data});
+
+  final StayCardData data;
+
+  @override
+  Widget build(BuildContext context) {
+    final imageUrl = data.imageUrl;
+    if (imageUrl != null && imageUrl.isNotEmpty) {
+      return Image.network(
+        imageUrl,
+        width: 128,
+        height: 128,
+        fit: BoxFit.cover,
+        errorBuilder: (context, error, stackTrace) =>
+            _FallbackImage(data: data),
+      );
+    }
+
+    return _FallbackImage(data: data);
+  }
+}
+
+class _FallbackImage extends StatelessWidget {
+  const _FallbackImage({required this.data});
+
+  final StayCardData data;
+
+  @override
+  Widget build(BuildContext context) {
+    return Image.asset(
+      data.imageAsset,
+      width: 128,
+      height: 128,
+      fit: BoxFit.cover,
     );
   }
 }

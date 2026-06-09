@@ -1,3 +1,4 @@
+import 'package:bingcook/domain/repositories/auth_repository.dart';
 import 'package:flutter/foundation.dart';
 
 class SignUpErrors {
@@ -13,11 +14,19 @@ class SignUpErrors {
 }
 
 class SignUpViewModel extends ChangeNotifier {
+  SignUpViewModel({required AuthRepository authRepository})
+    : _authRepository = authRepository;
+
+  final AuthRepository _authRepository;
   bool _isPasswordVisible = false;
+  bool _isSubmitting = false;
   SignUpErrors _errors = const SignUpErrors();
+  String? _errorMessage;
 
   bool get isPasswordVisible => _isPasswordVisible;
+  bool get isSubmitting => _isSubmitting;
   SignUpErrors get errors => _errors;
+  String? get errorMessage => _errorMessage;
 
   void togglePasswordVisibility() {
     _isPasswordVisible = !_isPasswordVisible;
@@ -45,20 +54,52 @@ class SignUpViewModel extends ChangeNotifier {
     );
   }
 
-  bool submit({
+  Future<bool> submit({
     required String fullName,
     required String email,
     required String phone,
     required String password,
-  }) {
+  }) async {
+    if (_isSubmitting) {
+      return false;
+    }
+
     _errors = validate(
       fullName: fullName,
       email: email,
       phone: phone,
       password: password,
     );
+    _errorMessage = null;
+    if (_errors.hasErrors) {
+      notifyListeners();
+      return false;
+    }
+
+    _isSubmitting = true;
     notifyListeners();
-    return !_errors.hasErrors;
+
+    try {
+      await _authRepository.register(
+        fullName: fullName.trim(),
+        email: email.trim(),
+        phone: phone.trim(),
+        password: password,
+      );
+      _isSubmitting = false;
+      notifyListeners();
+      return true;
+    } on AuthRepositoryException catch (error) {
+      _errorMessage = error.message;
+      _isSubmitting = false;
+      notifyListeners();
+      return false;
+    } catch (_) {
+      _errorMessage = 'Unable to create account. Try again.';
+      _isSubmitting = false;
+      notifyListeners();
+      return false;
+    }
   }
 
   bool _looksLikeEmail(String value) {

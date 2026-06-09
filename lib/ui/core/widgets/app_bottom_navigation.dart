@@ -12,10 +12,10 @@ class AppBottomNavigation extends StatelessWidget {
   final ValueChanged<int> onSelected;
 
   static const _items = [
-    (icon: Icons.search_rounded, label: 'Explore'),
-    (icon: Icons.favorite_border_rounded, label: 'Saved'),
-    (icon: Icons.confirmation_number_outlined, label: 'Bookings'),
-    (icon: Icons.person_outline_rounded, label: 'Profile'),
+    (icon: Icons.search_rounded, label: 'Tìm kiếm'),
+    (icon: Icons.favorite_border_rounded, label: 'Đã lưu'),
+    (icon: Icons.confirmation_number_outlined, label: 'Đặt chỗ'),
+    (icon: Icons.person_outline_rounded, label: 'Tài khoản'),
   ];
 
   @override
@@ -23,7 +23,7 @@ class AppBottomNavigation extends StatelessWidget {
     return SafeArea(
       top: false,
       child: Container(
-        height: 64,
+        height: 72,
         decoration: const BoxDecoration(
           color: Colors.white,
           border: Border(top: BorderSide(color: AppColors.gray100)),
@@ -51,14 +51,14 @@ class AppBottomNavigation extends StatelessWidget {
                   child: Column(
                     mainAxisAlignment: MainAxisAlignment.center,
                     children: [
-                      Icon(item.icon, size: 22, color: color),
+                      Icon(item.icon, size: 28, color: color),
                       const SizedBox(height: 3),
                       Text(
                         item.label,
                         style: TextStyle(
                           color: color,
                           fontFamily: 'Manrope',
-                          fontSize: 11,
+                          fontSize: 12,
                           height: 1.5,
                           fontWeight: selected
                               ? FontWeight.w700

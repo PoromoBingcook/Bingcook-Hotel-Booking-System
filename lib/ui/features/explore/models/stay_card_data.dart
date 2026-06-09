@@ -8,9 +8,11 @@ class StayCardData {
     required this.reviewCount,
     required this.amenities,
     required this.price,
+    this.imageUrl,
   });
 
   final String imageAsset;
+  final String? imageUrl;
   final String type;
   final String name;
   final String location;

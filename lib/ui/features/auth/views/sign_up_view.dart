@@ -135,10 +135,28 @@ class _SignUpViewState extends State<SignUpView> {
                               ),
                               const SizedBox(height: 16),
                               AppButton(
-                                label: 'Sign Up',
+                                label: widget.viewModel.isSubmitting
+                                    ? 'Signing up...'
+                                    : 'Sign Up',
                                 backgroundColor: AppColors.primary,
-                                onPressed: _submit,
+                                onPressed: widget.viewModel.isSubmitting
+                                    ? null
+                                    : _submit,
                               ),
+                              if (widget.viewModel.errorMessage != null) ...[
+                                const SizedBox(height: 12),
+                                Text(
+                                  widget.viewModel.errorMessage!,
+                                  textAlign: TextAlign.center,
+                                  style: const TextStyle(
+                                    color: Color(0xFFF43F5E),
+                                    fontFamily: 'Manrope',
+                                    fontSize: 14,
+                                    height: 1.43,
+                                    fontWeight: FontWeight.w500,
+                                  ),
+                                ),
+                              ],
                               const SizedBox(height: 24),
                               AppButton(
                                 label: 'Login with Google',
@@ -198,8 +216,8 @@ class _SignUpViewState extends State<SignUpView> {
     );
   }
 
-  void _submit() {
-    final isValid = widget.viewModel.submit(
+  Future<void> _submit() async {
+    final isValid = await widget.viewModel.submit(
       fullName: _fullNameController.text,
       email: _emailController.text,
       phone: _phoneController.text,
@@ -207,7 +225,11 @@ class _SignUpViewState extends State<SignUpView> {
     );
 
     if (isValid) {
+      if (!mounted) {
+        return;
+      }
       FocusScope.of(context).unfocus();
+      Navigator.of(context).pushReplacementNamed(AppRoutes.loginSuccess);
     }
   }
 }
