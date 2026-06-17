@@ -186,9 +186,9 @@ class ExploreView extends StatelessWidget {
         (stay) => [
           StayCard(
             data: stay,
-            onTap: stay.name == 'Ocean Pearl Hotel'
-                ? () => onStaySelected?.call(stay)
-                : null,
+            onTap: onStaySelected == null
+                ? null
+                : () => onStaySelected?.call(stay),
           ),
           const SizedBox(height: 16),
         ],

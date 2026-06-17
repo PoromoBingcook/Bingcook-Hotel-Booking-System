@@ -24,12 +24,59 @@ void main() {
         email: '',
         phone: '',
         password: '',
+        confirmPassword: '',
       );
 
       expect(errors.fullName, isNotNull);
       expect(errors.email, isNotNull);
       expect(errors.phone, isNotNull);
       expect(errors.password, isNotNull);
+      expect(errors.confirmPassword, isNotNull);
+    });
+
+    test('validates password confirmation', () {
+      final viewModel = SignUpViewModel(authRepository: FakeAuthRepository());
+
+      final errors = viewModel.validate(
+        fullName: 'Jane Cook',
+        email: 'jane@example.com',
+        phone: '+84901234567',
+        password: 'Password123',
+        confirmPassword: 'Different123',
+      );
+
+      expect(errors.confirmPassword, 'Passwords do not match');
+    });
+
+    test('does not validate while input changes', () {
+      final viewModel = SignUpViewModel(authRepository: FakeAuthRepository());
+
+      viewModel.updateInput(
+        fullName: 'Jane Cook',
+        email: 'jane@example.com',
+        phone: '+84901234567',
+        password: 'Password123',
+        confirmPassword: 'Different123',
+      );
+
+      expect(viewModel.errors.hasErrors, isFalse);
+    });
+
+    test('validates an edited field on demand', () {
+      final viewModel = SignUpViewModel(authRepository: FakeAuthRepository());
+
+      viewModel.updateInput(
+        password: 'Password123',
+        confirmPassword: 'Different123',
+      );
+      viewModel.validateField(SignUpField.confirmPassword);
+
+      expect(viewModel.errors.confirmPassword, 'Passwords do not match');
+
+      viewModel.updateInput(confirmPassword: 'Password123');
+      viewModel.validateField(SignUpField.confirmPassword);
+
+      expect(viewModel.errors.hasErrors, isFalse);
     });
 
     test('submits valid registration through repository', () async {
@@ -41,6 +88,7 @@ void main() {
         email: 'JANE@example.com',
         phone: '+84901234567',
         password: 'Password123',
+        confirmPassword: 'Password123',
       );
 
       expect(result, isTrue);
@@ -62,6 +110,7 @@ void main() {
         email: 'jane@example.com',
         phone: '+84901234567',
         password: 'Password123',
+        confirmPassword: 'Password123',
       );
 
       expect(result, isFalse);

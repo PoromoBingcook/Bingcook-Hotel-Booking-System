@@ -2,9 +2,12 @@ class PropertyDetailsData {
   const PropertyDetailsData({
     required this.imageAsset,
     required this.name,
+    required this.type,
+    required this.description,
     required this.location,
     required this.rating,
     required this.reviewCount,
+    required this.pricePerNight,
     required this.checkIn,
     required this.checkOut,
     required this.amenities,
@@ -12,13 +15,18 @@ class PropertyDetailsData {
     required this.summaryRating,
     required this.summaryReviewCount,
     required this.reviews,
+    this.imageUrl,
   });
 
   final String imageAsset;
+  final String? imageUrl;
   final String name;
+  final String type;
+  final String description;
   final String location;
   final double rating;
   final int reviewCount;
+  final int pricePerNight;
   final String checkIn;
   final String checkOut;
   final List<PropertyAmenityData> amenities;

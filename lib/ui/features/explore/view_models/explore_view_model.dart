@@ -53,15 +53,20 @@ class ExploreViewModel extends ChangeNotifier {
 
   StayCardData _toStayCardData(Product product) {
     return StayCardData(
+      id: product.id,
       imageAsset: _fallbackImageAsset(product),
       imageUrl: product.imageUrl,
       type: product.type,
       name: product.name,
+      description: product.description,
       location: product.location,
+      city: product.city,
+      address: product.address,
       rating: product.rating,
       reviewCount: product.reviewCount,
       amenities: product.amenities,
       price: product.pricePerNight.round(),
+      status: product.status,
     );
   }
 

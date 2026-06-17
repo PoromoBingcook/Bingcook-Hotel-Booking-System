@@ -4,10 +4,11 @@ import 'package:flutter/services.dart';
 
 class AddCardForm extends StatelessWidget {
   const AddCardForm({
+    required this.bankController,
     required this.cardholderController,
     required this.cardNumberController,
     required this.expiryController,
-    required this.cvvController,
+    required this.otpController,
     required this.onCardholderChanged,
     required this.onExpiryChanged,
     required this.saveForFuture,
@@ -15,10 +16,11 @@ class AddCardForm extends StatelessWidget {
     super.key,
   });
 
+  final TextEditingController bankController;
   final TextEditingController cardholderController;
   final TextEditingController cardNumberController;
   final TextEditingController expiryController;
-  final TextEditingController cvvController;
+  final TextEditingController otpController;
   final ValueChanged<String> onCardholderChanged;
   final ValueChanged<String> onExpiryChanged;
   final bool saveForFuture;
@@ -31,15 +33,18 @@ class AddCardForm extends StatelessWidget {
         crossAxisAlignment: CrossAxisAlignment.stretch,
         children: [
           _CardField(
-            label: 'Cardholder Name',
-            controller: cardholderController,
-            hintText: 'John Doe',
+            fieldKey: const Key('card_bank_field'),
+            label: 'Bank',
+            controller: bankController,
+            hintText: 'Select your bank',
             textInputAction: TextInputAction.next,
-            autofillHints: const [AutofillHints.creditCardName],
-            onChanged: onCardholderChanged,
+            autofillHints: const [],
+            readOnly: true,
+            suffixIcon: const Icon(Icons.keyboard_arrow_down_rounded),
           ),
           const SizedBox(height: 24),
           _CardField(
+            fieldKey: const Key('card_number_field'),
             label: 'Card Number',
             controller: cardNumberController,
             hintText: '0000 0000 0000 0000',
@@ -51,47 +56,52 @@ class AddCardForm extends StatelessWidget {
               LengthLimitingTextInputFormatter(16),
               _CardNumberFormatter(),
             ],
-            suffixIcon: const Icon(Icons.contactless_rounded, size: 22),
+            suffixIcon: const Icon(Icons.credit_card_rounded, size: 20),
           ),
           const SizedBox(height: 24),
-          Row(
-            children: [
-              Expanded(
-                child: _CardField(
-                  label: 'Expiry Date',
-                  controller: expiryController,
-                  hintText: 'MM/YY',
-                  keyboardType: TextInputType.number,
-                  textInputAction: TextInputAction.next,
-                  autofillHints: const [AutofillHints.creditCardExpirationDate],
-                  inputFormatters: [
-                    FilteringTextInputFormatter.digitsOnly,
-                    LengthLimitingTextInputFormatter(4),
-                    _ExpiryFormatter(),
-                  ],
-                  onChanged: onExpiryChanged,
-                ),
-              ),
-              const SizedBox(width: 16),
-              Expanded(
-                child: _CardField(
-                  label: 'CVV',
-                  controller: cvvController,
-                  hintText: '123',
-                  keyboardType: TextInputType.number,
-                  textInputAction: TextInputAction.done,
-                  autofillHints: const [AutofillHints.creditCardSecurityCode],
-                  inputFormatters: [
-                    FilteringTextInputFormatter.digitsOnly,
-                    LengthLimitingTextInputFormatter(4),
-                  ],
-                  suffixIcon: const Tooltip(
-                    message: 'Three or four digits on your card',
-                    child: Icon(Icons.info_outline_rounded, size: 14),
-                  ),
-                ),
-              ),
+          _CardField(
+            fieldKey: const Key('cardholder_name_field'),
+            label: 'Cardholder Name',
+            controller: cardholderController,
+            hintText: 'John Doe',
+            textInputAction: TextInputAction.next,
+            autofillHints: const [AutofillHints.creditCardName],
+            onChanged: onCardholderChanged,
+          ),
+          const SizedBox(height: 24),
+          _CardField(
+            fieldKey: const Key('card_expiry_field'),
+            label: 'Expiry Date',
+            controller: expiryController,
+            hintText: 'MM/YY',
+            keyboardType: TextInputType.number,
+            textInputAction: TextInputAction.next,
+            autofillHints: const [AutofillHints.creditCardExpirationDate],
+            inputFormatters: [
+              FilteringTextInputFormatter.digitsOnly,
+              LengthLimitingTextInputFormatter(4),
+              _ExpiryFormatter(),
             ],
+            onChanged: onExpiryChanged,
+          ),
+          const SizedBox(height: 24),
+          _CardField(
+            fieldKey: const Key('card_otp_field'),
+            label: 'OTP (One-Time Password)',
+            controller: otpController,
+            hintText: '0 0 0 0 0 0',
+            keyboardType: TextInputType.number,
+            textInputAction: TextInputAction.done,
+            autofillHints: const [AutofillHints.oneTimeCode],
+            inputFormatters: [
+              FilteringTextInputFormatter.digitsOnly,
+              LengthLimitingTextInputFormatter(6),
+              _OtpFormatter(),
+            ],
+            suffixIcon: TextButton(
+              onPressed: () {},
+              child: const Text('Resend'),
+            ),
           ),
           const SizedBox(height: 24),
           Row(
@@ -141,6 +151,7 @@ class AddCardForm extends StatelessWidget {
 
 class _CardField extends StatelessWidget {
   const _CardField({
+    this.fieldKey,
     required this.label,
     required this.controller,
     required this.hintText,
@@ -150,8 +161,10 @@ class _CardField extends StatelessWidget {
     this.inputFormatters,
     this.suffixIcon,
     this.onChanged,
+    this.readOnly = false,
   });
 
+  final Key? fieldKey;
   final String label;
   final TextEditingController controller;
   final String hintText;
@@ -161,6 +174,7 @@ class _CardField extends StatelessWidget {
   final List<TextInputFormatter>? inputFormatters;
   final Widget? suffixIcon;
   final ValueChanged<String>? onChanged;
+  final bool readOnly;
 
   @override
   Widget build(BuildContext context) {
@@ -180,12 +194,14 @@ class _CardField extends StatelessWidget {
         SizedBox(
           height: 48,
           child: TextField(
+            key: fieldKey,
             controller: controller,
             keyboardType: keyboardType,
             textInputAction: textInputAction,
             autofillHints: autofillHints,
             inputFormatters: inputFormatters,
             onChanged: onChanged,
+            readOnly: readOnly,
             style: const TextStyle(color: AppColors.textPrimary, fontSize: 16),
             decoration: InputDecoration(
               hintText: hintText,
@@ -239,6 +255,21 @@ class _ExpiryFormatter extends TextInputFormatter {
     final text = digits.length > 2
         ? '${digits.substring(0, 2)}/${digits.substring(2)}'
         : digits;
+    return TextEditingValue(
+      text: text,
+      selection: TextSelection.collapsed(offset: text.length),
+    );
+  }
+}
+
+class _OtpFormatter extends TextInputFormatter {
+  @override
+  TextEditingValue formatEditUpdate(
+    TextEditingValue oldValue,
+    TextEditingValue newValue,
+  ) {
+    final digits = newValue.text.replaceAll(' ', '');
+    final text = digits.split('').join(' ');
     return TextEditingValue(
       text: text,
       selection: TextSelection.collapsed(offset: text.length),

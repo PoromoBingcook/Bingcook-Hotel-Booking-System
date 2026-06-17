@@ -20,12 +20,7 @@ class SelectRoomPropertyContext extends StatelessWidget {
         children: [
           ClipRRect(
             borderRadius: BorderRadius.circular(8),
-            child: Image.asset(
-              data.propertyImageAsset,
-              width: 56,
-              height: 56,
-              fit: BoxFit.cover,
-            ),
+            child: _PropertyImage(data: data),
           ),
           const SizedBox(width: 14),
           Expanded(
@@ -85,6 +80,44 @@ class SelectRoomPropertyContext extends StatelessWidget {
           ),
         ],
       ),
+    );
+  }
+}
+
+class _PropertyImage extends StatelessWidget {
+  const _PropertyImage({required this.data});
+
+  final SelectRoomData data;
+
+  @override
+  Widget build(BuildContext context) {
+    final imageUrl = data.propertyImageUrl;
+    if (imageUrl != null && imageUrl.isNotEmpty) {
+      return Image.network(
+        imageUrl,
+        width: 56,
+        height: 56,
+        fit: BoxFit.cover,
+        errorBuilder: (context, error, stackTrace) => _FallbackImage(data),
+      );
+    }
+
+    return _FallbackImage(data);
+  }
+}
+
+class _FallbackImage extends StatelessWidget {
+  const _FallbackImage(this.data);
+
+  final SelectRoomData data;
+
+  @override
+  Widget build(BuildContext context) {
+    return Image.asset(
+      data.propertyImageAsset,
+      width: 56,
+      height: 56,
+      fit: BoxFit.cover,
     );
   }
 }

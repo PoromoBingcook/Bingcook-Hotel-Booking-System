@@ -1,4 +1,5 @@
 import 'package:bingcook/ui/core/constants/app_assets.dart';
+import 'package:bingcook/ui/features/property_details/models/property_details_data.dart';
 import 'package:bingcook/ui/features/select_room/models/select_room_data.dart';
 
 abstract final class SelectRoomContent {
@@ -43,4 +44,16 @@ abstract final class SelectRoomContent {
       ),
     ],
   );
+
+  static SelectRoomData fromProperty(PropertyDetailsData property) {
+    return SelectRoomData(
+      propertyName: property.name,
+      propertyImageAsset: property.imageAsset,
+      propertyImageUrl: property.imageUrl,
+      dateRange: oceanPearl.dateRange,
+      guests: oceanPearl.guests,
+      nights: oceanPearl.nights,
+      rooms: oceanPearl.rooms,
+    );
+  }
 }

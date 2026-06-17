@@ -70,6 +70,33 @@ void main() {
     expect(find.text('Find your next stay'), findsOneWidget);
   });
 
+  testWidgets('selecting another stay opens details with its product data', (
+    tester,
+  ) async {
+    await _pumpMainShell(tester);
+
+    await tester.scrollUntilVisible(find.text('Blue Garden Homestay'), 300);
+    await tester.tap(
+      find.byKey(const Key('stay_card_c8622126-babc-4c88-a01f-8773fe5456a5')),
+    );
+    await tester.pumpAndSettle();
+
+    expect(find.byKey(const Key('property_details_title')), findsOneWidget);
+    expect(find.text('Blue Garden Homestay'), findsOneWidget);
+    expect(find.text('Hoi An - Cam Chau'), findsOneWidget);
+    expect(find.text('\$42/night'), findsOneWidget);
+    final detailsScrollable = find.byKey(
+      const Key('property_details_scroll_view'),
+    );
+    await tester.drag(detailsScrollable, const Offset(0, -450));
+    await tester.pumpAndSettle();
+    expect(find.text('Quiet garden homestay in Cam Chau.'), findsOneWidget);
+    expect(find.text('Parking'), findsOneWidget);
+    await tester.drag(detailsScrollable, const Offset(0, -450));
+    await tester.pumpAndSettle();
+    expect(find.text('Guest Reviews'), findsOneWidget);
+  });
+
   testWidgets('Book Now opens room selection and updates total', (
     tester,
   ) async {
@@ -95,6 +122,28 @@ void main() {
     await tester.pumpAndSettle();
 
     expect(find.byKey(const Key('property_details_title')), findsOneWidget);
+  });
+
+  testWidgets('Book Now carries selected property into room selection', (
+    tester,
+  ) async {
+    await _pumpMainShell(tester);
+
+    await tester.scrollUntilVisible(find.text('Blue Garden Homestay'), 300);
+    await tester.tap(
+      find.byKey(const Key('stay_card_c8622126-babc-4c88-a01f-8773fe5456a5')),
+    );
+    await tester.pumpAndSettle();
+    tester
+        .widget<FilledButton>(find.byKey(const Key('property_book_now_button')))
+        .onPressed!();
+    await tester.pumpAndSettle();
+
+    expect(find.byKey(const Key('select_room_title')), findsOneWidget);
+    expect(find.text('Blue Garden Homestay'), findsOneWidget);
+    expect(find.text('Jun 12 - Jun 15'), findsOneWidget);
+    expect(find.text('2 guests'), findsOneWidget);
+    expect(find.text('Deluxe Ocean View'), findsOneWidget);
   });
 
   testWidgets('Continue to Payment opens checkout and back restores rooms', (
@@ -142,6 +191,107 @@ void main() {
     await tester.pumpAndSettle();
 
     expect(find.byKey(const Key('select_room_title')), findsOneWidget);
+  });
+
+  testWidgets('checkout uses selected booking and logged-in guest data', (
+    tester,
+  ) async {
+    await _pumpMainShell(tester);
+
+    await tester.scrollUntilVisible(find.text('Blue Garden Homestay'), 300);
+    await tester.tap(
+      find.byKey(const Key('stay_card_c8622126-babc-4c88-a01f-8773fe5456a5')),
+    );
+    await tester.pumpAndSettle();
+    tester
+        .widget<FilledButton>(find.byKey(const Key('property_book_now_button')))
+        .onPressed!();
+    await tester.pumpAndSettle();
+    await tester.tap(find.text('Deluxe Ocean View'));
+    await tester.pump();
+    tester
+        .widget<FilledButton>(
+          find.byKey(const Key('continue_to_payment_button')),
+        )
+        .onPressed!();
+    await tester.pumpAndSettle();
+
+    expect(find.byKey(const Key('checkout_title')), findsOneWidget);
+    expect(find.text('Blue Garden Homestay'), findsOneWidget);
+    expect(find.text('Deluxe Ocean View'), findsOneWidget);
+    expect(find.text('Oct 12, 2024'), findsOneWidget);
+    expect(find.text('Oct 15, 2024'), findsOneWidget);
+    expect(
+      tester
+          .widget<TextField>(find.byKey(const Key('checkout_guest_name_field')))
+          .controller
+          ?.text,
+      'Jane Cook',
+    );
+    expect(
+      tester
+          .widget<TextField>(
+            find.byKey(const Key('checkout_guest_email_field')),
+          )
+          .controller
+          ?.text,
+      'jane@example.com',
+    );
+    expect(
+      tester
+          .widget<TextField>(
+            find.byKey(const Key('checkout_guest_phone_field')),
+          )
+          .controller
+          ?.text,
+      '+84901234567',
+    );
+    await tester.scrollUntilVisible(
+      find.text('Deluxe Ocean View (3 nights)'),
+      300,
+      scrollable: find.byType(Scrollable).first,
+    );
+    expect(find.text('Deluxe Ocean View (3 nights)'), findsOneWidget);
+    expect(find.text('\$255.00'), findsWidgets);
+  });
+
+  testWidgets('Add a card button opens add card details screen', (
+    tester,
+  ) async {
+    await _pumpMainShell(tester);
+
+    await tester.tap(find.text('Ocean Pearl Hotel'));
+    await tester.pumpAndSettle();
+    tester
+        .widget<FilledButton>(find.byKey(const Key('property_book_now_button')))
+        .onPressed!();
+    await tester.pumpAndSettle();
+    await tester.tap(find.text('Deluxe Ocean View'));
+    await tester.pump();
+    tester
+        .widget<FilledButton>(
+          find.byKey(const Key('continue_to_payment_button')),
+        )
+        .onPressed!();
+    await tester.pumpAndSettle();
+
+    await tester.scrollUntilVisible(
+      find.byKey(const Key('add_card_button')),
+      300,
+      scrollable: find.byType(Scrollable).first,
+    );
+    tester
+        .widget<TextButton>(find.byKey(const Key('add_card_button')))
+        .onPressed!();
+    await tester.pumpAndSettle();
+
+    expect(find.byKey(const Key('add_card_title')), findsOneWidget);
+    expect(find.byKey(const Key('card_bank_field')), findsOneWidget);
+    expect(find.byKey(const Key('card_number_field')), findsOneWidget);
+    expect(find.byKey(const Key('cardholder_name_field')), findsOneWidget);
+    expect(find.byKey(const Key('card_expiry_field')), findsOneWidget);
+    expect(find.byKey(const Key('card_otp_field')), findsOneWidget);
+    expect(find.byKey(const Key('save_card_button')), findsOneWidget);
   });
 
   testWidgets('Confirm Booking opens Add Card and back restores checkout', (

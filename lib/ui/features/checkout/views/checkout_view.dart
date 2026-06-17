@@ -13,6 +13,7 @@ class CheckoutView extends StatefulWidget {
     required this.data,
     required this.viewModel,
     required this.onBack,
+    required this.onAddCard,
     required this.onConfirm,
     super.key,
   });
@@ -20,6 +21,7 @@ class CheckoutView extends StatefulWidget {
   final CheckoutData data;
   final CheckoutViewModel viewModel;
   final VoidCallback onBack;
+  final VoidCallback onAddCard;
   final VoidCallback onConfirm;
 
   @override
@@ -37,6 +39,20 @@ class _CheckoutViewState extends State<CheckoutView> {
     _nameController = TextEditingController(text: widget.data.fullName);
     _emailController = TextEditingController(text: widget.data.email);
     _phoneController = TextEditingController(text: widget.data.phone);
+  }
+
+  @override
+  void didUpdateWidget(covariant CheckoutView oldWidget) {
+    super.didUpdateWidget(oldWidget);
+    if (oldWidget.data.fullName != widget.data.fullName) {
+      _nameController.text = widget.data.fullName;
+    }
+    if (oldWidget.data.email != widget.data.email) {
+      _emailController.text = widget.data.email;
+    }
+    if (oldWidget.data.phone != widget.data.phone) {
+      _phoneController.text = widget.data.phone;
+    }
   }
 
   @override
@@ -84,7 +100,7 @@ class _CheckoutViewState extends State<CheckoutView> {
                             selectedMethod:
                                 widget.viewModel.selectedPaymentMethod,
                             onSelected: widget.viewModel.selectPaymentMethod,
-                            onAddCard: () {},
+                            onAddCard: widget.onAddCard,
                           );
                         },
                       ),
