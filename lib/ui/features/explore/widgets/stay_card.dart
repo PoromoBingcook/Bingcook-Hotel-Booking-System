@@ -13,141 +13,146 @@ class StayCard extends StatelessWidget {
     return Semantics(
       button: onTap != null,
       label: onTap == null ? null : 'Open ${data.name} details',
-      child: InkWell(
+      child: GestureDetector(
+        key: Key('stay_card_${data.id}'),
+        behavior: HitTestBehavior.opaque,
         onTap: onTap,
-        borderRadius: BorderRadius.circular(20),
-        child: Container(
-          padding: const EdgeInsets.all(13),
-          decoration: BoxDecoration(
-            color: Colors.white,
-            borderRadius: BorderRadius.circular(20),
-            border: Border.all(color: AppColors.gray100),
-            boxShadow: const [
-              BoxShadow(
-                color: Color(0x0D000000),
-                blurRadius: 2,
-                offset: Offset(0, 1),
-              ),
-            ],
-          ),
-          child: Row(
-            crossAxisAlignment: CrossAxisAlignment.start,
-            children: [
-              ClipRRect(
-                borderRadius: BorderRadius.circular(8),
-                child: _StayImage(data: data),
-              ),
-              const SizedBox(width: 16),
-              Expanded(
-                child: ConstrainedBox(
-                  constraints: const BoxConstraints(minHeight: 128),
-                  child: Column(
-                    crossAxisAlignment: CrossAxisAlignment.start,
-                    children: [
-                      Wrap(
-                        spacing: 8,
-                        runSpacing: 4,
-                        children: [
-                          _Badge(
-                            label: data.type.toUpperCase(),
-                            background: const Color(0xFFDBEAFE),
-                            foreground: const Color(0xFF2563EB),
-                          ),
-                          const _Badge(
-                            label: 'AVAILABLE',
-                            background: Color(0xFFDCFCE7),
-                            foreground: AppColors.success,
-                          ),
-                        ],
-                      ),
-                      const SizedBox(height: 4),
-                      Text(
-                        data.name,
-                        maxLines: 2,
-                        overflow: TextOverflow.ellipsis,
-                        style: const TextStyle(
-                          color: AppColors.gray900,
-                          fontFamily: 'Manrope',
-                          fontSize: 18,
-                          height: 1.15,
-                          fontWeight: FontWeight.w700,
+        child: InkWell(
+          onTap: onTap,
+          borderRadius: BorderRadius.circular(20),
+          child: Container(
+            padding: const EdgeInsets.all(13),
+            decoration: BoxDecoration(
+              color: Colors.white,
+              borderRadius: BorderRadius.circular(20),
+              border: Border.all(color: AppColors.gray100),
+              boxShadow: const [
+                BoxShadow(
+                  color: Color(0x0D000000),
+                  blurRadius: 2,
+                  offset: Offset(0, 1),
+                ),
+              ],
+            ),
+            child: Row(
+              crossAxisAlignment: CrossAxisAlignment.start,
+              children: [
+                ClipRRect(
+                  borderRadius: BorderRadius.circular(8),
+                  child: _StayImage(data: data),
+                ),
+                const SizedBox(width: 16),
+                Expanded(
+                  child: ConstrainedBox(
+                    constraints: const BoxConstraints(minHeight: 128),
+                    child: Column(
+                      crossAxisAlignment: CrossAxisAlignment.start,
+                      children: [
+                        Wrap(
+                          spacing: 8,
+                          runSpacing: 4,
+                          children: [
+                            _Badge(
+                              label: data.type.toUpperCase(),
+                              background: const Color(0xFFDBEAFE),
+                              foreground: const Color(0xFF2563EB),
+                            ),
+                            const _Badge(
+                              label: 'AVAILABLE',
+                              background: Color(0xFFDCFCE7),
+                              foreground: AppColors.success,
+                            ),
+                          ],
                         ),
-                      ),
-                      const SizedBox(height: 3),
-                      Row(
-                        children: [
-                          const Icon(
-                            Icons.location_on_rounded,
-                            color: Color(0xFFFB7185),
-                            size: 13,
+                        const SizedBox(height: 4),
+                        Text(
+                          data.name,
+                          maxLines: 2,
+                          overflow: TextOverflow.ellipsis,
+                          style: const TextStyle(
+                            color: AppColors.gray900,
+                            fontFamily: 'Manrope',
+                            fontSize: 18,
+                            height: 1.15,
+                            fontWeight: FontWeight.w700,
                           ),
-                          const SizedBox(width: 3),
-                          Expanded(
-                            child: Text(
-                              data.location,
-                              maxLines: 1,
-                              overflow: TextOverflow.ellipsis,
+                        ),
+                        const SizedBox(height: 3),
+                        Row(
+                          children: [
+                            const Icon(
+                              Icons.location_on_rounded,
+                              color: Color(0xFFFB7185),
+                              size: 13,
+                            ),
+                            const SizedBox(width: 3),
+                            Expanded(
+                              child: Text(
+                                data.location,
+                                maxLines: 1,
+                                overflow: TextOverflow.ellipsis,
+                                style: const TextStyle(
+                                  color: AppColors.gray400,
+                                  fontFamily: 'Manrope',
+                                  fontSize: 11,
+                                  height: 1.45,
+                                ),
+                              ),
+                            ),
+                          ],
+                        ),
+                        Row(
+                          children: [
+                            Text(
+                              '★ ${data.rating.toStringAsFixed(1)}',
+                              style: const TextStyle(
+                                color: AppColors.warning,
+                                fontFamily: 'Manrope',
+                                fontSize: 12,
+                                fontWeight: FontWeight.w700,
+                              ),
+                            ),
+                            const SizedBox(width: 4),
+                            Text(
+                              '${data.reviewCount} reviews',
                               style: const TextStyle(
                                 color: AppColors.gray400,
                                 fontFamily: 'Manrope',
                                 fontSize: 11,
-                                height: 1.45,
                               ),
                             ),
-                          ),
-                        ],
-                      ),
-                      Row(
-                        children: [
-                          Text(
-                            '★ ${data.rating.toStringAsFixed(1)}',
-                            style: const TextStyle(
-                              color: AppColors.warning,
-                              fontFamily: 'Manrope',
-                              fontSize: 12,
-                              fontWeight: FontWeight.w700,
+                          ],
+                        ),
+                        const SizedBox(height: 6),
+                        Row(
+                          crossAxisAlignment: CrossAxisAlignment.end,
+                          children: [
+                            Expanded(
+                              child: Wrap(
+                                spacing: 4,
+                                children: data.amenities
+                                    .map((amenity) => _Amenity(label: amenity))
+                                    .toList(),
+                              ),
                             ),
-                          ),
-                          const SizedBox(width: 4),
-                          Text(
-                            '${data.reviewCount} reviews',
-                            style: const TextStyle(
-                              color: AppColors.gray400,
-                              fontFamily: 'Manrope',
-                              fontSize: 11,
+                            Text(
+                              '\$${data.price}/night',
+                              style: const TextStyle(
+                                color: AppColors.primary,
+                                fontFamily: 'Manrope',
+                                fontSize: 16,
+                                height: 1.5,
+                                fontWeight: FontWeight.w700,
+                              ),
                             ),
-                          ),
-                        ],
-                      ),
-                      const SizedBox(height: 6),
-                      Row(
-                        crossAxisAlignment: CrossAxisAlignment.end,
-                        children: [
-                          Expanded(
-                            child: Wrap(
-                              spacing: 4,
-                              children: data.amenities
-                                  .map((amenity) => _Amenity(label: amenity))
-                                  .toList(),
-                            ),
-                          ),
-                          Text(
-                            '\$${data.price}/night',
-                            style: const TextStyle(
-                              color: AppColors.primary,
-                              fontFamily: 'Manrope',
-                              fontSize: 16,
-                              height: 1.5,
-                              fontWeight: FontWeight.w700,
-                            ),
-                          ),
-                        ],
-                      ),
-                    ],
+                          ],
+                        ),
+                      ],
+                    ),
                   ),
                 ),
-              ),
-            ],
+              ],
+            ),
           ),
         ),
       ),

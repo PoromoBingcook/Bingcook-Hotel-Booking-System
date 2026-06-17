@@ -24,9 +24,10 @@ class AddCardView extends StatefulWidget {
 
 class _AddCardViewState extends State<AddCardView> {
   late final TextEditingController _cardholderController;
+  late final TextEditingController _bankController;
   late final TextEditingController _cardNumberController;
   late final TextEditingController _expiryController;
-  late final TextEditingController _cvvController;
+  late final TextEditingController _otpController;
   String _cardholderName = 'John Doe';
   String _expiryDate = '';
 
@@ -34,17 +35,19 @@ class _AddCardViewState extends State<AddCardView> {
   void initState() {
     super.initState();
     _cardholderController = TextEditingController(text: _cardholderName);
+    _bankController = TextEditingController();
     _cardNumberController = TextEditingController();
     _expiryController = TextEditingController();
-    _cvvController = TextEditingController();
+    _otpController = TextEditingController();
   }
 
   @override
   void dispose() {
     _cardholderController.dispose();
+    _bankController.dispose();
     _cardNumberController.dispose();
     _expiryController.dispose();
-    _cvvController.dispose();
+    _otpController.dispose();
     super.dispose();
   }
 
@@ -78,10 +81,11 @@ class _AddCardViewState extends State<AddCardView> {
                         listenable: widget.viewModel,
                         builder: (context, _) {
                           return AddCardForm(
+                            bankController: _bankController,
                             cardholderController: _cardholderController,
                             cardNumberController: _cardNumberController,
                             expiryController: _expiryController,
-                            cvvController: _cvvController,
+                            otpController: _otpController,
                             onCardholderChanged: (value) =>
                                 setState(() => _cardholderName = value),
                             onExpiryChanged: (value) =>

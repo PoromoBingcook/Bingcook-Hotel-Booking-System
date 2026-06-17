@@ -26,7 +26,7 @@ class CheckoutSummaryCard extends StatelessWidget {
             child: Stack(
               fit: StackFit.expand,
               children: [
-                Image.asset(data.propertyImageAsset, fit: BoxFit.cover),
+                _PropertyImage(data: data),
                 const DecoratedBox(
                   decoration: BoxDecoration(
                     gradient: LinearGradient(
@@ -144,6 +144,37 @@ class CheckoutSummaryCard extends StatelessWidget {
         ],
       ),
     );
+  }
+}
+
+class _PropertyImage extends StatelessWidget {
+  const _PropertyImage({required this.data});
+
+  final CheckoutData data;
+
+  @override
+  Widget build(BuildContext context) {
+    final imageUrl = data.propertyImageUrl;
+    if (imageUrl != null && imageUrl.isNotEmpty) {
+      return Image.network(
+        imageUrl,
+        fit: BoxFit.cover,
+        errorBuilder: (context, error, stackTrace) => _FallbackImage(data),
+      );
+    }
+
+    return _FallbackImage(data);
+  }
+}
+
+class _FallbackImage extends StatelessWidget {
+  const _FallbackImage(this.data);
+
+  final CheckoutData data;
+
+  @override
+  Widget build(BuildContext context) {
+    return Image.asset(data.propertyImageAsset, fit: BoxFit.cover);
   }
 }
 

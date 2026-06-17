@@ -1,3 +1,4 @@
+import 'package:bingcook/app/routes/app_routes.dart';
 import 'package:bingcook/ui/core/constants/app_assets.dart';
 import 'package:bingcook/ui/core/theme/app_colors.dart';
 import 'package:bingcook/ui/core/widgets/app_button.dart';
@@ -5,7 +6,6 @@ import 'package:bingcook/ui/core/widgets/atmospheric_background.dart';
 import 'package:bingcook/ui/features/auth/view_models/sign_up_view_model.dart';
 import 'package:bingcook/ui/features/auth/widgets/auth_text_field.dart';
 import 'package:bingcook/ui/features/auth/widgets/brand_header.dart';
-import 'package:bingcook/app/routes/app_routes.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
 
@@ -23,6 +23,35 @@ class _SignUpViewState extends State<SignUpView> {
   final _emailController = TextEditingController();
   final _phoneController = TextEditingController();
   final _passwordController = TextEditingController();
+  final _confirmPasswordController = TextEditingController();
+  final _fullNameFocusNode = FocusNode();
+  final _emailFocusNode = FocusNode();
+  final _phoneFocusNode = FocusNode();
+  final _passwordFocusNode = FocusNode();
+  final _confirmPasswordFocusNode = FocusNode();
+
+  @override
+  void initState() {
+    super.initState();
+    _fullNameFocusNode.addListener(
+      () => _validateOnBlur(_fullNameFocusNode, SignUpField.fullName),
+    );
+    _emailFocusNode.addListener(
+      () => _validateOnBlur(_emailFocusNode, SignUpField.email),
+    );
+    _phoneFocusNode.addListener(
+      () => _validateOnBlur(_phoneFocusNode, SignUpField.phone),
+    );
+    _passwordFocusNode.addListener(
+      () => _validateOnBlur(_passwordFocusNode, SignUpField.password),
+    );
+    _confirmPasswordFocusNode.addListener(
+      () => _validateOnBlur(
+        _confirmPasswordFocusNode,
+        SignUpField.confirmPassword,
+      ),
+    );
+  }
 
   @override
   void dispose() {
@@ -30,6 +59,12 @@ class _SignUpViewState extends State<SignUpView> {
     _emailController.dispose();
     _phoneController.dispose();
     _passwordController.dispose();
+    _confirmPasswordController.dispose();
+    _fullNameFocusNode.dispose();
+    _emailFocusNode.dispose();
+    _phoneFocusNode.dispose();
+    _passwordFocusNode.dispose();
+    _confirmPasswordFocusNode.dispose();
     widget.viewModel.dispose();
     super.dispose();
   }
@@ -80,6 +115,11 @@ class _SignUpViewState extends State<SignUpView> {
                                 iconAsset: AppAssets.name,
                                 errorText: errors.fullName,
                                 keyboardType: TextInputType.name,
+                                focusNode: _fullNameFocusNode,
+                                onTapOutside: () =>
+                                    _validateField(SignUpField.fullName),
+                                onChanged: (value) => widget.viewModel
+                                    .updateInput(fullName: value),
                               ),
                               const SizedBox(height: 16),
                               AuthTextField(
@@ -91,6 +131,11 @@ class _SignUpViewState extends State<SignUpView> {
                                 iconAsset: AppAssets.email,
                                 errorText: errors.email,
                                 keyboardType: TextInputType.emailAddress,
+                                focusNode: _emailFocusNode,
+                                onTapOutside: () =>
+                                    _validateField(SignUpField.email),
+                                onChanged: (value) =>
+                                    widget.viewModel.updateInput(email: value),
                               ),
                               const SizedBox(height: 16),
                               AuthTextField(
@@ -102,11 +147,16 @@ class _SignUpViewState extends State<SignUpView> {
                                 iconAsset: AppAssets.phone,
                                 errorText: errors.phone,
                                 keyboardType: TextInputType.phone,
+                                focusNode: _phoneFocusNode,
+                                onTapOutside: () =>
+                                    _validateField(SignUpField.phone),
                                 inputFormatters: [
                                   FilteringTextInputFormatter.allow(
                                     RegExp(r'[0-9+()\-\s]'),
                                   ),
                                 ],
+                                onChanged: (value) =>
+                                    widget.viewModel.updateInput(phone: value),
                               ),
                               const SizedBox(height: 16),
                               AuthTextField(
@@ -114,11 +164,46 @@ class _SignUpViewState extends State<SignUpView> {
                                 iconKey: const Key('password_icon'),
                                 controller: _passwordController,
                                 label: 'Password',
-                                hint: '••••••••',
+                                hint: '********',
                                 iconAsset: AppAssets.password,
                                 errorText: errors.password,
                                 obscureText:
                                     !widget.viewModel.isPasswordVisible,
+                                focusNode: _passwordFocusNode,
+                                onTapOutside: () =>
+                                    _validateField(SignUpField.password),
+                                onChanged: (value) => widget.viewModel
+                                    .updateInput(password: value),
+                                suffixIcon: IconButton(
+                                  onPressed:
+                                      widget.viewModel.togglePasswordVisibility,
+                                  icon: Icon(
+                                    widget.viewModel.isPasswordVisible
+                                        ? Icons.visibility_off_outlined
+                                        : Icons.visibility_outlined,
+                                  ),
+                                  color: AppColors.textSecondary,
+                                  tooltip: widget.viewModel.isPasswordVisible
+                                      ? 'Hide password'
+                                      : 'Show password',
+                                ),
+                              ),
+                              const SizedBox(height: 16),
+                              AuthTextField(
+                                fieldKey: const Key('confirm_password_field'),
+                                iconKey: const Key('confirm_password_icon'),
+                                controller: _confirmPasswordController,
+                                label: 'Confirm Password',
+                                hint: '********',
+                                iconAsset: AppAssets.password,
+                                errorText: errors.confirmPassword,
+                                obscureText:
+                                    !widget.viewModel.isPasswordVisible,
+                                focusNode: _confirmPasswordFocusNode,
+                                onTapOutside: () =>
+                                    _validateField(SignUpField.confirmPassword),
+                                onChanged: (value) => widget.viewModel
+                                    .updateInput(confirmPassword: value),
                                 suffixIcon: IconButton(
                                   onPressed:
                                       widget.viewModel.togglePasswordVisibility,
@@ -216,12 +301,23 @@ class _SignUpViewState extends State<SignUpView> {
     );
   }
 
+  void _validateOnBlur(FocusNode focusNode, SignUpField field) {
+    if (!focusNode.hasFocus) {
+      _validateField(field);
+    }
+  }
+
+  void _validateField(SignUpField field) {
+    widget.viewModel.validateField(field);
+  }
+
   Future<void> _submit() async {
     final isValid = await widget.viewModel.submit(
       fullName: _fullNameController.text,
       email: _emailController.text,
       phone: _phoneController.text,
       password: _passwordController.text,
+      confirmPassword: _confirmPasswordController.text,
     );
 
     if (isValid) {

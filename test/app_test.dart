@@ -43,6 +43,60 @@ void main() {
     expect(find.byKey(const Key('email_field')), findsOneWidget);
     expect(find.byKey(const Key('phone_field')), findsOneWidget);
     expect(find.byKey(const Key('password_field')), findsOneWidget);
+    expect(find.byKey(const Key('confirm_password_field')), findsOneWidget);
+  });
+
+  testWidgets('sign up validates password confirmation after field blur', (
+    tester,
+  ) async {
+    await tester.pumpWidget(
+      MaterialApp(
+        home: SignUpView(
+          viewModel: SignUpViewModel(authRepository: FakeAuthRepository()),
+        ),
+      ),
+    );
+
+    await tester.enterText(
+      find.byKey(const Key('password_field')),
+      'Password123',
+    );
+    await tester.enterText(
+      find.byKey(const Key('confirm_password_field')),
+      'Different123',
+    );
+    await tester.pump();
+
+    expect(find.text('Passwords do not match'), findsNothing);
+
+    FocusManager.instance.primaryFocus?.unfocus();
+    await tester.pump();
+
+    expect(find.text('Passwords do not match'), findsOneWidget);
+  });
+
+  testWidgets('sign up validates one invalid field after tapping away', (
+    tester,
+  ) async {
+    await tester.pumpWidget(
+      MaterialApp(
+        home: SignUpView(
+          viewModel: SignUpViewModel(authRepository: FakeAuthRepository()),
+        ),
+      ),
+    );
+
+    await tester.enterText(find.byKey(const Key('email_field')), 'not-email');
+    await tester.pump();
+
+    expect(find.text('Enter a valid email address'), findsNothing);
+
+    await tester.tap(find.text('Create Account'));
+    await tester.pump();
+
+    expect(find.text('Enter a valid email address'), findsOneWidget);
+    expect(find.text('Enter your full name'), findsNothing);
+    expect(find.text('Enter your phone number'), findsNothing);
   });
 
   testWidgets('sign up login link opens login screen', (tester) async {

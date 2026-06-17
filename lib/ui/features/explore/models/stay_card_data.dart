@@ -1,23 +1,33 @@
 class StayCardData {
   const StayCardData({
+    required this.id,
     required this.imageAsset,
     required this.type,
     required this.name,
+    required this.description,
     required this.location,
+    required this.city,
+    required this.address,
     required this.rating,
     required this.reviewCount,
     required this.amenities,
     required this.price,
+    required this.status,
     this.imageUrl,
   });
 
+  final String id;
   final String imageAsset;
   final String? imageUrl;
   final String type;
   final String name;
+  final String description;
   final String location;
+  final String city;
+  final String address;
   final double rating;
   final int reviewCount;
   final List<String> amenities;
   final int price;
+  final String status;
 }

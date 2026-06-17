@@ -102,14 +102,22 @@ class _MainShellState extends State<MainShell> {
         )
       else if (_showCheckout)
         CheckoutView(
-          data: CheckoutContent.oceanPearl,
+          data: CheckoutContent.fromBooking(
+            property: _selectedProperty!,
+            room:
+                _selectRoomViewModel.selectedRoom ??
+                SelectRoomContent.oceanPearl.rooms.first,
+            user: widget.authRepository.currentSession?.user,
+            nights: SelectRoomContent.oceanPearl.nights,
+          ),
           viewModel: _checkoutViewModel,
           onBack: () => setState(() => _showCheckout = false),
+          onAddCard: () => setState(() => _showAddCard = true),
           onConfirm: () => setState(() => _showAddCard = true),
         )
       else if (_showSelectRoom)
         SelectRoomView(
-          data: SelectRoomContent.oceanPearl,
+          data: SelectRoomContent.fromProperty(_selectedProperty!),
           viewModel: _selectRoomViewModel,
           onBack: () => setState(() => _showSelectRoom = false),
           onContinue: () => setState(() => _showCheckout = true),
@@ -130,10 +138,15 @@ class _MainShellState extends State<MainShell> {
         ExploreView(
           viewModel: _exploreViewModel,
           onSearchRequested: () => setState(() => _showSearch = true),
-          onStaySelected: (_) {
+          onStaySelected: (stay) {
             setState(() {
+              _selectedIndex = 0;
               _showSearch = false;
-              _selectedProperty = PropertyDetailsContent.oceanPearl;
+              _showSelectRoom = false;
+              _showCheckout = false;
+              _showAddCard = false;
+              _selectRoomViewModel.clearSelection();
+              _selectedProperty = PropertyDetailsContent.fromStay(stay);
             });
           },
         ),

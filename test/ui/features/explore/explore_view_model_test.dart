@@ -42,11 +42,18 @@ void main() {
       expect(viewModel.resultCountLabel, '1 result');
       expect(viewModel.stays.single.name, 'Ocean Pearl Hotel');
       expect(
+        viewModel.stays.single.description,
+        'Beachfront hotel near My Khe Beach.',
+      );
+      expect(
         viewModel.stays.single.location,
         'Da Nang, Vo Nguyen Giap, Son Tra',
       );
+      expect(viewModel.stays.single.city, 'Da Nang');
+      expect(viewModel.stays.single.address, 'Vo Nguyen Giap, Son Tra');
       expect(viewModel.stays.single.imageUrl, 'https://example.com/ocean.jpg');
       expect(viewModel.stays.single.price, 68);
+      expect(viewModel.stays.single.status, 'Active');
     });
 
     test('exposes empty state when API returns no products', () async {

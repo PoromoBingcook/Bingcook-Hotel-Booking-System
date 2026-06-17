@@ -21,6 +21,7 @@ class GuestInformationSection extends StatelessWidget {
         const _SectionTitle('Guest Information'),
         const SizedBox(height: 12),
         _GuestField(
+          fieldKey: const Key('checkout_guest_name_field'),
           label: 'Full Name',
           controller: nameController,
           textInputAction: TextInputAction.next,
@@ -28,6 +29,7 @@ class GuestInformationSection extends StatelessWidget {
         ),
         const SizedBox(height: 12),
         _GuestField(
+          fieldKey: const Key('checkout_guest_email_field'),
           label: 'Email Address',
           controller: emailController,
           keyboardType: TextInputType.emailAddress,
@@ -36,6 +38,7 @@ class GuestInformationSection extends StatelessWidget {
         ),
         const SizedBox(height: 12),
         _GuestField(
+          fieldKey: const Key('checkout_guest_phone_field'),
           label: 'Phone Number',
           controller: phoneController,
           keyboardType: TextInputType.phone,
@@ -49,6 +52,7 @@ class GuestInformationSection extends StatelessWidget {
 
 class _GuestField extends StatelessWidget {
   const _GuestField({
+    required this.fieldKey,
     required this.label,
     required this.controller,
     required this.textInputAction,
@@ -56,6 +60,7 @@ class _GuestField extends StatelessWidget {
     this.keyboardType,
   });
 
+  final Key fieldKey;
   final String label;
   final TextEditingController controller;
   final TextInputType? keyboardType;
@@ -71,20 +76,18 @@ class _GuestField extends StatelessWidget {
           padding: const EdgeInsets.only(left: 2, bottom: 5),
           child: Text(
             label,
-            style: const TextStyle(
-              color: AppColors.textSecondary,
-              fontSize: 12,
-            ),
+            style: const TextStyle(color: AppColors.gray900, fontSize: 12),
           ),
         ),
         SizedBox(
           height: 48,
           child: TextField(
+            key: fieldKey,
             controller: controller,
             keyboardType: keyboardType,
             textInputAction: textInputAction,
             autofillHints: autofillHints,
-            style: const TextStyle(color: AppColors.hint, fontSize: 14),
+            style: const TextStyle(color: AppColors.gray900, fontSize: 14),
             decoration: const InputDecoration(
               contentPadding: EdgeInsets.symmetric(
                 horizontal: 16,

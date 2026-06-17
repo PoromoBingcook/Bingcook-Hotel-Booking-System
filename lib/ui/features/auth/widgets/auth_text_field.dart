@@ -14,9 +14,12 @@ class AuthTextField extends StatelessWidget {
     this.iconKey,
     this.keyboardType,
     this.inputFormatters,
+    this.focusNode,
     this.obscureText = false,
     this.errorText,
     this.suffixIcon,
+    this.onChanged,
+    this.onTapOutside,
   });
 
   final Key fieldKey;
@@ -27,9 +30,12 @@ class AuthTextField extends StatelessWidget {
   final Key? iconKey;
   final TextInputType? keyboardType;
   final List<TextInputFormatter>? inputFormatters;
+  final FocusNode? focusNode;
   final bool obscureText;
   final String? errorText;
   final Widget? suffixIcon;
+  final ValueChanged<String>? onChanged;
+  final VoidCallback? onTapOutside;
 
   @override
   Widget build(BuildContext context) {
@@ -43,9 +49,15 @@ class AuthTextField extends StatelessWidget {
         TextField(
           key: fieldKey,
           controller: controller,
+          focusNode: focusNode,
           keyboardType: keyboardType,
           inputFormatters: inputFormatters,
           obscureText: obscureText,
+          onChanged: onChanged,
+          onTapOutside: (_) {
+            focusNode?.unfocus();
+            onTapOutside?.call();
+          },
           textInputAction: TextInputAction.next,
           style: const TextStyle(
             color: AppColors.textPrimary,
