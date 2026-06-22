@@ -33,6 +33,7 @@ class AppRouter {
           AppRoutes.explore => MainShell(
             authRepository: _dependencies.authRepository,
             productRepository: _dependencies.productRepository,
+            bookingRepository: _dependencies.bookingRepository,
             onLogoutCompleted: () {
               Navigator.of(
                 context,

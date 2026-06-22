@@ -3,8 +3,12 @@ import 'package:bingcook/app/dependencies/app_dependencies.dart';
 import 'package:bingcook/app/routes/app_routes.dart';
 import 'package:bingcook/domain/models/auth_session.dart';
 import 'package:bingcook/domain/models/auth_user.dart';
+import 'package:bingcook/domain/models/booking.dart';
 import 'package:bingcook/domain/models/product.dart';
+import 'package:bingcook/domain/models/product_details.dart';
+import 'package:bingcook/domain/models/product_search_query.dart';
 import 'package:bingcook/domain/repositories/auth_repository.dart';
+import 'package:bingcook/domain/repositories/booking_repository.dart';
 import 'package:bingcook/domain/repositories/product_repository.dart';
 import 'package:bingcook/ui/features/auth/view_models/sign_up_view_model.dart';
 import 'package:bingcook/ui/features/auth/views/sign_up_view.dart';
@@ -43,6 +47,7 @@ void main() {
     expect(find.byKey(const Key('email_field')), findsOneWidget);
     expect(find.byKey(const Key('phone_field')), findsOneWidget);
     expect(find.byKey(const Key('password_field')), findsOneWidget);
+    expect(find.byKey(const Key('confirm_password_field')), findsOneWidget);
   });
 
   testWidgets('sign up login link opens login screen', (tester) async {
@@ -66,6 +71,7 @@ AppDependencies _testDependencies() {
   return AppDependencies.test(
     authRepository: FakeAuthRepository(),
     productRepository: const FakeProductRepository(),
+    bookingRepository: const FakeBookingRepository(),
   );
 }
 
@@ -110,7 +116,64 @@ class FakeProductRepository implements ProductRepository {
   const FakeProductRepository();
 
   @override
-  Future<List<Product>> fetchProducts() async {
+  Future<List<Product>> fetchProducts({
+    ProductSearchQuery query = const ProductSearchQuery(),
+  }) async {
     return const [];
+  }
+
+  @override
+  Future<ProductDetails> fetchProductDetails(
+    String id, {
+    ProductSearchQuery query = const ProductSearchQuery(),
+  }) {
+    throw UnimplementedError();
+  }
+}
+
+class FakeBookingRepository implements BookingRepository {
+  const FakeBookingRepository();
+
+  @override
+  Future<BookingDraft> createDraft(CreateBookingDraftCommand command) async {
+    return BookingDraft(
+      bookingId: 'f4fb8b9d-b26c-4685-9454-0fbb9d927337',
+      propertyId: command.propertyId,
+      propertyName: 'Ocean Pearl Hotel',
+      roomId: command.roomId,
+      roomName: 'Deluxe Ocean View',
+      roomType: 'Deluxe',
+      checkIn: command.checkIn,
+      checkOut: command.checkOut,
+      nights: command.checkOut.difference(command.checkIn).inDays,
+      adults: command.adults,
+      children: command.children,
+      totalGuests: command.adults + command.children,
+      roomQuantity: command.roomQuantity,
+      maxGuests: 2,
+      availableRooms: 3,
+      roomSubtotal: 255,
+      addOnSubtotal: 0,
+      totalPrice: 255,
+      addOns: const [],
+      note: command.note,
+      nextAction: 'ProceedToConfirmationPayment',
+    );
+  }
+
+  @override
+  Future<BookingCheckout> checkout(CheckoutBookingCommand command) async {
+    return const BookingCheckout(
+      bookingId: 'f4fb8b9d-b26c-4685-9454-0fbb9d927337',
+      bookingStatus: 'PendingPayment',
+      paymentMethod: 'PayOS',
+      paymentStatus: 'Pending',
+      amount: 255,
+      transactionCode: '88001234',
+      paymentLinkId: 'payos-link-id',
+      checkoutUrl: 'https://pay.payos.vn/web/88001234',
+      qrCode: 'qr-code-payload',
+      message: 'Open checkoutUrl to pay with PayOS.',
+    );
   }
 }

@@ -13,6 +13,7 @@ class Product {
     required this.amenities,
     required this.pricePerNight,
     required this.status,
+    required this.isAvailable,
   });
 
   final String id;
@@ -28,4 +29,5 @@ class Product {
   final List<String> amenities;
   final double pricePerNight;
   final String status;
+  final bool isAvailable;
 }

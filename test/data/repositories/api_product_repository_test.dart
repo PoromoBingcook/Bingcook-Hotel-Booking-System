@@ -1,6 +1,7 @@
 import 'package:bingcook/data/models/product_api_models.dart';
 import 'package:bingcook/data/repositories/api_product_repository.dart';
 import 'package:bingcook/data/services/product_api_service.dart';
+import 'package:bingcook/domain/models/product_search_query.dart';
 import 'package:bingcook/domain/repositories/product_repository.dart';
 import 'package:flutter_test/flutter_test.dart';
 
@@ -66,11 +67,21 @@ class FakeProductApiService implements ProductApiService {
   final ProductApiException? error;
 
   @override
-  Future<List<ProductListItemResponse>> fetchProducts() async {
+  Future<List<ProductListItemResponse>> fetchProducts({
+    ProductSearchQuery query = const ProductSearchQuery(),
+  }) async {
     final error = this.error;
     if (error != null) {
       throw error;
     }
     return products;
+  }
+
+  @override
+  Future<ProductDetailsResponse> fetchProductDetails(
+    String id, {
+    ProductSearchQuery query = const ProductSearchQuery(),
+  }) {
+    throw UnimplementedError();
   }
 }

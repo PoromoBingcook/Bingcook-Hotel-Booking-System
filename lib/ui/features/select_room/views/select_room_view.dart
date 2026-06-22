@@ -72,6 +72,9 @@ class SelectRoomView extends StatelessWidget {
                     SelectRoomFooter(
                       nights: data.nights,
                       total: viewModel.totalPrice,
+                      canContinue: viewModel.canContinue,
+                      isLoading: viewModel.isCreatingDraft,
+                      errorMessage: viewModel.errorMessage,
                       onContinue: onContinue,
                     ),
                   ],

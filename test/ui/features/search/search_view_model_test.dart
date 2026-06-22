@@ -4,7 +4,7 @@ import 'package:flutter_test/flutter_test.dart';
 void main() {
   group('SearchViewModel', () {
     test('starts with deterministic Figma values', () {
-      final viewModel = SearchViewModel();
+      final viewModel = _newViewModel();
 
       expect(viewModel.destination, 'Da Nang');
       expect(viewModel.checkIn, DateTime(2023, 6, 12));
@@ -15,7 +15,7 @@ void main() {
     });
 
     test('clears destination', () {
-      final viewModel = SearchViewModel();
+      final viewModel = _newViewModel();
 
       viewModel.clearDestination();
 
@@ -23,7 +23,7 @@ void main() {
     });
 
     test('starts a new range after a complete range', () {
-      final viewModel = SearchViewModel();
+      final viewModel = _newViewModel();
 
       viewModel.selectDate(DateTime(2023, 6, 18));
 
@@ -32,7 +32,7 @@ void main() {
     });
 
     test('completes an open range with a later date', () {
-      final viewModel = SearchViewModel()
+      final viewModel = _newViewModel()
         ..selectDate(DateTime(2023, 6, 18))
         ..selectDate(DateTime(2023, 6, 21));
 
@@ -41,7 +41,7 @@ void main() {
     });
 
     test('replaces check-in when open range receives an earlier date', () {
-      final viewModel = SearchViewModel()
+      final viewModel = _newViewModel()
         ..selectDate(DateTime(2023, 6, 18))
         ..selectDate(DateTime(2023, 6, 16));
 
@@ -50,7 +50,7 @@ void main() {
     });
 
     test('guest counters respect minimums and increment independently', () {
-      final viewModel = SearchViewModel();
+      final viewModel = _newViewModel();
 
       viewModel.decrementAdults();
       viewModel.decrementAdults();
@@ -63,7 +63,7 @@ void main() {
     });
 
     test('toggles amenities independently', () {
-      final viewModel = SearchViewModel();
+      final viewModel = _newViewModel();
 
       viewModel.toggleAmenity('Wi-Fi');
       viewModel.toggleAmenity('Self check-in');
@@ -71,4 +71,8 @@ void main() {
       expect(viewModel.selectedAmenities, {'Wi-Fi'});
     });
   });
+}
+
+SearchViewModel _newViewModel() {
+  return SearchViewModel(now: DateTime(2023, 6, 11));
 }

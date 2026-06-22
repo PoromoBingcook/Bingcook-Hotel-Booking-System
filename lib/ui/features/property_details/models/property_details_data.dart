@@ -1,3 +1,5 @@
+import 'package:bingcook/ui/features/select_room/models/select_room_data.dart';
+
 class PropertyDetailsData {
   const PropertyDetailsData({
     required this.imageAsset,
@@ -12,20 +14,42 @@ class PropertyDetailsData {
     required this.summaryRating,
     required this.summaryReviewCount,
     required this.reviews,
+    this.id = '',
+    this.type = 'Hotel',
+    this.description = '',
+    this.address = '',
+    this.imageUrls = const [],
+    this.status = 'Available',
+    this.checkInPolicy = '',
+    this.checkOutPolicy = '',
+    this.cancellationPolicy = '',
+    this.rooms = const [],
   });
 
+  final String id;
   final String imageAsset;
+  final List<String> imageUrls;
+  final String type;
   final String name;
   final String location;
+  final String description;
+  final String address;
   final double rating;
   final int reviewCount;
+  final String status;
   final String checkIn;
   final String checkOut;
+  final String checkInPolicy;
+  final String checkOutPolicy;
+  final String cancellationPolicy;
   final List<PropertyAmenityData> amenities;
+  final List<RoomOptionData> rooms;
   final List<RatingDistributionData> ratingDistribution;
   final double summaryRating;
   final int summaryReviewCount;
   final List<GuestReviewData> reviews;
+
+  bool get canBook => rooms.isNotEmpty && status.toLowerCase() != 'soldout';
 }
 
 class PropertyAmenityData {

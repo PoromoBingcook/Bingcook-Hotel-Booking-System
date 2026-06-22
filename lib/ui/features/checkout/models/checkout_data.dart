@@ -1,4 +1,4 @@
-enum PaymentMethodType { creditCard, digitalWallet, bankTransfer }
+enum PaymentMethodType { payOS, payAtProperty }
 
 class CheckoutData {
   const CheckoutData({
@@ -11,6 +11,7 @@ class CheckoutData {
     required this.fullName,
     required this.email,
     required this.phone,
+    required this.bookingId,
     required this.paymentMethods,
     required this.priceRows,
     required this.total,
@@ -25,6 +26,7 @@ class CheckoutData {
   final String fullName;
   final String email;
   final String phone;
+  final String bookingId;
   final List<PaymentMethodData> paymentMethods;
   final List<PriceBreakdownRow> priceRows;
   final double total;

@@ -72,9 +72,9 @@ class ExploreView extends StatelessWidget {
                             ),
                           ],
                         ),
-                        child: const Row(
+                        child: Row(
                           children: [
-                            SizedBox(
+                            const SizedBox(
                               width: 34,
                               child: Icon(
                                 Icons.search_rounded,
@@ -82,12 +82,12 @@ class ExploreView extends StatelessWidget {
                                 size: 22,
                               ),
                             ),
-                            SizedBox(width: 16),
+                            const SizedBox(width: 16),
                             Expanded(
                               child: Column(
                                 crossAxisAlignment: CrossAxisAlignment.start,
                                 children: [
-                                  Text(
+                                  const Text(
                                     'Location',
                                     style: TextStyle(
                                       color: AppColors.gray900,
@@ -96,10 +96,12 @@ class ExploreView extends StatelessWidget {
                                       fontWeight: FontWeight.w700,
                                     ),
                                   ),
-                                  SizedBox(height: 2),
+                                  const SizedBox(height: 2),
                                   Text(
-                                    'Jun 14 - Jun 15 (1 night) Â· 2 adults',
-                                    style: TextStyle(
+                                    viewModel.searchSummary,
+                                    maxLines: 2,
+                                    overflow: TextOverflow.ellipsis,
+                                    style: const TextStyle(
                                       color: AppColors.gray600,
                                       fontFamily: 'Manrope',
                                       fontSize: 14,
@@ -117,10 +119,10 @@ class ExploreView extends StatelessWidget {
                     const SizedBox(height: 24),
                     Row(
                       children: [
-                        const Expanded(
+                        Expanded(
                           child: Text(
-                            'Recommended stays',
-                            style: TextStyle(
+                            viewModel.listTitle,
+                            style: const TextStyle(
                               color: AppColors.gray900,
                               fontFamily: 'Manrope',
                               fontSize: 20,
@@ -176,7 +178,7 @@ class ExploreView extends StatelessWidget {
       return const [
         _ExploreMessage(
           icon: Icons.hotel_outlined,
-          title: 'No stays available yet.',
+          title: 'No stays match your search.',
         ),
       ];
     }
@@ -184,12 +186,7 @@ class ExploreView extends StatelessWidget {
     return [
       ...viewModel.stays.expand(
         (stay) => [
-          StayCard(
-            data: stay,
-            onTap: stay.name == 'Ocean Pearl Hotel'
-                ? () => onStaySelected?.call(stay)
-                : null,
-          ),
+          StayCard(data: stay, onTap: () => onStaySelected?.call(stay)),
           const SizedBox(height: 16),
         ],
       ),

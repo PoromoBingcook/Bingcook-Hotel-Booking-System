@@ -23,6 +23,7 @@ class _SignUpViewState extends State<SignUpView> {
   final _emailController = TextEditingController();
   final _phoneController = TextEditingController();
   final _passwordController = TextEditingController();
+  final _confirmPasswordController = TextEditingController();
 
   @override
   void dispose() {
@@ -30,6 +31,7 @@ class _SignUpViewState extends State<SignUpView> {
     _emailController.dispose();
     _phoneController.dispose();
     _passwordController.dispose();
+    _confirmPasswordController.dispose();
     widget.viewModel.dispose();
     super.dispose();
   }
@@ -117,6 +119,31 @@ class _SignUpViewState extends State<SignUpView> {
                                 hint: '••••••••',
                                 iconAsset: AppAssets.password,
                                 errorText: errors.password,
+                                obscureText:
+                                    !widget.viewModel.isPasswordVisible,
+                                suffixIcon: IconButton(
+                                  onPressed:
+                                      widget.viewModel.togglePasswordVisibility,
+                                  icon: Icon(
+                                    widget.viewModel.isPasswordVisible
+                                        ? Icons.visibility_off_outlined
+                                        : Icons.visibility_outlined,
+                                  ),
+                                  color: AppColors.textSecondary,
+                                  tooltip: widget.viewModel.isPasswordVisible
+                                      ? 'Hide password'
+                                      : 'Show password',
+                                ),
+                              ),
+                              const SizedBox(height: 16),
+                              AuthTextField(
+                                fieldKey: const Key('confirm_password_field'),
+                                iconKey: const Key('confirm_password_icon'),
+                                controller: _confirmPasswordController,
+                                label: 'Confirm Password',
+                                hint: 'â€¢â€¢â€¢â€¢â€¢â€¢â€¢â€¢',
+                                iconAsset: AppAssets.password,
+                                errorText: errors.confirmPassword,
                                 obscureText:
                                     !widget.viewModel.isPasswordVisible,
                                 suffixIcon: IconButton(
@@ -222,6 +249,7 @@ class _SignUpViewState extends State<SignUpView> {
       email: _emailController.text,
       phone: _phoneController.text,
       password: _passwordController.text,
+      confirmPassword: _confirmPasswordController.text,
     );
 
     if (isValid) {

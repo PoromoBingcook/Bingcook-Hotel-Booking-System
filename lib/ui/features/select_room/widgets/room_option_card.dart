@@ -39,7 +39,7 @@ class RoomOptionCard extends StatelessWidget {
                 children: [
                   AspectRatio(
                     aspectRatio: 16 / 8.8,
-                    child: Image.asset(room.imageAsset, fit: BoxFit.cover),
+                    child: _RoomImage(room: room),
                   ),
                   if (room.badge != null)
                     Positioned(
@@ -180,6 +180,27 @@ class RoomOptionCard extends StatelessWidget {
           ),
         ),
       ),
+    );
+  }
+}
+
+class _RoomImage extends StatelessWidget {
+  const _RoomImage({required this.room});
+
+  final RoomOptionData room;
+
+  @override
+  Widget build(BuildContext context) {
+    final imageUrl = room.imageUrl;
+    if (imageUrl == null) {
+      return Image.asset(room.imageAsset, fit: BoxFit.cover);
+    }
+
+    return Image.network(
+      imageUrl,
+      fit: BoxFit.cover,
+      errorBuilder: (_, _, _) =>
+          Image.asset(room.imageAsset, fit: BoxFit.cover),
     );
   }
 }

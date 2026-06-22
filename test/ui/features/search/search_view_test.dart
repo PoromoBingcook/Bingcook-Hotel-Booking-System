@@ -8,8 +8,9 @@ void main() {
     return MaterialApp(
       home: Scaffold(
         body: SearchView(
-          viewModel: SearchViewModel(),
+          viewModel: SearchViewModel(now: DateTime(2023, 6, 11)),
           onClose: onClose ?? () {},
+          onSearch: (_) {},
         ),
       ),
     );

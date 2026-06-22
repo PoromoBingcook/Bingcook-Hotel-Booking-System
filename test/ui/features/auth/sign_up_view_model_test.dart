@@ -24,12 +24,28 @@ void main() {
         email: '',
         phone: '',
         password: '',
+        confirmPassword: '',
       );
 
       expect(errors.fullName, isNotNull);
       expect(errors.email, isNotNull);
       expect(errors.phone, isNotNull);
       expect(errors.password, isNotNull);
+      expect(errors.confirmPassword, isNotNull);
+    });
+
+    test('returns error when confirm password does not match', () {
+      final viewModel = SignUpViewModel(authRepository: FakeAuthRepository());
+
+      final errors = viewModel.validate(
+        fullName: 'Jane Cook',
+        email: 'jane@example.com',
+        phone: '+84901234567',
+        password: 'Password123',
+        confirmPassword: 'Password456',
+      );
+
+      expect(errors.confirmPassword, 'Passwords do not match');
     });
 
     test('submits valid registration through repository', () async {
@@ -41,6 +57,7 @@ void main() {
         email: 'JANE@example.com',
         phone: '+84901234567',
         password: 'Password123',
+        confirmPassword: 'Password123',
       );
 
       expect(result, isTrue);
@@ -62,6 +79,7 @@ void main() {
         email: 'jane@example.com',
         phone: '+84901234567',
         password: 'Password123',
+        confirmPassword: 'Password123',
       );
 
       expect(result, isFalse);

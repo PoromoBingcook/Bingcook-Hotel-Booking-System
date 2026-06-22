@@ -5,6 +5,7 @@ import 'package:bingcook/ui/features/property_details/widgets/property_amenities
 import 'package:bingcook/ui/features/property_details/widgets/property_booking_card.dart';
 import 'package:bingcook/ui/features/property_details/widgets/property_guest_review.dart';
 import 'package:bingcook/ui/features/property_details/widgets/property_review_summary.dart';
+import 'package:bingcook/ui/features/select_room/models/select_room_data.dart';
 import 'package:flutter/material.dart';
 
 class PropertyDetailsView extends StatelessWidget {
@@ -59,6 +60,19 @@ class PropertyDetailsView extends StatelessWidget {
                               fontWeight: FontWeight.w700,
                             ),
                           ),
+                          const SizedBox(height: 6),
+                          Row(
+                            children: [
+                              _InfoChip(label: data.type),
+                              const SizedBox(width: 8),
+                              _InfoChip(
+                                label: data.canBook
+                                    ? 'Rooms available'
+                                    : 'Sold out',
+                                positive: data.canBook,
+                              ),
+                            ],
+                          ),
                           const SizedBox(height: 2),
                           Row(
                             children: [
@@ -111,30 +125,80 @@ class PropertyDetailsView extends StatelessWidget {
                             borderRadius: BorderRadius.circular(12),
                             child: AspectRatio(
                               aspectRatio: 16 / 9,
-                              child: Image.asset(
-                                data.imageAsset,
-                                fit: BoxFit.cover,
-                              ),
+                              child: _PropertyImage(data: data),
                             ),
                           ),
                           const SizedBox(height: 24),
                           PropertyBookingCard(
                             checkIn: data.checkIn,
                             checkOut: data.checkOut,
+                            canBook: data.canBook,
+                            unavailableMessage:
+                                'No available rooms for selected dates.',
                             onBookNow: onBookNow,
                           ),
                           const SizedBox(height: 20),
-                          Container(
-                            height: 28,
-                            decoration: BoxDecoration(
-                              color: AppColors.gray200,
-                              borderRadius: BorderRadius.circular(10),
+                          if (data.description.trim().isNotEmpty) ...[
+                            const _SectionTitle('Overview'),
+                            const SizedBox(height: 10),
+                            Text(
+                              data.description,
+                              style: const TextStyle(
+                                color: AppColors.textSecondary,
+                                fontSize: 14,
+                                height: 1.55,
+                              ),
                             ),
-                          ),
-                          const SizedBox(height: 24),
+                            const SizedBox(height: 24),
+                          ],
                           const _SectionTitle('Amenities'),
                           const SizedBox(height: 14),
                           PropertyAmenitiesGrid(amenities: data.amenities),
+                          const SizedBox(height: 24),
+                          const _SectionTitle('Policies'),
+                          const SizedBox(height: 12),
+                          _PolicyTile(
+                            icon: Icons.login_rounded,
+                            title: 'Check-in',
+                            body: data.checkInPolicy.isEmpty
+                                ? data.checkIn
+                                : data.checkInPolicy,
+                          ),
+                          const SizedBox(height: 10),
+                          _PolicyTile(
+                            icon: Icons.logout_rounded,
+                            title: 'Check-out',
+                            body: data.checkOutPolicy.isEmpty
+                                ? data.checkOut
+                                : data.checkOutPolicy,
+                          ),
+                          const SizedBox(height: 10),
+                          _PolicyTile(
+                            icon: Icons.event_busy_outlined,
+                            title: 'Cancellation',
+                            body: data.cancellationPolicy.isEmpty
+                                ? 'Free cancellation policy depends on room type.'
+                                : data.cancellationPolicy,
+                          ),
+                          const SizedBox(height: 24),
+                          const _SectionTitle('Available Rooms'),
+                          const SizedBox(height: 12),
+                          if (data.rooms.isEmpty)
+                            const _EmptyRoomsMessage()
+                          else
+                            for (
+                              var index = 0;
+                              index < data.rooms.length;
+                              index++
+                            )
+                              Padding(
+                                padding: EdgeInsets.only(
+                                  bottom: index == data.rooms.length - 1
+                                      ? 0
+                                      : 10,
+                                ),
+                                child: _RoomPreview(room: data.rooms[index]),
+                              ),
                           const SizedBox(height: 24),
                           PropertyReviewSummary(
                             distribution: data.ratingDistribution,
@@ -167,6 +231,205 @@ class PropertyDetailsView extends StatelessWidget {
               },
             ),
           ),
+        ),
+      ),
+    );
+  }
+}
+
+class _PropertyImage extends StatelessWidget {
+  const _PropertyImage({required this.data});
+
+  final PropertyDetailsData data;
+
+  @override
+  Widget build(BuildContext context) {
+    if (data.imageUrls.isEmpty) {
+      return Image.asset(data.imageAsset, fit: BoxFit.cover);
+    }
+
+    return Image.network(
+      data.imageUrls.first,
+      fit: BoxFit.cover,
+      errorBuilder: (_, _, _) =>
+          Image.asset(data.imageAsset, fit: BoxFit.cover),
+    );
+  }
+}
+
+class _InfoChip extends StatelessWidget {
+  const _InfoChip({required this.label, this.positive});
+
+  final String label;
+  final bool? positive;
+
+  @override
+  Widget build(BuildContext context) {
+    final positive = this.positive;
+    final color = positive == null
+        ? AppColors.primaryDark
+        : positive
+        ? AppColors.success
+        : AppColors.error;
+
+    return Container(
+      padding: const EdgeInsets.symmetric(horizontal: 9, vertical: 5),
+      decoration: BoxDecoration(
+        color: color.withValues(alpha: 0.10),
+        borderRadius: BorderRadius.circular(99),
+      ),
+      child: Text(
+        label,
+        style: TextStyle(
+          color: color,
+          fontFamily: 'JetBrains Mono',
+          fontSize: 10,
+          fontWeight: FontWeight.w700,
+        ),
+      ),
+    );
+  }
+}
+
+class _PolicyTile extends StatelessWidget {
+  const _PolicyTile({
+    required this.icon,
+    required this.title,
+    required this.body,
+  });
+
+  final IconData icon;
+  final String title;
+  final String body;
+
+  @override
+  Widget build(BuildContext context) {
+    return Container(
+      padding: const EdgeInsets.all(12),
+      decoration: BoxDecoration(
+        color: Colors.white,
+        border: Border.all(color: AppColors.gray200),
+        borderRadius: BorderRadius.circular(10),
+      ),
+      child: Row(
+        crossAxisAlignment: CrossAxisAlignment.start,
+        children: [
+          Icon(icon, color: AppColors.primaryDark, size: 20),
+          const SizedBox(width: 10),
+          Expanded(
+            child: Column(
+              crossAxisAlignment: CrossAxisAlignment.start,
+              children: [
+                Text(
+                  title,
+                  style: const TextStyle(
+                    color: AppColors.textPrimary,
+                    fontSize: 13,
+                    fontWeight: FontWeight.w800,
+                  ),
+                ),
+                const SizedBox(height: 3),
+                Text(
+                  body,
+                  style: const TextStyle(
+                    color: AppColors.textSecondary,
+                    fontSize: 12,
+                    height: 1.4,
+                  ),
+                ),
+              ],
+            ),
+          ),
+        ],
+      ),
+    );
+  }
+}
+
+class _RoomPreview extends StatelessWidget {
+  const _RoomPreview({required this.room});
+
+  final RoomOptionData room;
+
+  @override
+  Widget build(BuildContext context) {
+    return Container(
+      padding: const EdgeInsets.all(12),
+      decoration: BoxDecoration(
+        color: Colors.white,
+        border: Border.all(color: AppColors.gray200),
+        borderRadius: BorderRadius.circular(10),
+      ),
+      child: Row(
+        children: [
+          ClipRRect(
+            borderRadius: BorderRadius.circular(8),
+            child: Image.asset(
+              room.imageAsset,
+              width: 72,
+              height: 54,
+              fit: BoxFit.cover,
+            ),
+          ),
+          const SizedBox(width: 12),
+          Expanded(
+            child: Column(
+              crossAxisAlignment: CrossAxisAlignment.start,
+              children: [
+                Text(
+                  room.name,
+                  maxLines: 1,
+                  overflow: TextOverflow.ellipsis,
+                  style: const TextStyle(
+                    color: AppColors.textPrimary,
+                    fontSize: 14,
+                    fontWeight: FontWeight.w800,
+                  ),
+                ),
+                const SizedBox(height: 3),
+                Text(
+                  'Up to ${room.maxGuests} guests',
+                  style: const TextStyle(
+                    color: AppColors.textSecondary,
+                    fontSize: 12,
+                  ),
+                ),
+              ],
+            ),
+          ),
+          const SizedBox(width: 8),
+          Text(
+            '\$${room.pricePerNight}/night',
+            style: const TextStyle(
+              color: AppColors.primaryDark,
+              fontSize: 13,
+              fontWeight: FontWeight.w800,
+            ),
+          ),
+        ],
+      ),
+    );
+  }
+}
+
+class _EmptyRoomsMessage extends StatelessWidget {
+  const _EmptyRoomsMessage();
+
+  @override
+  Widget build(BuildContext context) {
+    return Container(
+      padding: const EdgeInsets.all(16),
+      decoration: BoxDecoration(
+        color: AppColors.gray100,
+        borderRadius: BorderRadius.circular(10),
+      ),
+      child: const Text(
+        'No rooms available for selected dates.',
+        textAlign: TextAlign.center,
+        style: TextStyle(
+          color: AppColors.textSecondary,
+          fontSize: 13,
+          fontWeight: FontWeight.w700,
         ),
       ),
     );

@@ -2,15 +2,26 @@ import 'package:bingcook/domain/repositories/auth_repository.dart';
 import 'package:flutter/foundation.dart';
 
 class SignUpErrors {
-  const SignUpErrors({this.fullName, this.email, this.phone, this.password});
+  const SignUpErrors({
+    this.fullName,
+    this.email,
+    this.phone,
+    this.password,
+    this.confirmPassword,
+  });
 
   final String? fullName;
   final String? email;
   final String? phone;
   final String? password;
+  final String? confirmPassword;
 
   bool get hasErrors =>
-      fullName != null || email != null || phone != null || password != null;
+      fullName != null ||
+      email != null ||
+      phone != null ||
+      password != null ||
+      confirmPassword != null;
 }
 
 class SignUpViewModel extends ChangeNotifier {
@@ -38,6 +49,7 @@ class SignUpViewModel extends ChangeNotifier {
     required String email,
     required String phone,
     required String password,
+    required String confirmPassword,
   }) {
     final normalizedEmail = email.trim();
     return SignUpErrors(
@@ -51,6 +63,9 @@ class SignUpViewModel extends ChangeNotifier {
       password: password.isEmpty
           ? 'Enter a password'
           : (password.length < 8 ? 'Use at least 8 characters' : null),
+      confirmPassword: confirmPassword.isEmpty
+          ? 'Confirm your password'
+          : (confirmPassword != password ? 'Passwords do not match' : null),
     );
   }
 
@@ -59,6 +74,7 @@ class SignUpViewModel extends ChangeNotifier {
     required String email,
     required String phone,
     required String password,
+    required String confirmPassword,
   }) async {
     if (_isSubmitting) {
       return false;
@@ -69,6 +85,7 @@ class SignUpViewModel extends ChangeNotifier {
       email: email,
       phone: phone,
       password: password,
+      confirmPassword: confirmPassword,
     );
     _errorMessage = null;
     if (_errors.hasErrors) {

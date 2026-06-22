@@ -2,13 +2,19 @@ import 'package:bingcook/ui/core/constants/app_assets.dart';
 import 'package:bingcook/ui/features/select_room/models/select_room_data.dart';
 
 abstract final class SelectRoomContent {
-  static const oceanPearl = SelectRoomData(
+  static final oceanPearl = SelectRoomData(
+    propertyId: '13430237-d5ed-4c9f-be3a-feddf4cb4fa8',
     propertyName: 'Ocean Pearl Hotel',
     propertyImageAsset: AppAssets.oceanPearlHotel,
     dateRange: 'Jun 12 - Jun 15',
+    checkIn: DateTime(2026, 6, 12),
+    checkOut: DateTime(2026, 6, 15),
+    adults: 2,
+    children: 0,
+    roomQuantity: 1,
     guests: 2,
     nights: 3,
-    rooms: [
+    rooms: const [
       RoomOptionData(
         id: 'deluxe-ocean-view',
         imageAsset: AppAssets.deluxeOceanView,

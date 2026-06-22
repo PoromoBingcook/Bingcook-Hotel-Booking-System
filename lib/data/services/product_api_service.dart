@@ -1,6 +1,7 @@
 import 'dart:convert';
 
 import 'package:bingcook/data/models/product_api_models.dart';
+import 'package:bingcook/domain/models/product_search_query.dart';
 import 'package:http/http.dart' as http;
 
 class ProductApiService {
@@ -11,9 +12,11 @@ class ProductApiService {
   final http.Client _client;
   final Uri _baseUrl;
 
-  Future<List<ProductListItemResponse>> fetchProducts() async {
+  Future<List<ProductListItemResponse>> fetchProducts({
+    ProductSearchQuery query = const ProductSearchQuery(),
+  }) async {
     final response = await _client.get(
-      _baseUrl.replace(path: '/api/products'),
+      _productsUri(query),
       headers: const {'accept': 'application/json'},
     );
 
@@ -33,6 +36,44 @@ class ProductApiService {
         .toList(growable: false);
   }
 
+  Future<ProductDetailsResponse> fetchProductDetails(
+    String id, {
+    ProductSearchQuery query = const ProductSearchQuery(),
+  }) async {
+    final response = await _client.get(
+      _productDetailsUri(id, query),
+      headers: const {'accept': 'application/json'},
+    );
+
+    final decoded = _decodeMap(response.body);
+    if (response.statusCode < 200 || response.statusCode >= 300) {
+      throw ProductApiException(
+        _readMessageFromMap(decoded) ?? 'Product details request failed.',
+        statusCode: response.statusCode,
+      );
+    }
+
+    return ProductDetailsResponse.fromJson(decoded);
+  }
+
+  Uri _productsUri(ProductSearchQuery query) {
+    return _baseUrl.replace(
+      path: '/api/products',
+      queryParameters: query.toQueryParameters().isEmpty
+          ? null
+          : query.toQueryParameters(),
+    );
+  }
+
+  Uri _productDetailsUri(String id, ProductSearchQuery query) {
+    return _baseUrl.replace(
+      path: '/api/products/$id',
+      queryParameters: query.toQueryParameters().isEmpty
+          ? null
+          : query.toQueryParameters(),
+    );
+  }
+
   List<Object?> _decodeList(String body) {
     final decoded = jsonDecode(body);
     if (decoded is List<Object?>) {
@@ -44,6 +85,14 @@ class ProductApiService {
     throw const ProductApiException('Unable to read products response.');
   }
 
+  Map<String, Object?> _decodeMap(String body) {
+    final decoded = jsonDecode(body);
+    if (decoded is Map<String, Object?>) {
+      return decoded;
+    }
+    throw const ProductApiException('Unable to read product details response.');
+  }
+
   String? _readMessage(List<Object?> decoded) {
     if (decoded.length != 1) {
       return null;
@@ -53,6 +102,11 @@ class ProductApiService {
       return null;
     }
     final message = first['message'];
+    return message is String && message.trim().isNotEmpty ? message : null;
+  }
+
+  String? _readMessageFromMap(Map<String, Object?> decoded) {
+    final message = decoded['message'];
     return message is String && message.trim().isNotEmpty ? message : null;
   }
 }

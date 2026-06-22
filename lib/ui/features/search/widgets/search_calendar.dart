@@ -31,8 +31,8 @@ class SearchCalendar extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
-    const year = 2023;
-    const month = 6;
+    final year = checkIn.year;
+    final month = checkIn.month;
     final firstWeekday = DateTime(year, month).weekday % 7;
     final daysInMonth = DateTime(year, month + 1, 0).day;
 
@@ -63,7 +63,16 @@ class SearchCalendar extends StatelessWidget {
               ),
             ],
           ),
-          const SizedBox(height: 16),
+          const SizedBox(height: 14),
+          Text(
+            '${_monthNames[month - 1]} $year',
+            style: const TextStyle(
+              color: AppColors.slate900,
+              fontSize: 14,
+              fontWeight: FontWeight.w700,
+            ),
+          ),
+          const SizedBox(height: 12),
           Row(
             children: [
               for (final weekday in _weekdays)
@@ -105,6 +114,7 @@ class SearchCalendar extends StatelessWidget {
 
               return _CalendarDay(
                 day: day,
+                monthName: _monthNames[month - 1],
                 isStart: isStart,
                 isEnd: isEnd,
                 isInRange: isInRange,
@@ -170,6 +180,7 @@ class _DateSummary extends StatelessWidget {
 class _CalendarDay extends StatelessWidget {
   const _CalendarDay({
     required this.day,
+    required this.monthName,
     required this.isStart,
     required this.isEnd,
     required this.isInRange,
@@ -177,6 +188,7 @@ class _CalendarDay extends StatelessWidget {
   });
 
   final int day;
+  final String monthName;
   final bool isStart;
   final bool isEnd;
   final bool isInRange;
@@ -188,7 +200,7 @@ class _CalendarDay extends StatelessWidget {
 
     return Semantics(
       button: true,
-      label: 'June $day',
+      label: '$monthName $day',
       selected: isEndpoint || isInRange,
       child: InkWell(
         key: Key('calendar_day_$day'),

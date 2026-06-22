@@ -1,4 +1,5 @@
 import 'package:bingcook/domain/models/product.dart';
+import 'package:bingcook/domain/models/product_search_query.dart';
 import 'package:bingcook/domain/repositories/product_repository.dart';
 import 'package:bingcook/ui/core/constants/app_assets.dart';
 import 'package:bingcook/ui/features/explore/models/stay_card_data.dart';
@@ -13,11 +14,17 @@ class ExploreViewModel extends ChangeNotifier {
   bool _isLoading = false;
   bool _hasLoaded = false;
   String? _errorMessage;
+  ProductSearchQuery _activeQuery = const ProductSearchQuery();
 
   List<StayCardData> get stays => _stays;
   bool get isLoading => _isLoading;
   bool get isEmpty => _hasLoaded && !_isLoading && _stays.isEmpty;
   String? get errorMessage => _errorMessage;
+  ProductSearchQuery get activeQuery => _activeQuery;
+  bool get hasActiveSearch => !_activeQuery.isEmpty;
+  String get searchSummary => _activeQuery.summary;
+  String get listTitle =>
+      hasActiveSearch ? 'Search results' : 'Recommended stays';
 
   String get resultCountLabel {
     final count = _stays.length;
@@ -25,16 +32,27 @@ class ExploreViewModel extends ChangeNotifier {
   }
 
   Future<void> loadProducts() async {
+    await _loadProducts(const ProductSearchQuery());
+  }
+
+  Future<void> applySearch(ProductSearchQuery query) async {
+    await _loadProducts(query);
+  }
+
+  Future<void> retry() => _loadProducts(_activeQuery);
+
+  Future<void> _loadProducts(ProductSearchQuery query) async {
     if (_isLoading) {
       return;
     }
 
     _isLoading = true;
+    _activeQuery = query;
     _errorMessage = null;
     notifyListeners();
 
     try {
-      final products = await _productRepository.fetchProducts();
+      final products = await _productRepository.fetchProducts(query: query);
       _stays = products.map(_toStayCardData).toList(growable: false);
     } on ProductRepositoryException catch (error) {
       _stays = const [];
@@ -49,10 +67,9 @@ class ExploreViewModel extends ChangeNotifier {
     }
   }
 
-  Future<void> retry() => loadProducts();
-
   StayCardData _toStayCardData(Product product) {
     return StayCardData(
+      id: product.id,
       imageAsset: _fallbackImageAsset(product),
       imageUrl: product.imageUrl,
       type: product.type,
@@ -62,6 +79,7 @@ class ExploreViewModel extends ChangeNotifier {
       reviewCount: product.reviewCount,
       amenities: product.amenities,
       price: product.pricePerNight.round(),
+      isAvailable: product.isAvailable,
     );
   }
 

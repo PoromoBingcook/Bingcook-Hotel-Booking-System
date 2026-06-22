@@ -1,3 +1,4 @@
+import 'package:bingcook/domain/models/booking.dart';
 import 'package:bingcook/ui/core/theme/app_colors.dart';
 import 'package:bingcook/ui/features/checkout/models/checkout_data.dart';
 import 'package:bingcook/ui/features/checkout/view_models/checkout_view_model.dart';
@@ -13,14 +14,14 @@ class CheckoutView extends StatefulWidget {
     required this.data,
     required this.viewModel,
     required this.onBack,
-    required this.onConfirm,
+    required this.onConfirmed,
     super.key,
   });
 
   final CheckoutData data;
   final CheckoutViewModel viewModel;
   final VoidCallback onBack;
-  final VoidCallback onConfirm;
+  final ValueChanged<BookingCheckout> onConfirmed;
 
   @override
   State<CheckoutView> createState() => _CheckoutViewState();
@@ -63,48 +64,81 @@ class _CheckoutViewState extends State<CheckoutView> {
               children: [
                 _CheckoutHeader(onBack: widget.onBack),
                 Expanded(
-                  child: ListView(
-                    padding: const EdgeInsets.fromLTRB(20, 16, 20, 28),
-                    keyboardDismissBehavior:
-                        ScrollViewKeyboardDismissBehavior.onDrag,
-                    children: [
-                      CheckoutSummaryCard(data: widget.data),
-                      const SizedBox(height: 24),
-                      GuestInformationSection(
-                        nameController: _nameController,
-                        emailController: _emailController,
-                        phoneController: _phoneController,
-                      ),
-                      const SizedBox(height: 24),
-                      ListenableBuilder(
-                        listenable: widget.viewModel,
-                        builder: (context, _) {
-                          return PaymentMethodSection(
+                  child: ListenableBuilder(
+                    listenable: widget.viewModel,
+                    builder: (context, _) {
+                      return ListView(
+                        padding: const EdgeInsets.fromLTRB(20, 16, 20, 28),
+                        keyboardDismissBehavior:
+                            ScrollViewKeyboardDismissBehavior.onDrag,
+                        children: [
+                          CheckoutSummaryCard(data: widget.data),
+                          const SizedBox(height: 24),
+                          GuestInformationSection(
+                            nameController: _nameController,
+                            emailController: _emailController,
+                            phoneController: _phoneController,
+                          ),
+                          const SizedBox(height: 24),
+                          PaymentMethodSection(
                             methods: widget.data.paymentMethods,
                             selectedMethod:
                                 widget.viewModel.selectedPaymentMethod,
                             onSelected: widget.viewModel.selectPaymentMethod,
                             onAddCard: () {},
-                          );
-                        },
-                      ),
-                      const SizedBox(height: 16),
-                      PriceBreakdownCard(
-                        rows: widget.data.priceRows,
-                        total: widget.data.total,
-                      ),
-                      const SizedBox(height: 22),
-                      const _TermsText(),
-                    ],
+                          ),
+                          if (widget.viewModel.errorMessage != null) ...[
+                            const SizedBox(height: 12),
+                            Text(
+                              widget.viewModel.errorMessage!,
+                              key: const Key('checkout_error_message'),
+                              textAlign: TextAlign.center,
+                              style: const TextStyle(
+                                color: AppColors.error,
+                                fontSize: 13,
+                              ),
+                            ),
+                          ],
+                          const SizedBox(height: 16),
+                          PriceBreakdownCard(
+                            rows: widget.data.priceRows,
+                            total: widget.data.total,
+                          ),
+                          const SizedBox(height: 22),
+                          const _TermsText(),
+                        ],
+                      );
+                    },
                   ),
                 ),
-                CheckoutFooter(onConfirm: widget.onConfirm),
+                ListenableBuilder(
+                  listenable: widget.viewModel,
+                  builder: (context, _) {
+                    return CheckoutFooter(
+                      isLoading: widget.viewModel.isSubmitting,
+                      onConfirm: _submit,
+                    );
+                  },
+                ),
               ],
             ),
           ),
         ),
       ),
     );
+  }
+
+  Future<void> _submit() async {
+    final success = await widget.viewModel.submit(
+      data: widget.data,
+      customerName: _nameController.text,
+      customerEmail: _emailController.text,
+      customerPhone: _phoneController.text,
+    );
+    final checkout = widget.viewModel.checkout;
+    if (success && checkout != null && mounted) {
+      widget.onConfirmed(checkout);
+    }
   }
 }
 

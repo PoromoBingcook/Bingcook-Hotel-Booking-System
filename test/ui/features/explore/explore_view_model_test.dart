@@ -1,6 +1,8 @@
 import 'dart:async';
 
 import 'package:bingcook/domain/models/product.dart';
+import 'package:bingcook/domain/models/product_details.dart';
+import 'package:bingcook/domain/models/product_search_query.dart';
 import 'package:bingcook/domain/repositories/product_repository.dart';
 import 'package:bingcook/ui/features/explore/view_models/explore_view_model.dart';
 import 'package:flutter_test/flutter_test.dart';
@@ -33,6 +35,7 @@ void main() {
           amenities: ['Wi-Fi', 'Pool'],
           pricePerNight: 68,
           status: 'Active',
+          isAvailable: true,
         ),
       ]);
       await load;
@@ -88,7 +91,17 @@ class FakeProductRepository implements ProductRepository {
   final Future<List<Product>> products;
 
   @override
-  Future<List<Product>> fetchProducts() {
+  Future<List<Product>> fetchProducts({
+    ProductSearchQuery query = const ProductSearchQuery(),
+  }) {
     return products;
+  }
+
+  @override
+  Future<ProductDetails> fetchProductDetails(
+    String id, {
+    ProductSearchQuery query = const ProductSearchQuery(),
+  }) {
+    throw UnimplementedError();
   }
 }

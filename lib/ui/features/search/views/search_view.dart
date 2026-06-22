@@ -1,3 +1,4 @@
+import 'package:bingcook/domain/models/product_search_query.dart';
 import 'package:bingcook/ui/core/theme/app_colors.dart';
 import 'package:bingcook/ui/features/search/view_models/search_view_model.dart';
 import 'package:bingcook/ui/features/search/widgets/amenity_selector.dart';
@@ -7,10 +8,16 @@ import 'package:bingcook/ui/features/search/widgets/search_destination_field.dar
 import 'package:flutter/material.dart';
 
 class SearchView extends StatelessWidget {
-  const SearchView({required this.viewModel, required this.onClose, super.key});
+  const SearchView({
+    required this.viewModel,
+    required this.onClose,
+    required this.onSearch,
+    super.key,
+  });
 
   final SearchViewModel viewModel;
   final VoidCallback onClose;
+  final ValueChanged<ProductSearchQuery> onSearch;
 
   @override
   Widget build(BuildContext context) {
@@ -41,6 +48,7 @@ class SearchView extends StatelessWidget {
                             const SizedBox(height: 8),
                             SearchDestinationField(
                               destination: viewModel.destination,
+                              onChanged: viewModel.updateDestination,
                               onClear: viewModel.clearDestination,
                             ),
                             const SizedBox(height: 20),
@@ -63,6 +71,30 @@ class SearchView extends StatelessWidget {
                               onDecrementChildren: viewModel.decrementChildren,
                             ),
                             const SizedBox(height: 20),
+                            const _SectionLabel('Property type'),
+                            const SizedBox(height: 8),
+                            _ChoiceSection(
+                              values: SearchViewModel.availableTypes,
+                              selectedValue: viewModel.selectedType,
+                              onSelected: viewModel.setType,
+                              labelBuilder: (value) => value,
+                            ),
+                            const SizedBox(height: 20),
+                            const _SectionLabel('Price per night'),
+                            const SizedBox(height: 8),
+                            _PriceRangeFilter(viewModel: viewModel),
+                            const SizedBox(height: 20),
+                            const _SectionLabel('Rating'),
+                            const SizedBox(height: 8),
+                            _ChoiceSection<double>(
+                              values: SearchViewModel.availableRatings,
+                              selectedValue: viewModel.minRating,
+                              onSelected: viewModel.setMinRating,
+                              labelBuilder: (value) => value == 0
+                                  ? 'Any'
+                                  : '${value.toStringAsFixed(1)}+',
+                            ),
+                            const SizedBox(height: 20),
                             const _SectionLabel('Amenities'),
                             const SizedBox(height: 8),
                             AmenitySelector(
@@ -74,7 +106,9 @@ class SearchView extends StatelessWidget {
                         ),
                       ),
                     ),
-                    const _SearchFooter(),
+                    _SearchFooter(
+                      onSearch: () => onSearch(viewModel.buildQuery()),
+                    ),
                   ],
                 );
               },
@@ -127,8 +161,109 @@ class _SearchHeader extends StatelessWidget {
   }
 }
 
+class _PriceRangeFilter extends StatelessWidget {
+  const _PriceRangeFilter({required this.viewModel});
+
+  final SearchViewModel viewModel;
+
+  @override
+  Widget build(BuildContext context) {
+    return Container(
+      padding: const EdgeInsets.fromLTRB(14, 12, 14, 10),
+      decoration: BoxDecoration(
+        color: Colors.white,
+        border: Border.all(color: AppColors.outline),
+        borderRadius: BorderRadius.circular(12),
+      ),
+      child: Column(
+        children: [
+          Row(
+            children: [
+              Text(
+                '\$${viewModel.minPrice.round()}',
+                style: const TextStyle(
+                  color: AppColors.slate900,
+                  fontSize: 14,
+                  fontWeight: FontWeight.w700,
+                ),
+              ),
+              const Spacer(),
+              Text(
+                '\$${viewModel.maxPrice.round()}',
+                style: const TextStyle(
+                  color: AppColors.slate900,
+                  fontSize: 14,
+                  fontWeight: FontWeight.w700,
+                ),
+              ),
+            ],
+          ),
+          RangeSlider(
+            values: RangeValues(viewModel.minPrice, viewModel.maxPrice),
+            min: SearchViewModel.minAllowedPrice,
+            max: SearchViewModel.maxAllowedPrice,
+            divisions: 20,
+            labels: RangeLabels(
+              '\$${viewModel.minPrice.round()}',
+              '\$${viewModel.maxPrice.round()}',
+            ),
+            onChanged: (values) =>
+                viewModel.setPriceRange(values.start, values.end),
+          ),
+        ],
+      ),
+    );
+  }
+}
+
+class _ChoiceSection<T> extends StatelessWidget {
+  const _ChoiceSection({
+    required this.values,
+    required this.selectedValue,
+    required this.onSelected,
+    required this.labelBuilder,
+  });
+
+  final List<T> values;
+  final T selectedValue;
+  final ValueChanged<T> onSelected;
+  final String Function(T value) labelBuilder;
+
+  @override
+  Widget build(BuildContext context) {
+    return Wrap(
+      spacing: 8,
+      runSpacing: 8,
+      children: [
+        for (final value in values)
+          ChoiceChip(
+            label: Text(labelBuilder(value)),
+            selected: value == selectedValue,
+            onSelected: (_) => onSelected(value),
+            selectedColor: AppColors.primaryDark,
+            backgroundColor: Colors.white,
+            side: BorderSide(
+              color: value == selectedValue
+                  ? AppColors.primaryDark
+                  : AppColors.outline,
+            ),
+            labelStyle: TextStyle(
+              color: value == selectedValue ? Colors.white : AppColors.slate700,
+              fontSize: 13,
+              fontWeight: FontWeight.w500,
+            ),
+            visualDensity: VisualDensity.compact,
+            materialTapTargetSize: MaterialTapTargetSize.padded,
+          ),
+      ],
+    );
+  }
+}
+
 class _SearchFooter extends StatelessWidget {
-  const _SearchFooter();
+  const _SearchFooter({required this.onSearch});
+
+  final VoidCallback onSearch;
 
   @override
   Widget build(BuildContext context) {
@@ -143,7 +278,7 @@ class _SearchFooter extends StatelessWidget {
         height: 48,
         child: FilledButton.icon(
           key: const Key('search_submit_button'),
-          onPressed: () {},
+          onPressed: onSearch,
           style: FilledButton.styleFrom(
             backgroundColor: AppColors.primaryDark,
             shape: RoundedRectangleBorder(

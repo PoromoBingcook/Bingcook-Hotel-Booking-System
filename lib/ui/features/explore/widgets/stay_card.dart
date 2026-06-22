@@ -53,10 +53,14 @@ class StayCard extends StatelessWidget {
                             background: const Color(0xFFDBEAFE),
                             foreground: const Color(0xFF2563EB),
                           ),
-                          const _Badge(
-                            label: 'AVAILABLE',
-                            background: Color(0xFFDCFCE7),
-                            foreground: AppColors.success,
+                          _Badge(
+                            label: data.isAvailable ? 'AVAILABLE' : 'SOLD OUT',
+                            background: data.isAvailable
+                                ? const Color(0xFFDCFCE7)
+                                : const Color(0xFFFEE2E2),
+                            foreground: data.isAvailable
+                                ? AppColors.success
+                                : const Color(0xFFDC2626),
                           ),
                         ],
                       ),
@@ -100,7 +104,7 @@ class StayCard extends StatelessWidget {
                       Row(
                         children: [
                           Text(
-                            '★ ${data.rating.toStringAsFixed(1)}',
+                            '* ${data.rating.toStringAsFixed(1)}',
                             style: const TextStyle(
                               color: AppColors.warning,
                               fontFamily: 'Manrope',

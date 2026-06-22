@@ -1,5 +1,6 @@
 class StayCardData {
   const StayCardData({
+    required this.id,
     required this.imageAsset,
     required this.type,
     required this.name,
@@ -8,9 +9,11 @@ class StayCardData {
     required this.reviewCount,
     required this.amenities,
     required this.price,
+    required this.isAvailable,
     this.imageUrl,
   });
 
+  final String id;
   final String imageAsset;
   final String? imageUrl;
   final String type;
@@ -20,4 +23,5 @@ class StayCardData {
   final int reviewCount;
   final List<String> amenities;
   final int price;
+  final bool isAvailable;
 }

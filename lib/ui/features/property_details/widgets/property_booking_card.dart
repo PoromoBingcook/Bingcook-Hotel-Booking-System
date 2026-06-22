@@ -5,13 +5,17 @@ class PropertyBookingCard extends StatelessWidget {
   const PropertyBookingCard({
     required this.checkIn,
     required this.checkOut,
+    required this.canBook,
     required this.onBookNow,
     super.key,
+    this.unavailableMessage,
   });
 
   final String checkIn;
   final String checkOut;
+  final bool canBook;
   final VoidCallback onBookNow;
+  final String? unavailableMessage;
 
   @override
   Widget build(BuildContext context) {
@@ -41,9 +45,10 @@ class PropertyBookingCard extends StatelessWidget {
             height: 48,
             child: FilledButton(
               key: const Key('property_book_now_button'),
-              onPressed: onBookNow,
+              onPressed: canBook ? onBookNow : null,
               style: FilledButton.styleFrom(
                 backgroundColor: AppColors.primaryDark,
+                disabledBackgroundColor: AppColors.gray400,
                 shape: RoundedRectangleBorder(
                   borderRadius: BorderRadius.circular(8),
                 ),
@@ -51,6 +56,29 @@ class PropertyBookingCard extends StatelessWidget {
               child: const Text('Book Now'),
             ),
           ),
+          if (!canBook && unavailableMessage != null) ...[
+            const SizedBox(height: 10),
+            Row(
+              children: [
+                const Icon(
+                  Icons.info_outline_rounded,
+                  size: 16,
+                  color: AppColors.textSecondary,
+                ),
+                const SizedBox(width: 6),
+                Expanded(
+                  child: Text(
+                    unavailableMessage!,
+                    style: const TextStyle(
+                      color: AppColors.textSecondary,
+                      fontSize: 12,
+                      fontWeight: FontWeight.w600,
+                    ),
+                  ),
+                ),
+              ],
+            ),
+          ],
         ],
       ),
     );
