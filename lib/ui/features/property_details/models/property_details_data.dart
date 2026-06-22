@@ -7,6 +7,7 @@ class PropertyDetailsData {
     required this.location,
     required this.rating,
     required this.reviewCount,
+    required this.pricePerNight,
     required this.checkIn,
     required this.checkOut,
     required this.amenities,
@@ -19,6 +20,7 @@ class PropertyDetailsData {
     this.description = '',
     this.address = '',
     this.imageUrls = const [],
+    this.imageUrl,
     this.status = 'Available',
     this.checkInPolicy = '',
     this.checkOutPolicy = '',
@@ -29,13 +31,15 @@ class PropertyDetailsData {
   final String id;
   final String imageAsset;
   final List<String> imageUrls;
+  final String? imageUrl;
   final String type;
   final String name;
-  final String location;
   final String description;
+  final String location;
   final String address;
   final double rating;
   final int reviewCount;
+  final int pricePerNight;
   final String status;
   final String checkIn;
   final String checkOut;

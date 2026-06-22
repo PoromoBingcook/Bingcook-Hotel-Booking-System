@@ -47,8 +47,27 @@ class PropertyDetailsView extends StatelessWidget {
                     ),
                     Expanded(
                       child: ListView(
+                        key: const Key('property_details_scroll_view'),
                         padding: const EdgeInsets.fromLTRB(20, 22, 20, 28),
                         children: [
+                          Wrap(
+                            spacing: 8,
+                            runSpacing: 8,
+                            crossAxisAlignment: WrapCrossAlignment.center,
+                            children: [
+                              _TypeBadge(label: data.type),
+                              Text(
+                                '\$${data.pricePerNight}/night',
+                                style: const TextStyle(
+                                  color: AppColors.primaryDark,
+                                  fontFamily: 'Manrope',
+                                  fontSize: 14,
+                                  fontWeight: FontWeight.w800,
+                                ),
+                              ),
+                            ],
+                          ),
+                          const SizedBox(height: 8),
                           Text(
                             data.name,
                             key: const Key('property_details_title'),
@@ -73,7 +92,7 @@ class PropertyDetailsView extends StatelessWidget {
                               ),
                             ],
                           ),
-                          const SizedBox(height: 2),
+                          const SizedBox(height: 8),
                           Row(
                             children: [
                               const Icon(
@@ -237,6 +256,33 @@ class PropertyDetailsView extends StatelessWidget {
   }
 }
 
+class _TypeBadge extends StatelessWidget {
+  const _TypeBadge({required this.label});
+
+  final String label;
+
+  @override
+  Widget build(BuildContext context) {
+    return Container(
+      padding: const EdgeInsets.symmetric(horizontal: 10, vertical: 5),
+      decoration: BoxDecoration(
+        color: const Color(0xFFDBEAFE),
+        borderRadius: BorderRadius.circular(6),
+      ),
+      child: Text(
+        label.toUpperCase(),
+        style: const TextStyle(
+          color: Color(0xFF2563EB),
+          fontFamily: 'Manrope',
+          fontSize: 11,
+          height: 1.3,
+          fontWeight: FontWeight.w800,
+        ),
+      ),
+    );
+  }
+}
+
 class _PropertyImage extends StatelessWidget {
   const _PropertyImage({required this.data});
 
@@ -244,16 +290,29 @@ class _PropertyImage extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
-    if (data.imageUrls.isEmpty) {
-      return Image.asset(data.imageAsset, fit: BoxFit.cover);
+    final imageUrl = data.imageUrls.isNotEmpty
+        ? data.imageUrls.first
+        : data.imageUrl;
+    if (imageUrl != null && imageUrl.isNotEmpty) {
+      return Image.network(
+        imageUrl,
+        fit: BoxFit.cover,
+        errorBuilder: (context, error, stackTrace) => _FallbackImage(data),
+      );
     }
 
-    return Image.network(
-      data.imageUrls.first,
-      fit: BoxFit.cover,
-      errorBuilder: (_, _, _) =>
-          Image.asset(data.imageAsset, fit: BoxFit.cover),
-    );
+    return _FallbackImage(data);
+  }
+}
+
+class _FallbackImage extends StatelessWidget {
+  const _FallbackImage(this.data);
+
+  final PropertyDetailsData data;
+
+  @override
+  Widget build(BuildContext context) {
+    return Image.asset(data.imageAsset, fit: BoxFit.cover);
   }
 }
 

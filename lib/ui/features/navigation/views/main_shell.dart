@@ -129,6 +129,7 @@ class _MainShellState extends State<MainShell> {
           data: _checkoutData!,
           viewModel: _checkoutViewModel,
           onBack: () => setState(() => _showCheckout = false),
+          onAddCard: () => setState(() => _showAddCard = true),
           onConfirmed: (checkout) {
             setState(() {
               _checkoutResult = checkout;
@@ -336,6 +337,7 @@ class _MainShellState extends State<MainShell> {
       address: details.address,
       rating: details.rating,
       reviewCount: details.reviewCount,
+      pricePerNight: details.pricePerNight.round(),
       status: details.status,
       checkIn: _formatDate(query.checkIn, fallback: 'Select date'),
       checkOut: _formatDate(query.checkOut, fallback: 'Select date'),

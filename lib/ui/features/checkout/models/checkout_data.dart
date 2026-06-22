@@ -15,10 +15,12 @@ class CheckoutData {
     required this.paymentMethods,
     required this.priceRows,
     required this.total,
+    this.propertyImageUrl,
   });
 
   final String propertyName;
   final String propertyImageAsset;
+  final String? propertyImageUrl;
   final String roomName;
   final String checkIn;
   final String checkOut;

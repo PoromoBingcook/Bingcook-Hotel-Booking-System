@@ -24,6 +24,8 @@ class SignUpErrors {
       confirmPassword != null;
 }
 
+enum SignUpField { fullName, email, phone, password, confirmPassword }
+
 class SignUpViewModel extends ChangeNotifier {
   SignUpViewModel({required AuthRepository authRepository})
     : _authRepository = authRepository;
@@ -33,6 +35,12 @@ class SignUpViewModel extends ChangeNotifier {
   bool _isSubmitting = false;
   SignUpErrors _errors = const SignUpErrors();
   String? _errorMessage;
+  String _fullName = '';
+  String _email = '';
+  String _phone = '';
+  String _password = '';
+  String _confirmPassword = '';
+  final Set<SignUpField> _editedFields = {};
 
   bool get isPasswordVisible => _isPasswordVisible;
   bool get isSubmitting => _isSubmitting;
@@ -41,6 +49,53 @@ class SignUpViewModel extends ChangeNotifier {
 
   void togglePasswordVisibility() {
     _isPasswordVisible = !_isPasswordVisible;
+    notifyListeners();
+  }
+
+  void updateInput({
+    String? fullName,
+    String? email,
+    String? phone,
+    String? password,
+    String? confirmPassword,
+  }) {
+    if (fullName != null) {
+      _fullName = fullName;
+      _editedFields.add(SignUpField.fullName);
+      _errors = _withFieldError(SignUpField.fullName, null);
+    }
+    if (email != null) {
+      _email = email;
+      _editedFields.add(SignUpField.email);
+      _errors = _withFieldError(SignUpField.email, null);
+    }
+    if (phone != null) {
+      _phone = phone;
+      _editedFields.add(SignUpField.phone);
+      _errors = _withFieldError(SignUpField.phone, null);
+    }
+    if (password != null) {
+      _password = password;
+      _editedFields.add(SignUpField.password);
+      _errors = _withFieldError(SignUpField.password, null);
+      _errors = _withFieldError(SignUpField.confirmPassword, null);
+    }
+    if (confirmPassword != null) {
+      _confirmPassword = confirmPassword;
+      _editedFields.add(SignUpField.confirmPassword);
+      _errors = _withFieldError(SignUpField.confirmPassword, null);
+    }
+    _errorMessage = null;
+    notifyListeners();
+  }
+
+  void validateField(SignUpField field) {
+    if (!_editedFields.contains(field)) {
+      return;
+    }
+
+    _errors = _withFieldError(field, _validateField(field));
+    _errorMessage = null;
     notifyListeners();
   }
 
@@ -53,19 +108,11 @@ class SignUpViewModel extends ChangeNotifier {
   }) {
     final normalizedEmail = email.trim();
     return SignUpErrors(
-      fullName: fullName.trim().isEmpty ? 'Enter your full name' : null,
-      email: normalizedEmail.isEmpty
-          ? 'Enter your email address'
-          : (!_looksLikeEmail(normalizedEmail)
-                ? 'Enter a valid email address'
-                : null),
-      phone: phone.trim().isEmpty ? 'Enter your phone number' : null,
-      password: password.isEmpty
-          ? 'Enter a password'
-          : (password.length < 8 ? 'Use at least 8 characters' : null),
-      confirmPassword: confirmPassword.isEmpty
-          ? 'Confirm your password'
-          : (confirmPassword != password ? 'Passwords do not match' : null),
+      fullName: _validateFullName(fullName),
+      email: _validateEmail(normalizedEmail),
+      phone: _validatePhone(phone),
+      password: _validatePassword(password),
+      confirmPassword: _validateConfirmPassword(password, confirmPassword),
     );
   }
 
@@ -80,6 +127,12 @@ class SignUpViewModel extends ChangeNotifier {
       return false;
     }
 
+    _fullName = fullName;
+    _email = email;
+    _phone = phone;
+    _password = password;
+    _confirmPassword = confirmPassword;
+    _editedFields.addAll(SignUpField.values);
     _errors = validate(
       fullName: fullName,
       email: email,
@@ -124,5 +177,87 @@ class SignUpViewModel extends ChangeNotifier {
     return separator > 0 &&
         separator < value.length - 1 &&
         value.substring(separator + 1).contains('.');
+  }
+
+  String? _validateField(SignUpField field) {
+    return switch (field) {
+      SignUpField.fullName => _validateFullName(_fullName),
+      SignUpField.email => _validateEmail(_email.trim()),
+      SignUpField.phone => _validatePhone(_phone),
+      SignUpField.password => _validatePassword(_password),
+      SignUpField.confirmPassword => _validateConfirmPassword(
+        _password,
+        _confirmPassword,
+      ),
+    };
+  }
+
+  String? _validateFullName(String value) {
+    return value.trim().isEmpty ? 'Enter your full name' : null;
+  }
+
+  String? _validateEmail(String value) {
+    if (value.isEmpty) {
+      return 'Enter your email address';
+    }
+    return _looksLikeEmail(value) ? null : 'Enter a valid email address';
+  }
+
+  String? _validatePhone(String value) {
+    return value.trim().isEmpty ? 'Enter your phone number' : null;
+  }
+
+  String? _validatePassword(String value) {
+    if (value.isEmpty) {
+      return 'Enter a password';
+    }
+    return value.length < 8 ? 'Use at least 8 characters' : null;
+  }
+
+  String? _validateConfirmPassword(String password, String confirmPassword) {
+    if (confirmPassword.isEmpty) {
+      return 'Confirm your password';
+    }
+    return confirmPassword == password ? null : 'Passwords do not match';
+  }
+
+  SignUpErrors _withFieldError(SignUpField field, String? error) {
+    return switch (field) {
+      SignUpField.fullName => SignUpErrors(
+        fullName: error,
+        email: _errors.email,
+        phone: _errors.phone,
+        password: _errors.password,
+        confirmPassword: _errors.confirmPassword,
+      ),
+      SignUpField.email => SignUpErrors(
+        fullName: _errors.fullName,
+        email: error,
+        phone: _errors.phone,
+        password: _errors.password,
+        confirmPassword: _errors.confirmPassword,
+      ),
+      SignUpField.phone => SignUpErrors(
+        fullName: _errors.fullName,
+        email: _errors.email,
+        phone: error,
+        password: _errors.password,
+        confirmPassword: _errors.confirmPassword,
+      ),
+      SignUpField.password => SignUpErrors(
+        fullName: _errors.fullName,
+        email: _errors.email,
+        phone: _errors.phone,
+        password: error,
+        confirmPassword: _errors.confirmPassword,
+      ),
+      SignUpField.confirmPassword => SignUpErrors(
+        fullName: _errors.fullName,
+        email: _errors.email,
+        phone: _errors.phone,
+        password: _errors.password,
+        confirmPassword: error,
+      ),
+    };
   }
 }

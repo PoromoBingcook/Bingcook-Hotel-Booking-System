@@ -13,6 +13,7 @@ class SelectRoomViewModel extends ChangeNotifier {
   final BookingRepository _bookingRepository;
 
   String? _selectedRoomId;
+  RoomOptionData? _selectedRoom;
   int _selectedNightlyPrice = 0;
   bool _isFavorite = false;
   bool _isCreatingDraft = false;
@@ -20,6 +21,7 @@ class SelectRoomViewModel extends ChangeNotifier {
   BookingDraft? _draft;
 
   String? get selectedRoomId => _selectedRoomId;
+  RoomOptionData? get selectedRoom => _selectedRoom;
   bool get isFavorite => _isFavorite;
   bool get isCreatingDraft => _isCreatingDraft;
   String? get errorMessage => _errorMessage;
@@ -32,9 +34,20 @@ class SelectRoomViewModel extends ChangeNotifier {
       return;
     }
     _selectedRoomId = room.id;
+    _selectedRoom = room;
     _selectedNightlyPrice = room.pricePerNight;
     _errorMessage = null;
     _draft = null;
+    notifyListeners();
+  }
+
+  void clearSelection() {
+    if (_selectedRoomId == null && _selectedNightlyPrice == 0) {
+      return;
+    }
+    _selectedRoomId = null;
+    _selectedRoom = null;
+    _selectedNightlyPrice = 0;
     notifyListeners();
   }
 

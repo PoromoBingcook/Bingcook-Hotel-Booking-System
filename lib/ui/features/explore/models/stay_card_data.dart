@@ -4,12 +4,15 @@ class StayCardData {
     required this.imageAsset,
     required this.type,
     required this.name,
+    required this.description,
     required this.location,
+    required this.city,
+    required this.address,
     required this.rating,
     required this.reviewCount,
     required this.amenities,
     required this.price,
-    required this.isAvailable,
+    required this.status,
     this.imageUrl,
   });
 
@@ -18,10 +21,15 @@ class StayCardData {
   final String? imageUrl;
   final String type;
   final String name;
+  final String description;
   final String location;
+  final String city;
+  final String address;
   final double rating;
   final int reviewCount;
   final List<String> amenities;
   final int price;
-  final bool isAvailable;
+  final String status;
+
+  bool get isAvailable => status.toLowerCase() != 'soldout';
 }

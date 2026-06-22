@@ -12,11 +12,13 @@ class SelectRoomData {
     required this.guests,
     required this.nights,
     required this.rooms,
+    this.propertyImageUrl,
   });
 
   final String propertyId;
   final String propertyName;
   final String propertyImageAsset;
+  final String? propertyImageUrl;
   final String dateRange;
   final DateTime checkIn;
   final DateTime checkOut;

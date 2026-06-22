@@ -34,7 +34,7 @@ void main() {
       expect(errors.confirmPassword, isNotNull);
     });
 
-    test('returns error when confirm password does not match', () {
+    test('validates password confirmation', () {
       final viewModel = SignUpViewModel(authRepository: FakeAuthRepository());
 
       final errors = viewModel.validate(
@@ -42,10 +42,41 @@ void main() {
         email: 'jane@example.com',
         phone: '+84901234567',
         password: 'Password123',
-        confirmPassword: 'Password456',
+        confirmPassword: 'Different123',
       );
 
       expect(errors.confirmPassword, 'Passwords do not match');
+    });
+
+    test('does not validate while input changes', () {
+      final viewModel = SignUpViewModel(authRepository: FakeAuthRepository());
+
+      viewModel.updateInput(
+        fullName: 'Jane Cook',
+        email: 'jane@example.com',
+        phone: '+84901234567',
+        password: 'Password123',
+        confirmPassword: 'Different123',
+      );
+
+      expect(viewModel.errors.hasErrors, isFalse);
+    });
+
+    test('validates an edited field on demand', () {
+      final viewModel = SignUpViewModel(authRepository: FakeAuthRepository());
+
+      viewModel.updateInput(
+        password: 'Password123',
+        confirmPassword: 'Different123',
+      );
+      viewModel.validateField(SignUpField.confirmPassword);
+
+      expect(viewModel.errors.confirmPassword, 'Passwords do not match');
+
+      viewModel.updateInput(confirmPassword: 'Password123');
+      viewModel.validateField(SignUpField.confirmPassword);
+
+      expect(viewModel.errors.hasErrors, isFalse);
     });
 
     test('submits valid registration through repository', () async {

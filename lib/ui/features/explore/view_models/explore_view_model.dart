@@ -74,12 +74,15 @@ class ExploreViewModel extends ChangeNotifier {
       imageUrl: product.imageUrl,
       type: product.type,
       name: product.name,
+      description: product.description,
       location: product.location,
+      city: product.city,
+      address: product.address,
       rating: product.rating,
       reviewCount: product.reviewCount,
       amenities: product.amenities,
       price: product.pricePerNight.round(),
-      isAvailable: product.isAvailable,
+      status: product.status,
     );
   }
 

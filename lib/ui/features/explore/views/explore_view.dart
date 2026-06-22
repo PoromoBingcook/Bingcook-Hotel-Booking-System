@@ -186,7 +186,12 @@ class ExploreView extends StatelessWidget {
     return [
       ...viewModel.stays.expand(
         (stay) => [
-          StayCard(data: stay, onTap: () => onStaySelected?.call(stay)),
+          StayCard(
+            data: stay,
+            onTap: onStaySelected == null
+                ? null
+                : () => onStaySelected?.call(stay),
+          ),
           const SizedBox(height: 16),
         ],
       ),

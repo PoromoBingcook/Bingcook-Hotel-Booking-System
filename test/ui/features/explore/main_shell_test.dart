@@ -74,15 +74,31 @@ void main() {
     expect(find.text('Find your next stay'), findsOneWidget);
   });
 
-  testWidgets('non Ocean Pearl stays also open details', (tester) async {
+  testWidgets('selecting another stay opens details with its product data', (
+    tester,
+  ) async {
     await _pumpMainShell(tester);
 
-    await tester.scrollUntilVisible(find.text('Blue Garden Homestay'), 250);
-    await tester.tap(find.text('Blue Garden Homestay'));
+    await tester.scrollUntilVisible(find.text('Blue Garden Homestay'), 300);
+    await tester.tap(
+      find.byKey(const Key('stay_card_c8622126-babc-4c88-a01f-8773fe5456a5')),
+    );
     await tester.pumpAndSettle();
 
     expect(find.byKey(const Key('property_details_title')), findsOneWidget);
-    expect(find.text('Book Now'), findsOneWidget);
+    expect(find.text('Blue Garden Homestay'), findsOneWidget);
+    expect(find.text('Hoi An - Cam Chau'), findsOneWidget);
+    expect(find.text('\$42/night'), findsOneWidget);
+    final detailsScrollable = find.byKey(
+      const Key('property_details_scroll_view'),
+    );
+    await tester.drag(detailsScrollable, const Offset(0, -450));
+    await tester.pumpAndSettle();
+    expect(find.text('Quiet garden homestay in Cam Chau.'), findsOneWidget);
+    expect(find.text('Parking'), findsOneWidget);
+    await tester.drag(detailsScrollable, const Offset(0, -450));
+    await tester.pumpAndSettle();
+    expect(find.text('Guest Reviews'), findsOneWidget);
   });
 
   testWidgets('Book Now opens room selection and updates total', (
@@ -110,6 +126,28 @@ void main() {
     await tester.pumpAndSettle();
 
     expect(find.byKey(const Key('property_details_title')), findsOneWidget);
+  });
+
+  testWidgets('Book Now carries selected property into room selection', (
+    tester,
+  ) async {
+    await _pumpMainShell(tester);
+
+    await tester.scrollUntilVisible(find.text('Blue Garden Homestay'), 300);
+    await tester.tap(
+      find.byKey(const Key('stay_card_c8622126-babc-4c88-a01f-8773fe5456a5')),
+    );
+    await tester.pumpAndSettle();
+    tester
+        .widget<FilledButton>(find.byKey(const Key('property_book_now_button')))
+        .onPressed!();
+    await tester.pumpAndSettle();
+
+    expect(find.byKey(const Key('select_room_title')), findsOneWidget);
+    expect(find.text('Blue Garden Homestay'), findsOneWidget);
+    expect(find.text('Jun 12 - Jun 15'), findsOneWidget);
+    expect(find.text('2 guests'), findsOneWidget);
+    expect(find.text('Deluxe Ocean View'), findsOneWidget);
   });
 
   testWidgets('Continue to Payment opens checkout and back restores rooms', (

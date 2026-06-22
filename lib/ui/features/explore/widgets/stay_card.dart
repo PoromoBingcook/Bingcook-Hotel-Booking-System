@@ -14,6 +14,7 @@ class StayCard extends StatelessWidget {
       button: onTap != null,
       label: onTap == null ? null : 'Open ${data.name} details',
       child: InkWell(
+        key: Key('stay_card_${data.id}'),
         onTap: onTap,
         borderRadius: BorderRadius.circular(20),
         child: Container(
@@ -130,6 +131,7 @@ class StayCard extends StatelessWidget {
                           Expanded(
                             child: Wrap(
                               spacing: 4,
+                              runSpacing: 4,
                               children: data.amenities
                                   .map((amenity) => _Amenity(label: amenity))
                                   .toList(),

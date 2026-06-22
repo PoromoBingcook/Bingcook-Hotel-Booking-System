@@ -47,6 +47,7 @@ class PaymentMethodSection extends StatelessWidget {
         Align(
           alignment: Alignment.centerRight,
           child: TextButton.icon(
+            key: const Key('add_card_button'),
             onPressed: onAddCard,
             iconAlignment: IconAlignment.end,
             icon: const Icon(Icons.chevron_right_rounded, size: 16),
