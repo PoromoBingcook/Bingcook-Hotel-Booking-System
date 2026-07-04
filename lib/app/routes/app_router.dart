@@ -34,6 +34,7 @@ class AppRouter {
             authRepository: _dependencies.authRepository,
             productRepository: _dependencies.productRepository,
             bookingRepository: _dependencies.bookingRepository,
+            chatRepository: _dependencies.chatRepository,
             onLogoutCompleted: () {
               Navigator.of(
                 context,

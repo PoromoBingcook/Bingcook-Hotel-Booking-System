@@ -5,10 +5,13 @@ import 'package:bingcook/domain/models/product_details.dart';
 import 'package:bingcook/domain/models/product_search_query.dart';
 import 'package:bingcook/domain/repositories/auth_repository.dart';
 import 'package:bingcook/domain/repositories/booking_repository.dart';
+import 'package:bingcook/domain/repositories/chat_repository.dart';
 import 'package:bingcook/domain/repositories/product_repository.dart';
 import 'package:bingcook/ui/core/constants/app_assets.dart';
 import 'package:bingcook/ui/core/theme/app_colors.dart';
 import 'package:bingcook/ui/core/widgets/app_bottom_navigation.dart';
+import 'package:bingcook/ui/features/chat/view_models/chat_view_model.dart';
+import 'package:bingcook/ui/features/chat/views/chat_view.dart';
 import 'package:bingcook/ui/features/checkout/models/checkout_data.dart';
 import 'package:bingcook/ui/features/checkout/view_models/add_card_view_model.dart';
 import 'package:bingcook/ui/features/checkout/view_models/checkout_view_model.dart';
@@ -35,6 +38,7 @@ class MainShell extends StatefulWidget {
     required this.authRepository,
     required this.productRepository,
     required this.bookingRepository,
+    required this.chatRepository,
     required this.onLogoutCompleted,
     this.payOSCheckoutBuilder,
     super.key,
@@ -43,6 +47,7 @@ class MainShell extends StatefulWidget {
   final AuthRepository authRepository;
   final ProductRepository productRepository;
   final BookingRepository bookingRepository;
+  final ChatRepository chatRepository;
   final VoidCallback onLogoutCompleted;
   final PayOSCheckoutBuilder? payOSCheckoutBuilder;
 
@@ -57,6 +62,7 @@ class _MainShellState extends State<MainShell> {
   bool _showCheckout = false;
   bool _showAddCard = false;
   bool _showPaymentResult = false;
+  bool _showChat = false;
   bool _isLoadingPropertyDetails = false;
   PropertyDetailsData? _selectedProperty;
   SelectRoomData? _selectedRoomData;
@@ -70,6 +76,7 @@ class _MainShellState extends State<MainShell> {
   late SelectRoomViewModel _selectRoomViewModel;
   late CheckoutViewModel _checkoutViewModel;
   final AddCardViewModel _addCardViewModel = AddCardViewModel();
+  late final ChatViewModel _chatViewModel;
   late final ProfileViewModel _profileViewModel;
 
   static const _pendingDestinations = [
@@ -97,6 +104,10 @@ class _MainShellState extends State<MainShell> {
     _checkoutViewModel = CheckoutViewModel(
       bookingRepository: widget.bookingRepository,
     );
+    _chatViewModel = ChatViewModel(
+      chatRepository: widget.chatRepository,
+      authRepository: widget.authRepository,
+    );
     _profileViewModel = ProfileViewModel(authRepository: widget.authRepository);
   }
 
@@ -108,6 +119,7 @@ class _MainShellState extends State<MainShell> {
     _selectRoomViewModel.dispose();
     _checkoutViewModel.dispose();
     _addCardViewModel.dispose();
+    _chatViewModel.dispose();
     _profileViewModel.dispose();
     super.dispose();
   }
@@ -180,14 +192,24 @@ class _MainShellState extends State<MainShell> {
       ..._pendingDestinations,
       ProfileView(
         viewModel: _profileViewModel,
+        onChatRequested: () => setState(() => _showChat = true),
         onLoggedOut: widget.onLogoutCompleted,
       ),
     ];
 
     return Scaffold(
-      body: IndexedStack(index: _selectedIndex, children: destinations),
+      body: _showChat
+          ? ChatView(
+              viewModel: _chatViewModel,
+              onBack: () => setState(() => _showChat = false),
+            )
+          : IndexedStack(index: _selectedIndex, children: destinations),
       bottomNavigationBar:
-          _showSelectRoom || _showCheckout || _showAddCard || _showPaymentResult
+          _showSelectRoom ||
+              _showCheckout ||
+              _showAddCard ||
+              _showPaymentResult ||
+              _showChat
           ? null
           : AppBottomNavigation(
               selectedIndex: _selectedIndex,
@@ -199,6 +221,7 @@ class _MainShellState extends State<MainShell> {
                   _showCheckout = false;
                   _showAddCard = false;
                   _showPaymentResult = false;
+                  _showChat = false;
                   _isLoadingPropertyDetails = false;
                   _selectedProperty = null;
                   _selectedRoomData = null;
@@ -223,6 +246,7 @@ class _MainShellState extends State<MainShell> {
       _showCheckout = false;
       _showAddCard = false;
       _showPaymentResult = false;
+      _showChat = false;
       _selectedProperty = null;
       _selectedRoomData = null;
       _checkoutData = null;
@@ -312,6 +336,7 @@ class _MainShellState extends State<MainShell> {
       _showCheckout = false;
       _showAddCard = false;
       _showPaymentResult = false;
+      _showChat = false;
       _selectedProperty = null;
       _selectedRoomData = null;
       _checkoutData = null;

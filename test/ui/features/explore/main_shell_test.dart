@@ -1,11 +1,13 @@
 import 'package:bingcook/domain/models/auth_session.dart';
 import 'package:bingcook/domain/models/auth_user.dart';
 import 'package:bingcook/domain/models/booking.dart';
+import 'package:bingcook/domain/models/chat.dart';
 import 'package:bingcook/domain/models/product.dart';
 import 'package:bingcook/domain/models/product_details.dart';
 import 'package:bingcook/domain/models/product_search_query.dart';
 import 'package:bingcook/domain/repositories/auth_repository.dart';
 import 'package:bingcook/domain/repositories/booking_repository.dart';
+import 'package:bingcook/domain/repositories/chat_repository.dart';
 import 'package:bingcook/domain/repositories/product_repository.dart';
 import 'package:bingcook/ui/features/navigation/views/main_shell.dart';
 import 'package:flutter/material.dart';
@@ -285,6 +287,7 @@ Future<void> _pumpMainShell(
         authRepository: authRepository ?? FakeAuthRepository(),
         productRepository: productRepository ?? const FakeProductRepository(),
         bookingRepository: bookingRepository ?? const FakeBookingRepository(),
+        chatRepository: const FakeChatRepository(),
         onLogoutCompleted: onLogoutCompleted ?? () {},
         payOSCheckoutBuilder: (url) => Text(
           'Embedded PayOS: $url',
@@ -294,6 +297,60 @@ Future<void> _pumpMainShell(
     ),
   );
   await tester.pumpAndSettle();
+}
+
+class FakeChatRepository implements ChatRepository {
+  const FakeChatRepository();
+
+  @override
+  Future<ChatConversation> createConversation({
+    required String propertyId,
+    String? bookingId,
+  }) async {
+    return ChatConversation(
+      id: 'conversation-1',
+      propertyId: propertyId,
+      propertyName: 'Ocean Pearl Hotel',
+      bookingId: bookingId,
+      customerUserId: 'user-1',
+      customerName: 'Jane Cook',
+      status: 'Open',
+      createdAt: DateTime(2026, 7, 5, 8),
+      updatedAt: DateTime(2026, 7, 5, 8),
+    );
+  }
+
+  @override
+  Future<List<ChatConversation>> fetchConversations() async {
+    return const [];
+  }
+
+  @override
+  Future<List<ChatMessage>> fetchMessages({
+    required String conversationId,
+    DateTime? before,
+    int take = 50,
+  }) async {
+    return const [];
+  }
+
+  @override
+  Future<void> markRead({required String conversationId}) async {}
+
+  @override
+  Future<ChatMessage> sendMessage({
+    required String conversationId,
+    required String body,
+  }) async {
+    return ChatMessage(
+      id: 'message-1',
+      conversationId: conversationId,
+      senderUserId: 'user-1',
+      senderName: 'Jane Cook',
+      body: body,
+      createdAt: DateTime(2026, 7, 5, 8, 10),
+    );
+  }
 }
 
 class FakeBookingRepository implements BookingRepository {

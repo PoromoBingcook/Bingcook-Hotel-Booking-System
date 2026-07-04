@@ -5,11 +5,13 @@ import 'package:flutter/material.dart';
 class ProfileView extends StatelessWidget {
   const ProfileView({
     required this.viewModel,
+    required this.onChatRequested,
     required this.onLoggedOut,
     super.key,
   });
 
   final ProfileViewModel viewModel;
+  final VoidCallback onChatRequested;
   final VoidCallback onLoggedOut;
 
   @override
@@ -22,12 +24,17 @@ class ProfileView extends StatelessWidget {
           child: CustomScrollView(
             key: const Key('profile_scroll_view'),
             slivers: [
-              SliverToBoxAdapter(child: _ProfileHeader(viewModel: viewModel)),
+              SliverToBoxAdapter(
+                child: _ProfileHeader(
+                  viewModel: viewModel,
+                  onChatRequested: onChatRequested,
+                ),
+              ),
               SliverPadding(
                 padding: const EdgeInsets.fromLTRB(16, 22, 16, 28),
                 sliver: SliverList.list(
                   children: [
-                    const _ProfileSection(
+                    _ProfileSection(
                       title: 'Thông tin thanh toán',
                       items: [
                         _ProfileActionItem(
@@ -41,7 +48,7 @@ class ProfileView extends StatelessWidget {
                       ],
                     ),
                     const SizedBox(height: 22),
-                    const _ProfileSection(
+                    _ProfileSection(
                       title: 'Quản lý tài khoản',
                       items: [
                         _ProfileActionItem(
@@ -51,7 +58,7 @@ class ProfileView extends StatelessWidget {
                       ],
                     ),
                     const SizedBox(height: 22),
-                    const _ProfileSection(
+                    _ProfileSection(
                       title: 'Hoạt động du lịch',
                       items: [
                         _ProfileActionItem(
@@ -61,7 +68,7 @@ class ProfileView extends StatelessWidget {
                       ],
                     ),
                     const SizedBox(height: 22),
-                    const _ProfileSection(
+                    _ProfileSection(
                       title: 'Trợ giúp',
                       items: [
                         _ProfileActionItem(
@@ -70,6 +77,7 @@ class ProfileView extends StatelessWidget {
                         ),
                         _ProfileActionItem(
                           icon: Icons.support_agent_rounded,
+                          onTap: onChatRequested,
                           label: 'Liên hệ hỗ trợ',
                         ),
                       ],
@@ -97,9 +105,13 @@ class ProfileView extends StatelessWidget {
 }
 
 class _ProfileHeader extends StatelessWidget {
-  const _ProfileHeader({required this.viewModel});
+  const _ProfileHeader({
+    required this.viewModel,
+    required this.onChatRequested,
+  });
 
   final ProfileViewModel viewModel;
+  final VoidCallback onChatRequested;
 
   @override
   Widget build(BuildContext context) {
@@ -149,8 +161,9 @@ class _ProfileHeader extends StatelessWidget {
                     ),
                   ),
                   const SizedBox(width: 12),
-                  const _HeaderIconButton(
+                  _HeaderIconButton(
                     icon: Icons.chat_bubble_outline_rounded,
+                    onPressed: onChatRequested,
                     tooltip: 'Tin nhắn',
                   ),
                   const SizedBox(width: 8),
@@ -199,16 +212,21 @@ class _ProfileAvatar extends StatelessWidget {
 }
 
 class _HeaderIconButton extends StatelessWidget {
-  const _HeaderIconButton({required this.icon, required this.tooltip});
+  const _HeaderIconButton({
+    required this.icon,
+    required this.tooltip,
+    this.onPressed,
+  });
 
   final IconData icon;
   final String tooltip;
+  final VoidCallback? onPressed;
 
   @override
   Widget build(BuildContext context) {
     return IconButton(
       tooltip: tooltip,
-      onPressed: () {},
+      onPressed: onPressed,
       icon: Icon(icon, color: Colors.white, size: 30),
     );
   }
@@ -372,15 +390,20 @@ class _ProfileSection extends StatelessWidget {
 }
 
 class _ProfileActionItem extends StatelessWidget {
-  const _ProfileActionItem({required this.icon, required this.label});
+  const _ProfileActionItem({
+    required this.icon,
+    required this.label,
+    this.onTap,
+  });
 
   final IconData icon;
   final String label;
+  final VoidCallback? onTap;
 
   @override
   Widget build(BuildContext context) {
     return InkWell(
-      onTap: () {},
+      onTap: onTap,
       child: Semantics(
         button: true,
         label: label,
