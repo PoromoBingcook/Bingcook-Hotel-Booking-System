@@ -1,4 +1,5 @@
 import 'package:bingcook/ui/core/theme/app_colors.dart';
+import 'package:bingcook/ui/core/utils/currency_formatter.dart';
 import 'package:bingcook/ui/features/property_details/models/property_details_data.dart';
 import 'package:bingcook/ui/features/property_details/view_models/property_details_view_model.dart';
 import 'package:bingcook/ui/features/property_details/widgets/property_amenities_grid.dart';
@@ -57,7 +58,7 @@ class PropertyDetailsView extends StatelessWidget {
                             children: [
                               _TypeBadge(label: data.type),
                               Text(
-                                '\$${data.pricePerNight}/night',
+                                '${formatVnd(data.pricePerNight)}/night',
                                 style: const TextStyle(
                                   color: AppColors.primaryDark,
                                   fontFamily: 'Manrope',
@@ -458,7 +459,7 @@ class _RoomPreview extends StatelessWidget {
           ),
           const SizedBox(width: 8),
           Text(
-            '\$${room.pricePerNight}/night',
+            '${formatVnd(room.pricePerNight)}/night',
             style: const TextStyle(
               color: AppColors.primaryDark,
               fontSize: 13,

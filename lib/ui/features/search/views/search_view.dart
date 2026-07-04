@@ -1,5 +1,6 @@
 import 'package:bingcook/domain/models/product_search_query.dart';
 import 'package:bingcook/ui/core/theme/app_colors.dart';
+import 'package:bingcook/ui/core/utils/currency_formatter.dart';
 import 'package:bingcook/ui/features/search/view_models/search_view_model.dart';
 import 'package:bingcook/ui/features/search/widgets/amenity_selector.dart';
 import 'package:bingcook/ui/features/search/widgets/guest_counter_card.dart';
@@ -180,7 +181,7 @@ class _PriceRangeFilter extends StatelessWidget {
           Row(
             children: [
               Text(
-                '\$${viewModel.minPrice.round()}',
+                formatVnd(viewModel.minPrice),
                 style: const TextStyle(
                   color: AppColors.slate900,
                   fontSize: 14,
@@ -189,7 +190,7 @@ class _PriceRangeFilter extends StatelessWidget {
               ),
               const Spacer(),
               Text(
-                '\$${viewModel.maxPrice.round()}',
+                formatVnd(viewModel.maxPrice),
                 style: const TextStyle(
                   color: AppColors.slate900,
                   fontSize: 14,
@@ -204,8 +205,8 @@ class _PriceRangeFilter extends StatelessWidget {
             max: SearchViewModel.maxAllowedPrice,
             divisions: 20,
             labels: RangeLabels(
-              '\$${viewModel.minPrice.round()}',
-              '\$${viewModel.maxPrice.round()}',
+              formatVnd(viewModel.minPrice),
+              formatVnd(viewModel.maxPrice),
             ),
             onChanged: (values) =>
                 viewModel.setPriceRange(values.start, values.end),

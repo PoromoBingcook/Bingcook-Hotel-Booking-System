@@ -1,4 +1,5 @@
 import 'package:bingcook/ui/core/theme/app_colors.dart';
+import 'package:bingcook/ui/core/utils/currency_formatter.dart';
 import 'package:bingcook/ui/features/checkout/models/checkout_data.dart';
 import 'package:flutter/material.dart';
 
@@ -47,7 +48,7 @@ class PriceBreakdownCard extends StatelessWidget {
     );
   }
 
-  static String _money(double value) => '\$${value.toStringAsFixed(2)}';
+  static String _money(double value) => formatVnd(value);
 }
 
 class _PriceRow extends StatelessWidget {

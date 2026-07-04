@@ -1,4 +1,4 @@
-import 'package:bingcook/domain/repositories/auth_repository.dart';
+﻿import 'package:bingcook/domain/repositories/auth_repository.dart';
 import 'package:flutter/foundation.dart';
 
 class LoginErrors {
@@ -41,10 +41,9 @@ class LoginViewModel extends ChangeNotifier {
   }
 
   LoginErrors validate({required String identity, required String password}) {
+    final normalizedIdentity = identity.trim();
     return LoginErrors(
-      identity: identity.trim().isEmpty
-          ? 'Enter your email or phone number'
-          : null,
+      identity: _validateEmail(normalizedIdentity),
       password: password.isEmpty ? 'Enter your password' : null,
     );
   }
@@ -87,5 +86,18 @@ class LoginViewModel extends ChangeNotifier {
       notifyListeners();
       return false;
     }
+  }
+
+  String? _validateEmail(String value) {
+    if (value.isEmpty) {
+      return 'Enter your email address';
+    }
+    return _looksLikeEmail(value) ? null : 'Enter a valid email address';
+  }
+
+  bool _looksLikeEmail(String value) {
+    final atIndex = value.indexOf('@');
+    final dotIndex = value.lastIndexOf('.');
+    return atIndex > 0 && dotIndex > atIndex + 1 && dotIndex < value.length - 1;
   }
 }

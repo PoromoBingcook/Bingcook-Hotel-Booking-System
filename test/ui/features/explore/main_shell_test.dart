@@ -88,7 +88,7 @@ void main() {
     expect(find.byKey(const Key('property_details_title')), findsOneWidget);
     expect(find.text('Blue Garden Homestay'), findsOneWidget);
     expect(find.text('Hoi An - Cam Chau'), findsOneWidget);
-    expect(find.text('\$42/night'), findsOneWidget);
+    expect(find.text('42 VND/night'), findsOneWidget);
     final detailsScrollable = find.byKey(
       const Key('property_details_scroll_view'),
     );
@@ -223,7 +223,12 @@ void main() {
 
     expect(find.byKey(const Key('payment_result_title')), findsOneWidget);
     expect(find.text('PayOS checkout ready'), findsOneWidget);
-    expect(find.text('https://pay.payos.vn/web/88001234'), findsOneWidget);
+    expect(find.byKey(const Key('payos_checkout_webview')), findsOneWidget);
+    expect(
+      find.text('Embedded PayOS: https://pay.payos.vn/web/88001234'),
+      findsOneWidget,
+    );
+    expect(find.text('255 VND'), findsOneWidget);
 
     await tester.tap(find.byKey(const Key('payment_result_back_button')));
     await tester.pumpAndSettle();
@@ -281,6 +286,10 @@ Future<void> _pumpMainShell(
         productRepository: productRepository ?? const FakeProductRepository(),
         bookingRepository: bookingRepository ?? const FakeBookingRepository(),
         onLogoutCompleted: onLogoutCompleted ?? () {},
+        payOSCheckoutBuilder: (url) => Text(
+          'Embedded PayOS: $url',
+          key: const Key('payos_checkout_webview'),
+        ),
       ),
     ),
   );

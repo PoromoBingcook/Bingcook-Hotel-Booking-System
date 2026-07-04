@@ -1,23 +1,31 @@
 import 'package:bingcook/domain/models/booking.dart';
 import 'package:bingcook/ui/core/theme/app_colors.dart';
+import 'package:bingcook/ui/core/utils/currency_formatter.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
+import 'package:webview_flutter/webview_flutter.dart';
+
+typedef PayOSCheckoutBuilder = Widget Function(Uri checkoutUri);
 
 class PaymentResultView extends StatelessWidget {
   const PaymentResultView({
     required this.checkout,
     required this.onBackToExplore,
+    this.payOSCheckoutBuilder,
     super.key,
   });
 
   final BookingCheckout checkout;
   final VoidCallback onBackToExplore;
+  final PayOSCheckoutBuilder? payOSCheckoutBuilder;
 
   bool get _isPayOS => checkout.paymentMethod.toLowerCase() == 'payos';
 
   @override
   Widget build(BuildContext context) {
     final checkoutUrl = checkout.checkoutUrl;
+    final checkoutUri = _checkoutUri(checkoutUrl);
+    final shouldEmbedPayOS = _isPayOS && checkoutUri != null;
 
     return ColoredBox(
       color: AppColors.gray100,
@@ -32,65 +40,253 @@ class PaymentResultView extends StatelessWidget {
               crossAxisAlignment: CrossAxisAlignment.stretch,
               children: [
                 _PaymentResultHeader(onBack: onBackToExplore),
-                Expanded(
-                  child: ListView(
-                    padding: const EdgeInsets.fromLTRB(20, 28, 20, 28),
-                    children: [
-                      Icon(
-                        _isPayOS
-                            ? Icons.qr_code_2_rounded
-                            : Icons.check_circle_rounded,
-                        color: AppColors.primaryDark,
-                        size: 56,
-                      ),
-                      const SizedBox(height: 14),
-                      Text(
-                        _isPayOS ? 'PayOS checkout ready' : 'Booking confirmed',
-                        key: const Key('payment_result_title'),
-                        textAlign: TextAlign.center,
-                        style: const TextStyle(
-                          color: AppColors.textPrimary,
-                          fontFamily: 'Manrope',
-                          fontSize: 24,
-                          fontWeight: FontWeight.w800,
-                        ),
-                      ),
-                      const SizedBox(height: 8),
-                      Text(
-                        checkout.message,
-                        textAlign: TextAlign.center,
-                        style: const TextStyle(
-                          color: AppColors.textSecondary,
-                          fontSize: 14,
-                          height: 1.4,
-                        ),
-                      ),
-                      const SizedBox(height: 24),
-                      _StatusCard(checkout: checkout),
-                      if (checkoutUrl != null) ...[
-                        const SizedBox(height: 16),
-                        _CopyValueCard(
-                          title: 'Checkout URL',
-                          value: checkoutUrl,
-                          buttonLabel: 'Copy PayOS Link',
-                        ),
-                      ],
-                      if (checkout.qrCode != null) ...[
-                        const SizedBox(height: 16),
-                        _CopyValueCard(
-                          title: 'PayOS QR Payload',
-                          value: checkout.qrCode!,
-                          buttonLabel: 'Copy QR Payload',
-                        ),
-                      ],
-                    ],
+                if (shouldEmbedPayOS)
+                  _EmbeddedPayOSResult(
+                    checkout: checkout,
+                    checkoutUri: checkoutUri,
+                    checkoutBuilder:
+                        payOSCheckoutBuilder ?? _defaultPayOSCheckoutBuilder,
+                  )
+                else
+                  _FallbackPaymentResult(
+                    checkout: checkout,
+                    isPayOS: _isPayOS,
+                    checkoutUrl: checkoutUrl,
                   ),
-                ),
               ],
             ),
           ),
         ),
       ),
+    );
+  }
+
+  Uri? _checkoutUri(String? value) {
+    if (value == null) {
+      return null;
+    }
+    final uri = Uri.tryParse(value);
+    if (uri == null || !uri.hasScheme || uri.host.isEmpty) {
+      return null;
+    }
+    return uri;
+  }
+
+  static Widget _defaultPayOSCheckoutBuilder(Uri checkoutUri) {
+    return _PayOSCheckoutWebView(checkoutUri: checkoutUri);
+  }
+}
+
+class _EmbeddedPayOSResult extends StatelessWidget {
+  const _EmbeddedPayOSResult({
+    required this.checkout,
+    required this.checkoutUri,
+    required this.checkoutBuilder,
+  });
+
+  final BookingCheckout checkout;
+  final Uri checkoutUri;
+  final PayOSCheckoutBuilder checkoutBuilder;
+
+  @override
+  Widget build(BuildContext context) {
+    return Expanded(
+      child: Column(
+        crossAxisAlignment: CrossAxisAlignment.stretch,
+        children: [
+          Padding(
+            padding: const EdgeInsets.fromLTRB(20, 20, 20, 12),
+            child: Column(
+              children: [
+                const Text(
+                  'PayOS checkout ready',
+                  key: Key('payment_result_title'),
+                  textAlign: TextAlign.center,
+                  style: TextStyle(
+                    color: AppColors.textPrimary,
+                    fontFamily: 'Manrope',
+                    fontSize: 22,
+                    fontWeight: FontWeight.w800,
+                  ),
+                ),
+                const SizedBox(height: 12),
+                _StatusCard(checkout: checkout),
+              ],
+            ),
+          ),
+          Expanded(
+            child: Container(
+              margin: const EdgeInsets.fromLTRB(20, 0, 20, 20),
+              clipBehavior: Clip.antiAlias,
+              decoration: BoxDecoration(
+                color: Colors.white,
+                border: Border.all(color: const Color(0xFFE8F0FE)),
+                borderRadius: BorderRadius.circular(12),
+              ),
+              child: checkoutBuilder(checkoutUri),
+            ),
+          ),
+        ],
+      ),
+    );
+  }
+}
+
+class _FallbackPaymentResult extends StatelessWidget {
+  const _FallbackPaymentResult({
+    required this.checkout,
+    required this.isPayOS,
+    required this.checkoutUrl,
+  });
+
+  final BookingCheckout checkout;
+  final bool isPayOS;
+  final String? checkoutUrl;
+
+  @override
+  Widget build(BuildContext context) {
+    return Expanded(
+      child: ListView(
+        padding: const EdgeInsets.fromLTRB(20, 28, 20, 28),
+        children: [
+          Icon(
+            isPayOS ? Icons.qr_code_2_rounded : Icons.check_circle_rounded,
+            color: AppColors.primaryDark,
+            size: 56,
+          ),
+          const SizedBox(height: 14),
+          Text(
+            isPayOS ? 'PayOS checkout ready' : 'Booking confirmed',
+            key: const Key('payment_result_title'),
+            textAlign: TextAlign.center,
+            style: const TextStyle(
+              color: AppColors.textPrimary,
+              fontFamily: 'Manrope',
+              fontSize: 24,
+              fontWeight: FontWeight.w800,
+            ),
+          ),
+          const SizedBox(height: 8),
+          Text(
+            checkout.message,
+            textAlign: TextAlign.center,
+            style: const TextStyle(
+              color: AppColors.textSecondary,
+              fontSize: 14,
+              height: 1.4,
+            ),
+          ),
+          const SizedBox(height: 24),
+          _StatusCard(checkout: checkout),
+          if (checkoutUrl != null) ...[
+            const SizedBox(height: 16),
+            _CopyValueCard(
+              title: 'Checkout URL',
+              value: checkoutUrl!,
+              buttonLabel: 'Copy PayOS Link',
+            ),
+          ],
+          if (checkout.qrCode != null) ...[
+            const SizedBox(height: 16),
+            _CopyValueCard(
+              title: 'PayOS QR Payload',
+              value: checkout.qrCode!,
+              buttonLabel: 'Copy QR Payload',
+            ),
+          ],
+        ],
+      ),
+    );
+  }
+}
+
+class _PayOSCheckoutWebView extends StatefulWidget {
+  const _PayOSCheckoutWebView({required this.checkoutUri});
+
+  final Uri checkoutUri;
+
+  @override
+  State<_PayOSCheckoutWebView> createState() => _PayOSCheckoutWebViewState();
+}
+
+class _PayOSCheckoutWebViewState extends State<_PayOSCheckoutWebView> {
+  late final WebViewController _controller;
+  bool _isLoading = true;
+  String? _errorMessage;
+
+  @override
+  void initState() {
+    super.initState();
+    _controller = WebViewController()
+      ..setJavaScriptMode(JavaScriptMode.unrestricted)
+      ..setNavigationDelegate(
+        NavigationDelegate(
+          onPageStarted: (_) {
+            if (mounted) {
+              setState(() {
+                _isLoading = true;
+                _errorMessage = null;
+              });
+            }
+          },
+          onPageFinished: (_) {
+            if (mounted) {
+              setState(() => _isLoading = false);
+            }
+          },
+          onWebResourceError: (_) {
+            if (mounted) {
+              setState(() {
+                _isLoading = false;
+                _errorMessage = 'Unable to load PayOS checkout.';
+              });
+            }
+          },
+        ),
+      )
+      ..loadRequest(widget.checkoutUri);
+  }
+
+  @override
+  void didUpdateWidget(covariant _PayOSCheckoutWebView oldWidget) {
+    super.didUpdateWidget(oldWidget);
+    if (oldWidget.checkoutUri != widget.checkoutUri) {
+      _controller.loadRequest(widget.checkoutUri);
+    }
+  }
+
+  @override
+  Widget build(BuildContext context) {
+    return Stack(
+      children: [
+        WebViewWidget(
+          key: const Key('payos_checkout_webview'),
+          controller: _controller,
+        ),
+        if (_isLoading)
+          const Align(
+            alignment: Alignment.topCenter,
+            child: LinearProgressIndicator(minHeight: 2),
+          ),
+        if (_errorMessage != null)
+          Align(
+            alignment: Alignment.bottomCenter,
+            child: Container(
+              width: double.infinity,
+              padding: const EdgeInsets.all(12),
+              color: AppColors.textPrimary,
+              child: Text(
+                _errorMessage!,
+                textAlign: TextAlign.center,
+                style: const TextStyle(
+                  color: Colors.white,
+                  fontSize: 12,
+                  fontWeight: FontWeight.w700,
+                ),
+              ),
+            ),
+          ),
+      ],
     );
   }
 }
@@ -163,7 +359,7 @@ class _StatusCard extends StatelessWidget {
     );
   }
 
-  static String _money(double value) => '\$${value.toStringAsFixed(2)}';
+  static String _money(double value) => formatVnd(value);
 }
 
 class _StatusRow extends StatelessWidget {

@@ -36,6 +36,7 @@ class MainShell extends StatefulWidget {
     required this.productRepository,
     required this.bookingRepository,
     required this.onLogoutCompleted,
+    this.payOSCheckoutBuilder,
     super.key,
   });
 
@@ -43,6 +44,7 @@ class MainShell extends StatefulWidget {
   final ProductRepository productRepository;
   final BookingRepository bookingRepository;
   final VoidCallback onLogoutCompleted;
+  final PayOSCheckoutBuilder? payOSCheckoutBuilder;
 
   @override
   State<MainShell> createState() => _MainShellState();
@@ -117,6 +119,7 @@ class _MainShellState extends State<MainShell> {
         PaymentResultView(
           checkout: _checkoutResult!,
           onBackToExplore: _resetExploreFlow,
+          payOSCheckoutBuilder: widget.payOSCheckoutBuilder,
         )
       else if (_showAddCard)
         AddCardView(

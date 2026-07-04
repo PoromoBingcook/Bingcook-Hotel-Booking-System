@@ -1,4 +1,5 @@
 import 'package:bingcook/ui/core/theme/app_colors.dart';
+import 'package:bingcook/ui/core/utils/currency_formatter.dart';
 import 'package:bingcook/ui/features/select_room/models/select_room_data.dart';
 import 'package:flutter/material.dart';
 
@@ -96,7 +97,7 @@ class RoomOptionCard extends StatelessWidget {
                           TextSpan(
                             children: [
                               TextSpan(
-                                text: '\$${room.pricePerNight}',
+                                text: formatVnd(room.pricePerNight),
                                 style: const TextStyle(
                                   color: AppColors.primaryDark,
                                   fontSize: 18,

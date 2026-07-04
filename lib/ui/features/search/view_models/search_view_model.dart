@@ -31,7 +31,7 @@ class SearchViewModel extends ChangeNotifier {
 
   static const availableRatings = [0.0, 4.0, 4.5];
   static const minAllowedPrice = 0.0;
-  static const maxAllowedPrice = 500.0;
+  static const maxAllowedPrice = 5000000.0;
 
   String _destination = 'Da Nang';
   late DateTime _checkIn;

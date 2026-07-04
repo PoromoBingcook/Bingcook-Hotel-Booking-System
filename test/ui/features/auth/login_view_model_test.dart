@@ -1,4 +1,4 @@
-import 'package:bingcook/domain/models/auth_session.dart';
+﻿import 'package:bingcook/domain/models/auth_session.dart';
 import 'package:bingcook/domain/models/auth_user.dart';
 import 'package:bingcook/domain/repositories/auth_repository.dart';
 import 'package:bingcook/ui/features/auth/view_models/login_view_model.dart';
@@ -6,7 +6,23 @@ import 'package:flutter_test/flutter_test.dart';
 
 void main() {
   group('LoginViewModel', () {
-    test('submits phone identity through repository', () async {
+    test('submits email identity through repository', () async {
+      final repository = FakeAuthRepository();
+      final viewModel = LoginViewModel(authRepository: repository);
+
+      final result = await viewModel.submit(
+        identity: 'jane@example.com',
+        password: 'Password123',
+      );
+
+      expect(result, isTrue);
+      expect(repository.loginIdentity, 'jane@example.com');
+      expect(repository.loginPassword, 'Password123');
+      expect(viewModel.errorMessage, isNull);
+      expect(viewModel.isSubmitting, isFalse);
+    });
+
+    test('rejects phone identity before repository submit', () async {
       final repository = FakeAuthRepository();
       final viewModel = LoginViewModel(authRepository: repository);
 
@@ -15,11 +31,9 @@ void main() {
         password: 'Password123',
       );
 
-      expect(result, isTrue);
-      expect(repository.loginIdentity, '+84901234567');
-      expect(repository.loginPassword, 'Password123');
-      expect(viewModel.errorMessage, isNull);
-      expect(viewModel.isSubmitting, isFalse);
+      expect(result, isFalse);
+      expect(repository.loginIdentity, isNull);
+      expect(viewModel.errorMessage, 'Enter a valid email address');
     });
 
     test('shows safe error when repository rejects credentials', () async {

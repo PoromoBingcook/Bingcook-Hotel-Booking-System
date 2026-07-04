@@ -1,4 +1,5 @@
 import 'package:bingcook/ui/core/theme/app_colors.dart';
+import 'package:bingcook/ui/core/utils/currency_formatter.dart';
 import 'package:flutter/material.dart';
 
 class SelectRoomFooter extends StatelessWidget {
@@ -62,7 +63,7 @@ class SelectRoomFooter extends StatelessWidget {
                       ),
                     ),
                     Text(
-                      '\$$total',
+                      formatVnd(total),
                       key: Key('select_room_total_$total'),
                       style: const TextStyle(
                         color: AppColors.primaryDark,

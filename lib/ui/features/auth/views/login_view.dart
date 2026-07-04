@@ -1,4 +1,4 @@
-import 'package:bingcook/app/routes/app_routes.dart';
+﻿import 'package:bingcook/app/routes/app_routes.dart';
 import 'package:bingcook/ui/core/constants/app_assets.dart';
 import 'package:bingcook/ui/core/theme/app_colors.dart';
 import 'package:bingcook/ui/core/widgets/app_button.dart';
@@ -62,8 +62,8 @@ class _LoginViewState extends State<LoginView> {
                                         'login_identity_field',
                                       ),
                                       controller: _emailController,
-                                      label: 'Email or phone number',
-                                      hint: 'customer@email.com',
+                                      label: 'Email',
+                                      hint: 'email@example.com',
                                       iconAsset: AppAssets.email,
                                       keyboardType: TextInputType.emailAddress,
                                     ),
@@ -389,3 +389,4 @@ class _LoginBackground extends StatelessWidget {
     );
   }
 }
+

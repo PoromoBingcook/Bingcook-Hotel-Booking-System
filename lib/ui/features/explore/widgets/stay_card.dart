@@ -1,4 +1,5 @@
 import 'package:bingcook/ui/core/theme/app_colors.dart';
+import 'package:bingcook/ui/core/utils/currency_formatter.dart';
 import 'package:bingcook/ui/features/explore/models/stay_card_data.dart';
 import 'package:flutter/material.dart';
 
@@ -125,29 +126,26 @@ class StayCard extends StatelessWidget {
                         ],
                       ),
                       const SizedBox(height: 6),
-                      Row(
-                        crossAxisAlignment: CrossAxisAlignment.end,
-                        children: [
-                          Expanded(
-                            child: Wrap(
-                              spacing: 4,
-                              runSpacing: 4,
-                              children: data.amenities
-                                  .map((amenity) => _Amenity(label: amenity))
-                                  .toList(),
-                            ),
+                      Wrap(
+                        spacing: 4,
+                        runSpacing: 4,
+                        children: data.amenities
+                            .map((amenity) => _Amenity(label: amenity))
+                            .toList(),
+                      ),
+                      const SizedBox(height: 6),
+                      Align(
+                        alignment: Alignment.centerRight,
+                        child: Text(
+                          '${formatVnd(data.price)}/night',
+                          style: const TextStyle(
+                            color: AppColors.primary,
+                            fontFamily: 'Manrope',
+                            fontSize: 16,
+                            height: 1.5,
+                            fontWeight: FontWeight.w700,
                           ),
-                          Text(
-                            '\$${data.price}/night',
-                            style: const TextStyle(
-                              color: AppColors.primary,
-                              fontFamily: 'Manrope',
-                              fontSize: 16,
-                              height: 1.5,
-                              fontWeight: FontWeight.w700,
-                            ),
-                          ),
-                        ],
+                        ),
                       ),
                     ],
                   ),
@@ -221,6 +219,8 @@ class _Badge extends StatelessWidget {
       ),
       child: Text(
         label,
+        maxLines: 1,
+        overflow: TextOverflow.ellipsis,
         style: TextStyle(
           color: foreground,
           fontFamily: 'Manrope',
@@ -248,6 +248,8 @@ class _Amenity extends StatelessWidget {
       ),
       child: Text(
         label,
+        maxLines: 1,
+        overflow: TextOverflow.ellipsis,
         style: const TextStyle(
           color: AppColors.gray500,
           fontFamily: 'Manrope',
