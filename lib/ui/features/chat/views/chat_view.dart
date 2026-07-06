@@ -46,9 +46,9 @@ class _ChatViewState extends State<ChatView> {
             child: Column(
               children: [
                 _ChatHeader(
-                  title:
-                      widget.viewModel.conversation?.propertyName ??
-                      'Live Chat',
+                  title: widget.viewModel.conversation == null
+                      ? 'Live Chat'
+                      : '${widget.viewModel.conversation!.propertyName} Support',
                   onBack: widget.onBack,
                 ),
                 Expanded(child: _buildBody()),

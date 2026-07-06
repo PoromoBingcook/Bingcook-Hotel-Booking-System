@@ -51,6 +51,10 @@ class SearchView extends StatelessWidget {
                               destination: viewModel.destination,
                               onChanged: viewModel.updateDestination,
                               onClear: viewModel.clearDestination,
+                              suggestions: viewModel.citySuggestions,
+                              onSuggestionSelected: viewModel.updateDestination,
+                              onSubmitted: (_) =>
+                                  onSearch(viewModel.buildQuery()),
                             ),
                             const SizedBox(height: 20),
                             const _SectionLabel('When'),

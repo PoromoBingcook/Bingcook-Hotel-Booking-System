@@ -20,7 +20,7 @@ void main() {
     await tester.pumpWidget(buildView());
 
     expect(find.byKey(const Key('search_title')), findsOneWidget);
-    expect(find.text('Da Nang'), findsOneWidget);
+    expect(find.text('Tìm thành phố'), findsOneWidget);
     expect(find.text('Jun 12'), findsOneWidget);
     expect(find.text('Jun 15'), findsOneWidget);
     expect(find.byKey(const Key('adults_count_2')), findsOneWidget);
@@ -40,11 +40,16 @@ void main() {
   testWidgets('clear and date controls update visible state', (tester) async {
     await tester.pumpWidget(buildView());
 
+    await tester.enterText(
+      find.byKey(const Key('destination_text_field')),
+      'Đà Nẵng',
+    );
+    await tester.pump();
     await tester.tap(find.byKey(const Key('destination_clear_button')));
     await tester.tap(find.byKey(const Key('calendar_day_18')));
     await tester.pump();
 
-    expect(find.text('Da Nang'), findsNothing);
+    expect(find.text('Đà Nẵng'), findsNothing);
     expect(find.text('Jun 18'), findsOneWidget);
     expect(find.text('Select date'), findsOneWidget);
   });
@@ -76,5 +81,28 @@ void main() {
 
     final chip = tester.widget<FilterChip>(wifiChip);
     expect(chip.selected, isTrue);
+  });
+
+  testWidgets('suggests and selects cities from typed text', (tester) async {
+    await tester.pumpWidget(buildView());
+
+    await tester.enterText(
+      find.byKey(const Key('destination_text_field')),
+      'da',
+    );
+    await tester.pump();
+
+    final suggestion = find.byKey(const Key('city_suggestion_Đà Nẵng'));
+    expect(suggestion, findsOneWidget);
+    await tester.tap(suggestion);
+    await tester.pump();
+
+    expect(
+      tester
+          .widget<TextField>(find.byKey(const Key('destination_text_field')))
+          .controller!
+          .text,
+      'Đà Nẵng',
+    );
   });
 }

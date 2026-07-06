@@ -1,4 +1,4 @@
-﻿import 'package:bingcook/app/routes/app_routes.dart';
+import 'package:bingcook/app/routes/app_routes.dart';
 import 'package:bingcook/ui/core/constants/app_assets.dart';
 import 'package:bingcook/ui/core/theme/app_colors.dart';
 import 'package:bingcook/ui/core/widgets/app_button.dart';
@@ -255,7 +255,11 @@ class _LoginViewState extends State<LoginView> {
     }
 
     FocusScope.of(context).unfocus();
-    Navigator.of(context).pushReplacementNamed(AppRoutes.loginSuccess);
+    Navigator.of(context).pushReplacementNamed(
+      widget.viewModel.shouldOpenStaffPortal
+          ? AppRoutes.staffPortal
+          : AppRoutes.loginSuccess,
+    );
   }
 }
 
@@ -389,4 +393,3 @@ class _LoginBackground extends StatelessWidget {
     );
   }
 }
-

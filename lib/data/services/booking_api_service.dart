@@ -11,6 +11,44 @@ class BookingApiService {
   final http.Client _client;
   final Uri _baseUrl;
 
+  Future<List<BookingReservationResponse>> fetchReservations({
+    required String token,
+  }) async {
+    final response = await _client.get(
+      _baseUrl.replace(path: '/api/bookings'),
+      headers: {'accept': 'application/json', 'authorization': 'Bearer $token'},
+    );
+    final decoded = _tryDecode(response.body);
+    if (response.statusCode < 200 || response.statusCode >= 300) {
+      final message = decoded is Map<String, Object?>
+          ? _readMessage(decoded)
+          : null;
+      throw BookingApiException(
+        message ??
+            (response.statusCode == 404
+                ? 'Reservations API is unavailable. Restart the updated BingCook backend.'
+                : 'Unable to load reservations (HTTP ${response.statusCode}).'),
+        statusCode: response.statusCode,
+      );
+    }
+    if (decoded is! List) {
+      throw const BookingApiException('Unable to read reservations response.');
+    }
+    return decoded
+        .whereType<Map<String, Object?>>()
+        .map(BookingReservationResponse.fromJson)
+        .toList(growable: false);
+  }
+
+  Object? _tryDecode(String body) {
+    if (body.trim().isEmpty) return null;
+    try {
+      return jsonDecode(body);
+    } on FormatException {
+      return null;
+    }
+  }
+
   Future<BookingDraftResponse> createDraft({
     required String token,
     required String propertyId,

@@ -101,6 +101,11 @@ class FakeBookingApiService implements BookingApiService {
   String? lastPaymentMethod;
 
   @override
+  Future<List<BookingReservationResponse>> fetchReservations({
+    required String token,
+  }) async => const [];
+
+  @override
   Future<BookingDraftResponse> createDraft({
     required String token,
     required String propertyId,

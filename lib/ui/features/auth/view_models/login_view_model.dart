@@ -1,4 +1,4 @@
-﻿import 'package:bingcook/domain/repositories/auth_repository.dart';
+import 'package:bingcook/domain/repositories/auth_repository.dart';
 import 'package:flutter/foundation.dart';
 
 class LoginErrors {
@@ -26,6 +26,10 @@ class LoginViewModel extends ChangeNotifier {
   bool get isSubmitting => _isSubmitting;
   LoginErrors get errors => _errors;
   String? get errorMessage => _errorMessage;
+  bool get shouldOpenStaffPortal {
+    final role = _authRepository.currentSession?.user.role.trim().toLowerCase();
+    return role == 'host' || role == 'admin' || role == 'staff';
+  }
 
   void togglePasswordVisibility() {
     _isPasswordVisible = !_isPasswordVisible;

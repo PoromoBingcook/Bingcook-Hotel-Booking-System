@@ -5,6 +5,50 @@ import 'package:http/testing.dart';
 
 void main() {
   group('BookingApiService', () {
+    test('fetches authenticated reservations', () async {
+      http.Request? capturedRequest;
+      final service = BookingApiService(
+        client: MockClient((request) async {
+          capturedRequest = request;
+          return http.Response('''
+[
+  {
+    "bookingId": "booking-1",
+    "propertyId": "property-1",
+    "propertyName": "Ocean Pearl Hotel",
+    "propertyImageUrl": "https://example.com/hotel.jpg",
+    "latitude": 16.0544,
+    "longitude": 108.2022,
+    "roomId": "room-1",
+    "roomName": "Deluxe Ocean View",
+    "roomImageUrl": null,
+    "checkIn": "2026-07-10",
+    "checkOut": "2026-07-13",
+    "adults": 2,
+    "children": 1,
+    "roomQuantity": 1,
+    "totalPrice": 4080000,
+    "bookingStatus": "Confirmed",
+    "paymentStatus": "Pending",
+    "paymentMethod": "PayAtProperty"
+  }
+]
+''', 200);
+        }),
+        baseUrl: Uri.parse('http://10.0.2.2:5115'),
+      );
+
+      final reservations = await service.fetchReservations(token: 'jwt-token');
+
+      expect(capturedRequest!.method, 'GET');
+      expect(capturedRequest!.url.path, '/api/bookings');
+      expect(capturedRequest!.headers['authorization'], 'Bearer jwt-token');
+      expect(reservations.single.propertyName, 'Ocean Pearl Hotel');
+      expect(reservations.single.totalPrice, 4080000);
+      expect(reservations.single.latitude, 16.0544);
+      expect(reservations.single.longitude, 108.2022);
+    });
+
     test('createDraft posts selection with bearer token', () async {
       http.Request? capturedRequest;
       final service = BookingApiService(

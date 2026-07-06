@@ -16,7 +16,7 @@ import 'package:flutter/material.dart';
 import 'package:flutter_test/flutter_test.dart';
 
 void main() {
-  testWidgets('shows BingCook splash then opens sign up', (tester) async {
+  testWidgets('shows BingCook splash then opens login', (tester) async {
     await tester.pumpWidget(
       BingCookApp(
         splashDuration: const Duration(milliseconds: 300),
@@ -30,8 +30,8 @@ void main() {
     await tester.pump(const Duration(milliseconds: 300));
     await tester.pumpAndSettle();
 
-    expect(find.text('Create Account'), findsOneWidget);
-    expect(find.text('Sign Up'), findsOneWidget);
+    expect(find.text('Welcome back'), findsOneWidget);
+    expect(find.byKey(const Key('login_button')), findsOneWidget);
   });
 
   testWidgets('sign up screen contains reusable form fields', (tester) async {
@@ -48,6 +48,25 @@ void main() {
     expect(find.byKey(const Key('phone_field')), findsOneWidget);
     expect(find.byKey(const Key('password_field')), findsOneWidget);
     expect(find.byKey(const Key('confirm_password_field')), findsOneWidget);
+  });
+
+  testWidgets('restores a saved session and opens the authenticated app', (
+    tester,
+  ) async {
+    final authRepository = _RestoringAuthRepository();
+    await tester.pumpWidget(
+      BingCookApp(
+        splashDuration: const Duration(milliseconds: 1),
+        dependencies: _testDependencies(authRepository: authRepository),
+      ),
+    );
+
+    await tester.pump(const Duration(milliseconds: 1));
+    await tester.pumpAndSettle();
+
+    expect(authRepository.didRestore, isTrue);
+    expect(find.text('Find your next stay'), findsOneWidget);
+    expect(find.byKey(const Key('login_button')), findsNothing);
   });
 
   testWidgets('sign up validates password confirmation after field blur', (
@@ -120,28 +139,41 @@ void main() {
   });
 }
 
-AppDependencies _testDependencies() {
+AppDependencies _testDependencies({AuthRepository? authRepository}) {
   return AppDependencies.test(
-    authRepository: FakeAuthRepository(),
+    authRepository: authRepository ?? FakeAuthRepository(),
     productRepository: const FakeProductRepository(),
     bookingRepository: const FakeBookingRepository(),
   );
 }
 
-class FakeAuthRepository implements AuthRepository {
+class _RestoringAuthRepository extends FakeAuthRepository
+    implements RestorableAuthRepository {
+  bool didRestore = false;
+
   @override
-  AuthSession? get currentSession => _session;
+  Future<void> restoreSession() async {
+    didRestore = true;
+    _currentSession = FakeAuthRepository._session;
+  }
+}
+
+class FakeAuthRepository implements AuthRepository {
+  AuthSession? _currentSession;
+
+  @override
+  AuthSession? get currentSession => _currentSession;
 
   @override
   Future<AuthSession> login({
     required String identity,
     required String password,
   }) async {
-    return _session;
+    return _currentSession = _session;
   }
 
   @override
-  Future<void> logout() async {}
+  Future<void> logout() async => _currentSession = null;
 
   @override
   Future<AuthSession> register({
@@ -150,7 +182,7 @@ class FakeAuthRepository implements AuthRepository {
     required String phone,
     required String password,
   }) async {
-    return _session;
+    return _currentSession = _session;
   }
 
   static final _session = AuthSession(
@@ -186,6 +218,9 @@ class FakeProductRepository implements ProductRepository {
 
 class FakeBookingRepository implements BookingRepository {
   const FakeBookingRepository();
+
+  @override
+  Future<List<BookingReservation>> fetchReservations() async => const [];
 
   @override
   Future<BookingDraft> createDraft(CreateBookingDraftCommand command) async {

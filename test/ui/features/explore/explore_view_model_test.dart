@@ -89,7 +89,60 @@ void main() {
       expect(viewModel.errorMessage, 'Unable to reach BingCook server.');
       expect(viewModel.stays, isEmpty);
     });
+
+    test('keeps a search submitted during the initial load', () async {
+      final repository = _QueuedProductRepository();
+      final viewModel = ExploreViewModel(productRepository: repository);
+
+      final initialLoad = viewModel.loadProducts();
+      final search = viewModel.applySearch(
+        const ProductSearchQuery(keyword: 'Ocean Pearl'),
+      );
+      repository.completeSearch([
+        const Product(
+          id: 'result',
+          type: 'Hotel',
+          name: 'Ocean Pearl Hotel',
+          description: '',
+          location: 'Da Nang',
+          city: 'Da Nang',
+          address: '',
+          imageUrl: null,
+          rating: 4.7,
+          reviewCount: 3,
+          amenities: [],
+          pricePerNight: 100,
+          status: 'Active',
+          isAvailable: true,
+        ),
+      ]);
+      await search;
+      repository.completeInitial(const []);
+      await initialLoad;
+
+      expect(viewModel.activeQuery.keyword, 'Ocean Pearl');
+      expect(viewModel.stays.single.name, 'Ocean Pearl Hotel');
+    });
   });
+}
+
+class _QueuedProductRepository implements ProductRepository {
+  final initial = Completer<List<Product>>();
+  final search = Completer<List<Product>>();
+
+  void completeInitial(List<Product> products) => initial.complete(products);
+  void completeSearch(List<Product> products) => search.complete(products);
+
+  @override
+  Future<List<Product>> fetchProducts({
+    ProductSearchQuery query = const ProductSearchQuery(),
+  }) => query.keyword == null ? initial.future : search.future;
+
+  @override
+  Future<ProductDetails> fetchProductDetails(
+    String id, {
+    ProductSearchQuery query = const ProductSearchQuery(),
+  }) => throw UnimplementedError();
 }
 
 class FakeProductRepository implements ProductRepository {

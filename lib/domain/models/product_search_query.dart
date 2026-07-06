@@ -40,6 +40,8 @@ class ProductSearchQuery {
     final parts = <String>[];
     if (!_isBlank(location)) {
       parts.add(location!.trim());
+    } else if (!_isBlank(keyword)) {
+      parts.add(keyword!.trim());
     }
     if (checkIn != null && checkOut != null) {
       parts.add('${_formatMonthDay(checkIn!)} - ${_formatMonthDay(checkOut!)}');

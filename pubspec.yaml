@@ -32,7 +32,9 @@ dependencies:
     sdk: flutter
 
   flutter_svg: ^2.3.0
+  flutter_secure_storage: ^10.3.1
   http: ^1.6.0
+  signalr_netcore: ^1.4.4
   webview_flutter: ^4.14.0
 
 dev_dependencies:

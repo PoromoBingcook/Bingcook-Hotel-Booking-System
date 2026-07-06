@@ -18,6 +18,10 @@ abstract interface class AuthRepository {
   Future<void> logout();
 }
 
+abstract interface class RestorableAuthRepository {
+  Future<void> restoreSession();
+}
+
 class AuthRepositoryException implements Exception {
   const AuthRepositoryException(this.message);
 

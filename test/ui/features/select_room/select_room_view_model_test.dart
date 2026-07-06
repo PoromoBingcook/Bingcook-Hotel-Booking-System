@@ -69,6 +69,9 @@ class FakeBookingRepository implements BookingRepository {
   CreateBookingDraftCommand? lastDraftCommand;
 
   @override
+  Future<List<BookingReservation>> fetchReservations() async => const [];
+
+  @override
   Future<BookingDraft> createDraft(CreateBookingDraftCommand command) async {
     lastDraftCommand = command;
     return BookingDraft(

@@ -1,4 +1,4 @@
-﻿import 'package:bingcook/domain/models/auth_session.dart';
+import 'package:bingcook/domain/models/auth_session.dart';
 import 'package:bingcook/domain/models/auth_user.dart';
 import 'package:bingcook/domain/repositories/auth_repository.dart';
 import 'package:bingcook/ui/features/auth/view_models/login_view_model.dart';
@@ -20,6 +20,20 @@ void main() {
       expect(repository.loginPassword, 'Password123');
       expect(viewModel.errorMessage, isNull);
       expect(viewModel.isSubmitting, isFalse);
+      expect(viewModel.shouldOpenStaffPortal, isFalse);
+    });
+
+    test('identifies host login for direct staff portal navigation', () async {
+      final repository = FakeAuthRepository(role: 'Host');
+      final viewModel = LoginViewModel(authRepository: repository);
+
+      final result = await viewModel.submit(
+        identity: 'host@example.com',
+        password: 'Password123',
+      );
+
+      expect(result, isTrue);
+      expect(viewModel.shouldOpenStaffPortal, isTrue);
     });
 
     test('rejects phone identity before repository submit', () async {
@@ -56,6 +70,9 @@ void main() {
 }
 
 class FakeAuthRepository implements AuthRepository {
+  FakeAuthRepository({String role = 'Customer'}) : _role = role;
+
+  final String _role;
   String? loginIdentity;
   String? loginPassword;
   AuthRepositoryException? loginError;
@@ -90,14 +107,14 @@ class FakeAuthRepository implements AuthRepository {
     return _session;
   }
 
-  static final _session = AuthSession(
+  AuthSession get _session => AuthSession(
     token: 'jwt-token',
     user: AuthUser(
       id: 'c38d653b-3a56-49cf-9473-22edaa5f3a2c',
       fullName: 'Jane Cook',
       email: 'jane@example.com',
       phone: '+84901234567',
-      role: 'Customer',
+      role: _role,
     ),
   );
 }

@@ -40,6 +40,48 @@ class CheckoutBookingCommand {
   final String? identityNumber;
 }
 
+class BookingReservation {
+  const BookingReservation({
+    required this.bookingId,
+    required this.propertyId,
+    required this.propertyName,
+    required this.propertyImageUrl,
+    this.latitude,
+    this.longitude,
+    required this.roomId,
+    required this.roomName,
+    required this.roomImageUrl,
+    required this.checkIn,
+    required this.checkOut,
+    required this.adults,
+    required this.children,
+    required this.roomQuantity,
+    required this.totalPrice,
+    required this.bookingStatus,
+    required this.paymentStatus,
+    required this.paymentMethod,
+  });
+
+  final String bookingId;
+  final String propertyId;
+  final String propertyName;
+  final String? propertyImageUrl;
+  final double? latitude;
+  final double? longitude;
+  final String roomId;
+  final String roomName;
+  final String? roomImageUrl;
+  final DateTime checkIn;
+  final DateTime checkOut;
+  final int adults;
+  final int children;
+  final int roomQuantity;
+  final double totalPrice;
+  final String bookingStatus;
+  final String? paymentStatus;
+  final String? paymentMethod;
+}
+
 class BookingDraft {
   const BookingDraft({
     required this.bookingId,

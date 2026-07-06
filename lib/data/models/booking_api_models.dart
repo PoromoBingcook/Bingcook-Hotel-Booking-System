@@ -259,3 +259,111 @@ class BookingCheckoutResponse {
     );
   }
 }
+
+class BookingReservationResponse {
+  const BookingReservationResponse({
+    required this.bookingId,
+    required this.propertyId,
+    required this.propertyName,
+    required this.propertyImageUrl,
+    required this.latitude,
+    required this.longitude,
+    required this.roomId,
+    required this.roomName,
+    required this.roomImageUrl,
+    required this.checkIn,
+    required this.checkOut,
+    required this.adults,
+    required this.children,
+    required this.roomQuantity,
+    required this.totalPrice,
+    required this.bookingStatus,
+    required this.paymentStatus,
+    required this.paymentMethod,
+  });
+
+  factory BookingReservationResponse.fromJson(Map<String, Object?> json) {
+    String text(String key) => json[key] is String ? json[key]! as String : '';
+    String? optionalText(String key) {
+      final value = json[key];
+      return value is String && value.trim().isNotEmpty ? value : null;
+    }
+
+    int integer(String key) => switch (json[key]) {
+      int value => value,
+      num value => value.toInt(),
+      _ => 0,
+    };
+    double decimal(String key) => switch (json[key]) {
+      num value => value.toDouble(),
+      String value => double.tryParse(value) ?? 0,
+      _ => 0,
+    };
+    double? optionalDecimal(String key) => switch (json[key]) {
+      num value => value.toDouble(),
+      String value => double.tryParse(value),
+      _ => null,
+    };
+
+    return BookingReservationResponse(
+      bookingId: text('bookingId'),
+      propertyId: text('propertyId'),
+      propertyName: text('propertyName'),
+      propertyImageUrl: optionalText('propertyImageUrl'),
+      latitude: optionalDecimal('latitude'),
+      longitude: optionalDecimal('longitude'),
+      roomId: text('roomId'),
+      roomName: text('roomName'),
+      roomImageUrl: optionalText('roomImageUrl'),
+      checkIn: DateTime.parse(text('checkIn')),
+      checkOut: DateTime.parse(text('checkOut')),
+      adults: integer('adults'),
+      children: integer('children'),
+      roomQuantity: integer('roomQuantity'),
+      totalPrice: decimal('totalPrice'),
+      bookingStatus: text('bookingStatus'),
+      paymentStatus: optionalText('paymentStatus'),
+      paymentMethod: optionalText('paymentMethod'),
+    );
+  }
+
+  final String bookingId;
+  final String propertyId;
+  final String propertyName;
+  final String? propertyImageUrl;
+  final double? latitude;
+  final double? longitude;
+  final String roomId;
+  final String roomName;
+  final String? roomImageUrl;
+  final DateTime checkIn;
+  final DateTime checkOut;
+  final int adults;
+  final int children;
+  final int roomQuantity;
+  final double totalPrice;
+  final String bookingStatus;
+  final String? paymentStatus;
+  final String? paymentMethod;
+
+  BookingReservation toDomain() => BookingReservation(
+    bookingId: bookingId,
+    propertyId: propertyId,
+    propertyName: propertyName,
+    propertyImageUrl: propertyImageUrl,
+    latitude: latitude,
+    longitude: longitude,
+    roomId: roomId,
+    roomName: roomName,
+    roomImageUrl: roomImageUrl,
+    checkIn: checkIn,
+    checkOut: checkOut,
+    adults: adults,
+    children: children,
+    roomQuantity: roomQuantity,
+    totalPrice: totalPrice,
+    bookingStatus: bookingStatus,
+    paymentStatus: paymentStatus,
+    paymentMethod: paymentMethod,
+  );
+}

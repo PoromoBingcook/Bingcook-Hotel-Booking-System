@@ -30,10 +30,19 @@ class SearchViewModel extends ChangeNotifier {
   ];
 
   static const availableRatings = [0.0, 4.0, 4.5];
+  static const availableCities = [
+    'Hà Nội',
+    'Hải Phòng',
+    'Huế',
+    'Đà Nẵng',
+    'Thành phố Hồ Chí Minh',
+    'Cần Thơ',
+    'Đồng Nai',
+  ];
   static const minAllowedPrice = 0.0;
   static const maxAllowedPrice = 5000000.0;
 
-  String _destination = 'Da Nang';
+  String _destination = '';
   late DateTime _checkIn;
   DateTime? _checkOut;
   int _adults = 2;
@@ -55,6 +64,16 @@ class SearchViewModel extends ChangeNotifier {
   double get maxPrice => _maxPrice;
   double get minRating => _minRating;
   Set<String> get selectedAmenities => Set.unmodifiable(_selectedAmenities);
+  List<String> get citySuggestions {
+    final input = _foldVietnamese(_destination.trim());
+    if (input.isEmpty) return const [];
+    if (availableCities.any((city) => _foldVietnamese(city) == input)) {
+      return const [];
+    }
+    return availableCities
+        .where((city) => _foldVietnamese(city).contains(input))
+        .toList(growable: false);
+  }
 
   void updateDestination(String value) {
     if (_destination == value) {
@@ -152,8 +171,9 @@ class SearchViewModel extends ChangeNotifier {
   ProductSearchQuery buildQuery() {
     final trimmedDestination = _destination.trim();
     return ProductSearchQuery(
-      keyword: trimmedDestination.isEmpty ? null : trimmedDestination,
-      location: trimmedDestination.isEmpty ? null : trimmedDestination,
+      keyword: trimmedDestination.isEmpty
+          ? null
+          : _foldVietnamese(trimmedDestination),
       checkIn: _checkIn,
       checkOut: _checkOut,
       guests: guests,
@@ -167,5 +187,24 @@ class SearchViewModel extends ChangeNotifier {
 
   static DateTime _normalize(DateTime date) {
     return DateTime(date.year, date.month, date.day);
+  }
+
+  static String _foldVietnamese(String value) {
+    var folded = value.toLowerCase();
+    const replacements = {
+      'a': 'àáạảãâầấậẩẫăằắặẳẵ',
+      'e': 'èéẹẻẽêềếệểễ',
+      'i': 'ìíịỉĩ',
+      'o': 'òóọỏõôồốộổỗơờớợởỡ',
+      'u': 'ùúụủũưừứựửữ',
+      'y': 'ỳýỵỷỹ',
+      'd': 'đ',
+    };
+    for (final entry in replacements.entries) {
+      for (final character in entry.value.split('')) {
+        folded = folded.replaceAll(character, entry.key);
+      }
+    }
+    return folded;
   }
 }

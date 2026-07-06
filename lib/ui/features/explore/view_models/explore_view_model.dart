@@ -15,6 +15,7 @@ class ExploreViewModel extends ChangeNotifier {
   bool _hasLoaded = false;
   String? _errorMessage;
   ProductSearchQuery _activeQuery = const ProductSearchQuery();
+  int _requestId = 0;
 
   List<StayCardData> get stays => _stays;
   bool get isLoading => _isLoading;
@@ -42,10 +43,7 @@ class ExploreViewModel extends ChangeNotifier {
   Future<void> retry() => _loadProducts(_activeQuery);
 
   Future<void> _loadProducts(ProductSearchQuery query) async {
-    if (_isLoading) {
-      return;
-    }
-
+    final requestId = ++_requestId;
     _isLoading = true;
     _activeQuery = query;
     _errorMessage = null;
@@ -53,17 +51,22 @@ class ExploreViewModel extends ChangeNotifier {
 
     try {
       final products = await _productRepository.fetchProducts(query: query);
+      if (requestId != _requestId) return;
       _stays = products.map(_toStayCardData).toList(growable: false);
     } on ProductRepositoryException catch (error) {
+      if (requestId != _requestId) return;
       _stays = const [];
       _errorMessage = error.message;
     } catch (_) {
+      if (requestId != _requestId) return;
       _stays = const [];
       _errorMessage = 'Unable to reach BingCook server.';
     } finally {
-      _hasLoaded = true;
-      _isLoading = false;
-      notifyListeners();
+      if (requestId == _requestId) {
+        _hasLoaded = true;
+        _isLoading = false;
+        notifyListeners();
+      }
     }
   }
 

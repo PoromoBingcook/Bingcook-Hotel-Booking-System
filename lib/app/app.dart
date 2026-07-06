@@ -3,6 +3,8 @@ import 'package:bingcook/app/routes/app_router.dart';
 import 'package:bingcook/app/routes/app_routes.dart';
 import 'package:bingcook/ui/core/theme/app_theme.dart';
 import 'package:bingcook/ui/features/splash/views/splash_view.dart';
+import 'package:bingcook/domain/repositories/auth_repository.dart';
+import 'dart:async';
 import 'package:flutter/material.dart';
 
 class BingCookApp extends StatefulWidget {
@@ -49,24 +51,38 @@ class _BingCookAppState extends State<BingCookApp> {
       initialRoute: widget.initialRoute,
       onGenerateRoute: _router.onGenerateRoute,
       home: widget.initialRoute == null
-          ? _SplashEntry(duration: widget.splashDuration)
+          ? _SplashEntry(
+              duration: widget.splashDuration,
+              authRepository: _dependencies.authRepository,
+            )
           : null,
     );
   }
 }
 
 class _SplashEntry extends StatelessWidget {
-  const _SplashEntry({required this.duration});
+  const _SplashEntry({required this.duration, required this.authRepository});
 
   final Duration duration;
+  final AuthRepository authRepository;
 
   @override
   Widget build(BuildContext context) {
     return SplashView(
       duration: duration,
-      onFinished: () {
-        Navigator.of(context).pushReplacementNamed(AppRoutes.signUp);
-      },
+      onFinished: () => unawaited(_finish(context)),
     );
+  }
+
+  Future<void> _finish(BuildContext context) async {
+    final repository = authRepository;
+    if (repository is RestorableAuthRepository) {
+      await (repository as RestorableAuthRepository).restoreSession();
+    }
+    if (!context.mounted) return;
+    final route = repository.currentSession == null
+        ? AppRoutes.login
+        : AppRoutes.explore;
+    Navigator.of(context).pushReplacementNamed(route);
   }
 }

@@ -5,13 +5,17 @@ import 'package:flutter/material.dart';
 class ProfileView extends StatelessWidget {
   const ProfileView({
     required this.viewModel,
-    required this.onChatRequested,
+    required this.onMessagesRequested,
+    required this.onPersonalInformationRequested,
+    required this.onSupportRequested,
     required this.onLoggedOut,
     super.key,
   });
 
   final ProfileViewModel viewModel;
-  final VoidCallback onChatRequested;
+  final VoidCallback onMessagesRequested;
+  final VoidCallback onPersonalInformationRequested;
+  final VoidCallback onSupportRequested;
   final VoidCallback onLoggedOut;
 
   @override
@@ -27,7 +31,7 @@ class ProfileView extends StatelessWidget {
               SliverToBoxAdapter(
                 child: _ProfileHeader(
                   viewModel: viewModel,
-                  onChatRequested: onChatRequested,
+                  onMessagesRequested: onMessagesRequested,
                 ),
               ),
               SliverPadding(
@@ -53,6 +57,7 @@ class ProfileView extends StatelessWidget {
                       items: [
                         _ProfileActionItem(
                           icon: Icons.person_outline_rounded,
+                          onTap: onPersonalInformationRequested,
                           label: 'Thông tin cá nhân',
                         ),
                       ],
@@ -77,7 +82,7 @@ class ProfileView extends StatelessWidget {
                         ),
                         _ProfileActionItem(
                           icon: Icons.support_agent_rounded,
-                          onTap: onChatRequested,
+                          onTap: onSupportRequested,
                           label: 'Liên hệ hỗ trợ',
                         ),
                       ],
@@ -107,11 +112,11 @@ class ProfileView extends StatelessWidget {
 class _ProfileHeader extends StatelessWidget {
   const _ProfileHeader({
     required this.viewModel,
-    required this.onChatRequested,
+    required this.onMessagesRequested,
   });
 
   final ProfileViewModel viewModel;
-  final VoidCallback onChatRequested;
+  final VoidCallback onMessagesRequested;
 
   @override
   Widget build(BuildContext context) {
@@ -163,7 +168,7 @@ class _ProfileHeader extends StatelessWidget {
                   const SizedBox(width: 12),
                   _HeaderIconButton(
                     icon: Icons.chat_bubble_outline_rounded,
-                    onPressed: onChatRequested,
+                    onPressed: onMessagesRequested,
                     tooltip: 'Tin nhắn',
                   ),
                   const SizedBox(width: 8),

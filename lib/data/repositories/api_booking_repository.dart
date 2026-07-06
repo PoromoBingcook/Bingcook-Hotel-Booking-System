@@ -14,6 +14,26 @@ class ApiBookingRepository implements BookingRepository {
   final AuthRepository _authRepository;
 
   @override
+  Future<List<BookingReservation>> fetchReservations() async {
+    try {
+      final response = await _bookingApiService.fetchReservations(
+        token: _token(),
+      );
+      return response.map((item) => item.toDomain()).toList(growable: false);
+    } on BookingRepositoryException {
+      rethrow;
+    } on BookingApiException catch (error) {
+      throw BookingRepositoryException(error.message);
+    } on FormatException {
+      throw const BookingRepositoryException('Unable to read reservations.');
+    } catch (_) {
+      throw const BookingRepositoryException(
+        'Unable to reach BingCook server.',
+      );
+    }
+  }
+
+  @override
   Future<BookingDraft> createDraft(CreateBookingDraftCommand command) async {
     try {
       final response = await _bookingApiService.createDraft(

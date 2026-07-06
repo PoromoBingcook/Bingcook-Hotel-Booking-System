@@ -6,7 +6,7 @@ void main() {
     test('starts with deterministic Figma values', () {
       final viewModel = _newViewModel();
 
-      expect(viewModel.destination, 'Da Nang');
+      expect(viewModel.destination, isEmpty);
       expect(viewModel.checkIn, DateTime(2023, 6, 12));
       expect(viewModel.checkOut, DateTime(2023, 6, 15));
       expect(viewModel.adults, 2);
@@ -20,6 +20,15 @@ void main() {
       viewModel.clearDestination();
 
       expect(viewModel.destination, isEmpty);
+    });
+
+    test('filters Vietnamese cities without requiring accents', () {
+      final viewModel = _newViewModel()..updateDestination('ho chi');
+
+      expect(viewModel.citySuggestions, ['Thành phố Hồ Chí Minh']);
+
+      viewModel.updateDestination('hai');
+      expect(viewModel.citySuggestions, ['Hải Phòng']);
     });
 
     test('starts a new range after a complete range', () {
@@ -69,6 +78,26 @@ void main() {
       viewModel.toggleAmenity('Self check-in');
 
       expect(viewModel.selectedAmenities, {'Wi-Fi'});
+    });
+
+    test('builds backend search and filter parameters', () {
+      final viewModel = _newViewModel()
+        ..updateDestination('Ocean Pearl')
+        ..setType('Hotel')
+        ..setPriceRange(500000, 2000000)
+        ..setMinRating(4.5)
+        ..toggleAmenity('Wi-Fi');
+
+      final query = viewModel.buildQuery();
+
+      expect(query.keyword, 'ocean pearl');
+      expect(query.location, isNull);
+      expect(query.type, 'Hotel');
+      expect(query.minPrice, 500000);
+      expect(query.maxPrice, 2000000);
+      expect(query.minRating, 4.5);
+      expect(query.amenities, ['Self check-in', 'Wi-Fi']);
+      expect(query.guests, 2);
     });
   });
 }

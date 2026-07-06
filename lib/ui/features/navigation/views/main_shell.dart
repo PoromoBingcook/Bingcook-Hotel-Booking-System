@@ -1,17 +1,23 @@
 import 'dart:async';
 
 import 'package:bingcook/domain/models/booking.dart';
+import 'package:bingcook/domain/models/chat.dart';
 import 'package:bingcook/domain/models/product_details.dart';
 import 'package:bingcook/domain/models/product_search_query.dart';
 import 'package:bingcook/domain/repositories/auth_repository.dart';
 import 'package:bingcook/domain/repositories/booking_repository.dart';
 import 'package:bingcook/domain/repositories/chat_repository.dart';
 import 'package:bingcook/domain/repositories/product_repository.dart';
+import 'package:bingcook/domain/services/chat_realtime_service.dart';
 import 'package:bingcook/ui/core/constants/app_assets.dart';
 import 'package:bingcook/ui/core/theme/app_colors.dart';
 import 'package:bingcook/ui/core/widgets/app_bottom_navigation.dart';
 import 'package:bingcook/ui/features/chat/view_models/chat_view_model.dart';
+import 'package:bingcook/ui/features/chat/view_models/conversations_view_model.dart';
 import 'package:bingcook/ui/features/chat/views/chat_view.dart';
+import 'package:bingcook/ui/features/chat/views/conversations_view.dart';
+import 'package:bingcook/ui/features/bookings/view_models/bookings_view_model.dart';
+import 'package:bingcook/ui/features/bookings/views/bookings_view.dart';
 import 'package:bingcook/ui/features/checkout/models/checkout_data.dart';
 import 'package:bingcook/ui/features/checkout/view_models/add_card_view_model.dart';
 import 'package:bingcook/ui/features/checkout/view_models/checkout_view_model.dart';
@@ -26,6 +32,7 @@ import 'package:bingcook/ui/features/property_details/view_models/property_detai
 import 'package:bingcook/ui/features/property_details/views/property_details_view.dart';
 import 'package:bingcook/ui/features/profile/view_models/profile_view_model.dart';
 import 'package:bingcook/ui/features/profile/views/profile_view.dart';
+import 'package:bingcook/ui/features/profile/views/personal_information_view.dart';
 import 'package:bingcook/ui/features/search/view_models/search_view_model.dart';
 import 'package:bingcook/ui/features/search/views/search_view.dart';
 import 'package:bingcook/ui/features/select_room/models/select_room_data.dart';
@@ -40,6 +47,7 @@ class MainShell extends StatefulWidget {
     required this.bookingRepository,
     required this.chatRepository,
     required this.onLogoutCompleted,
+    this.chatRealtimeService,
     this.payOSCheckoutBuilder,
     super.key,
   });
@@ -49,6 +57,7 @@ class MainShell extends StatefulWidget {
   final BookingRepository bookingRepository;
   final ChatRepository chatRepository;
   final VoidCallback onLogoutCompleted;
+  final ChatRealtimeService? chatRealtimeService;
   final PayOSCheckoutBuilder? payOSCheckoutBuilder;
 
   @override
@@ -63,6 +72,9 @@ class _MainShellState extends State<MainShell> {
   bool _showAddCard = false;
   bool _showPaymentResult = false;
   bool _showChat = false;
+  bool _showMessages = false;
+  bool _showPersonalInformation = false;
+  bool _showPropertyChat = false;
   bool _isLoadingPropertyDetails = false;
   PropertyDetailsData? _selectedProperty;
   SelectRoomData? _selectedRoomData;
@@ -77,18 +89,16 @@ class _MainShellState extends State<MainShell> {
   late CheckoutViewModel _checkoutViewModel;
   final AddCardViewModel _addCardViewModel = AddCardViewModel();
   late final ChatViewModel _chatViewModel;
+  late final ConversationsViewModel _conversationsViewModel;
+  ChatViewModel? _selectedChatViewModel;
+  ChatViewModel? _propertyChatViewModel;
   late final ProfileViewModel _profileViewModel;
+  late final BookingsViewModel _bookingsViewModel;
 
-  static const _pendingDestinations = [
-    _PendingDestination(
-      icon: Icons.favorite_border_rounded,
-      title: 'Saved stays',
-    ),
-    _PendingDestination(
-      icon: Icons.confirmation_number_outlined,
-      title: 'Your bookings',
-    ),
-  ];
+  static const _savedDestination = _PendingDestination(
+    icon: Icons.favorite_border_rounded,
+    title: 'Saved stays',
+  );
 
   @override
   void initState() {
@@ -107,8 +117,16 @@ class _MainShellState extends State<MainShell> {
     _chatViewModel = ChatViewModel(
       chatRepository: widget.chatRepository,
       authRepository: widget.authRepository,
+      realtimeService: widget.chatRealtimeService,
+    );
+    _conversationsViewModel = ConversationsViewModel(
+      chatRepository: widget.chatRepository,
     );
     _profileViewModel = ProfileViewModel(authRepository: widget.authRepository);
+    _bookingsViewModel = BookingsViewModel(
+      bookingRepository: widget.bookingRepository,
+    );
+    unawaited(_bookingsViewModel.load());
   }
 
   @override
@@ -120,7 +138,11 @@ class _MainShellState extends State<MainShell> {
     _checkoutViewModel.dispose();
     _addCardViewModel.dispose();
     _chatViewModel.dispose();
+    _conversationsViewModel.dispose();
+    _selectedChatViewModel?.dispose();
+    _propertyChatViewModel?.dispose();
     _profileViewModel.dispose();
+    _bookingsViewModel.dispose();
     super.dispose();
   }
 
@@ -176,6 +198,7 @@ class _MainShellState extends State<MainShell> {
           viewModel: _propertyDetailsViewModel,
           onBack: () => setState(() => _selectedProperty = null),
           onBookNow: _openSelectRoom,
+          onChat: _openPropertyChat,
         )
       else if (_showSearch)
         SearchView(
@@ -189,16 +212,46 @@ class _MainShellState extends State<MainShell> {
           onSearchRequested: () => setState(() => _showSearch = true),
           onStaySelected: _handleStaySelected,
         ),
-      ..._pendingDestinations,
+      _savedDestination,
+      BookingsView(viewModel: _bookingsViewModel),
       ProfileView(
         viewModel: _profileViewModel,
-        onChatRequested: () => setState(() => _showChat = true),
+        onMessagesRequested: _openMessages,
+        onPersonalInformationRequested: () =>
+            setState(() => _showPersonalInformation = true),
+        onSupportRequested: () => setState(() => _showChat = true),
         onLoggedOut: widget.onLogoutCompleted,
       ),
     ];
 
     return Scaffold(
-      body: _showChat
+      body: _showPersonalInformation
+          ? PersonalInformationView(
+              user: widget.authRepository.currentSession?.user,
+              onBack: () => setState(() => _showPersonalInformation = false),
+            )
+          : _selectedChatViewModel != null
+          ? ChatView(
+              viewModel: _selectedChatViewModel!,
+              onBack: () {
+                _selectedChatViewModel!.dispose();
+                setState(() => _selectedChatViewModel = null);
+                unawaited(_conversationsViewModel.load());
+              },
+            )
+          : _showMessages
+          ? ConversationsView(
+              viewModel: _conversationsViewModel,
+              onBack: () => setState(() => _showMessages = false),
+              onConversationSelected: _openConversation,
+            )
+          : _showPropertyChat && _selectedProperty != null
+          ? ChatView(
+              key: ValueKey('property-chat-${_selectedProperty!.id}'),
+              viewModel: _propertyChatViewModel!,
+              onBack: () => setState(() => _showPropertyChat = false),
+            )
+          : _showChat
           ? ChatView(
               viewModel: _chatViewModel,
               onBack: () => setState(() => _showChat = false),
@@ -209,7 +262,11 @@ class _MainShellState extends State<MainShell> {
               _showCheckout ||
               _showAddCard ||
               _showPaymentResult ||
-              _showChat
+              _showChat ||
+              _showMessages ||
+              _showPersonalInformation ||
+              _selectedChatViewModel != null ||
+              _showPropertyChat
           ? null
           : AppBottomNavigation(
               selectedIndex: _selectedIndex,
@@ -222,6 +279,9 @@ class _MainShellState extends State<MainShell> {
                   _showAddCard = false;
                   _showPaymentResult = false;
                   _showChat = false;
+                  _showMessages = false;
+                  _showPersonalInformation = false;
+                  _showPropertyChat = false;
                   _isLoadingPropertyDetails = false;
                   _selectedProperty = null;
                   _selectedRoomData = null;
@@ -305,6 +365,40 @@ class _MainShellState extends State<MainShell> {
       _selectedRoomData = data;
       _showSelectRoom = true;
     });
+  }
+
+  void _openPropertyChat() {
+    final property = _selectedProperty;
+    if (property == null || property.id.isEmpty) {
+      return;
+    }
+
+    _propertyChatViewModel?.dispose();
+    _propertyChatViewModel = ChatViewModel(
+      chatRepository: widget.chatRepository,
+      authRepository: widget.authRepository,
+      realtimeService: widget.chatRealtimeService,
+      initialPropertyId: property.id,
+    );
+    setState(() => _showPropertyChat = true);
+  }
+
+  void _openMessages() {
+    setState(() => _showMessages = true);
+    unawaited(_conversationsViewModel.load());
+  }
+
+  void _openConversation(ChatConversation conversation) {
+    _selectedChatViewModel?.dispose();
+    _selectedChatViewModel = ChatViewModel(
+      chatRepository: widget.chatRepository,
+      authRepository: widget.authRepository,
+      realtimeService: widget.chatRealtimeService,
+      initialConversation: conversation,
+      initialPropertyId: conversation.propertyId,
+      initialBookingId: conversation.bookingId,
+    );
+    setState(() {});
   }
 
   Future<void> _continueToCheckout() async {
