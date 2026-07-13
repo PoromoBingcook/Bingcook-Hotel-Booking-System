@@ -9,11 +9,13 @@ class ExploreView extends StatelessWidget {
     required this.viewModel,
     super.key,
     this.onSearchRequested,
+    this.onMapRequested,
     this.onStaySelected,
   });
 
   final ExploreViewModel viewModel;
   final VoidCallback? onSearchRequested;
+  final VoidCallback? onMapRequested;
   final ValueChanged<StayCardData>? onStaySelected;
 
   @override
@@ -138,6 +140,28 @@ class ExploreView extends StatelessWidget {
                             fontFamily: 'Manrope',
                             fontSize: 14,
                             fontWeight: FontWeight.w600,
+                          ),
+                        ),
+                        const SizedBox(width: 8),
+                        OutlinedButton.icon(
+                          key: const Key('explore_map_button'),
+                          onPressed: viewModel.isLoading
+                              ? null
+                              : onMapRequested,
+                          icon: const Icon(Icons.map_outlined, size: 18),
+                          label: const Text('Map'),
+                          style: OutlinedButton.styleFrom(
+                            padding: const EdgeInsets.symmetric(
+                              horizontal: 12,
+                              vertical: 9,
+                            ),
+                            side: const BorderSide(color: AppColors.gray200),
+                            foregroundColor: AppColors.slate900,
+                            textStyle: const TextStyle(
+                              fontFamily: 'Manrope',
+                              fontSize: 12,
+                              fontWeight: FontWeight.w800,
+                            ),
                           ),
                         ),
                       ],

@@ -44,6 +44,42 @@ void main() {
     expect(find.text('Find your next stay'), findsOneWidget);
   });
 
+  testWidgets('explore opens nearby map and returns', (tester) async {
+    await _pumpMainShell(tester);
+
+    await tester.tap(find.byKey(const Key('explore_map_button')));
+    await tester.pumpAndSettle();
+
+    expect(find.byKey(const Key('nearby_map_title')), findsOneWidget);
+    expect(
+      find.byKey(
+        const Key('nearby_map_marker_c8622126-babc-4c88-a01f-8773fe5456a5'),
+      ),
+      findsOneWidget,
+    );
+
+    await tester.tap(
+      find.byKey(
+        const Key('nearby_map_marker_c8622126-babc-4c88-a01f-8773fe5456a5'),
+      ),
+    );
+    await tester.pump();
+    await tester.tap(find.byKey(const Key('nearby_map_view_stay_button')));
+    await tester.pumpAndSettle();
+
+    expect(find.byKey(const Key('property_details_title')), findsOneWidget);
+    expect(find.text('Blue Garden Homestay'), findsOneWidget);
+
+    await tester.tap(find.byKey(const Key('property_back_button')));
+    await tester.pumpAndSettle();
+    expect(find.byKey(const Key('nearby_map_title')), findsOneWidget);
+
+    await tester.tap(find.byKey(const Key('nearby_map_back_button')));
+    await tester.pumpAndSettle();
+
+    expect(find.text('Find your next stay'), findsOneWidget);
+  });
+
   testWidgets('bottom navigation leaves search mode', (tester) async {
     await _pumpMainShell(tester);
 
@@ -515,6 +551,8 @@ class FakeProductRepository implements ProductRepository {
         location: 'Da Nang, Vo Nguyen Giap, Son Tra',
         city: 'Da Nang',
         address: 'Vo Nguyen Giap, Son Tra',
+        latitude: 16.0544,
+        longitude: 108.2022,
         imageUrl: null,
         rating: 4.7,
         reviewCount: 3,
@@ -531,6 +569,8 @@ class FakeProductRepository implements ProductRepository {
         location: 'Hoi An, Cam Chau',
         city: 'Hoi An',
         address: 'Cam Chau',
+        latitude: 15.8801,
+        longitude: 108.3380,
         imageUrl: null,
         rating: 4.5,
         reviewCount: 2,

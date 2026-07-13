@@ -29,6 +29,8 @@ void main() {
           location: 'Da Nang, Vo Nguyen Giap, Son Tra',
           city: 'Da Nang',
           address: 'Vo Nguyen Giap, Son Tra',
+          latitude: 16.0544,
+          longitude: 108.2022,
           imageUrl: 'https://example.com/ocean.jpg',
           rating: 4.7,
           reviewCount: 3,
@@ -57,6 +59,9 @@ void main() {
       expect(viewModel.stays.single.imageUrl, 'https://example.com/ocean.jpg');
       expect(viewModel.stays.single.price, 68);
       expect(viewModel.stays.single.status, 'Active');
+      expect(viewModel.stays.single.latitude, 16.0544);
+      expect(viewModel.stays.single.longitude, 108.2022);
+      expect(viewModel.stays.single.hasCoordinates, isTrue);
     });
 
     test('exposes empty state when API returns no products', () async {

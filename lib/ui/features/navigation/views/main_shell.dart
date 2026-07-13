@@ -28,6 +28,7 @@ import 'package:bingcook/ui/features/checkout/views/payment_result_view.dart';
 import 'package:bingcook/ui/features/explore/models/stay_card_data.dart';
 import 'package:bingcook/ui/features/explore/view_models/explore_view_model.dart';
 import 'package:bingcook/ui/features/explore/views/explore_view.dart';
+import 'package:bingcook/ui/features/map/views/nearby_map_view.dart';
 import 'package:bingcook/ui/features/property_details/models/property_details_data.dart';
 import 'package:bingcook/ui/features/property_details/view_models/property_details_view_model.dart';
 import 'package:bingcook/ui/features/property_details/views/property_details_view.dart';
@@ -72,6 +73,7 @@ class MainShell extends StatefulWidget {
 class _MainShellState extends State<MainShell> {
   int _selectedIndex = 0;
   bool _showSearch = false;
+  bool _showMap = false;
   bool _showSelectRoom = false;
   bool _showCheckout = false;
   bool _showAddCard = false;
@@ -214,6 +216,12 @@ class _MainShellState extends State<MainShell> {
           onBookNow: _openSelectRoom,
           onChat: _openPropertyChat,
         )
+      else if (_showMap)
+        NearbyMapView(
+          stays: _exploreViewModel.stays,
+          onBack: () => setState(() => _showMap = false),
+          onStaySelected: _handleStaySelected,
+        )
       else if (_showSearch)
         SearchView(
           viewModel: _searchViewModel,
@@ -224,6 +232,7 @@ class _MainShellState extends State<MainShell> {
         ExploreView(
           viewModel: _exploreViewModel,
           onSearchRequested: () => setState(() => _showSearch = true),
+          onMapRequested: () => setState(() => _showMap = true),
           onStaySelected: _handleStaySelected,
         ),
       _savedDestination,
@@ -301,6 +310,7 @@ class _MainShellState extends State<MainShell> {
                 setState(() {
                   _selectedIndex = index;
                   _showSearch = false;
+                  _showMap = false;
                   _showSelectRoom = false;
                   _showCheckout = false;
                   _showAddCard = false;
@@ -459,6 +469,7 @@ class _MainShellState extends State<MainShell> {
   void _resetExploreFlow() {
     setState(() {
       _showSearch = false;
+      _showMap = false;
       _showSelectRoom = false;
       _showCheckout = false;
       _showAddCard = false;
