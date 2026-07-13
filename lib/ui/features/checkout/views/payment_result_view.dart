@@ -1,22 +1,28 @@
 import 'package:bingcook/domain/models/booking.dart';
 import 'package:bingcook/ui/core/theme/app_colors.dart';
 import 'package:bingcook/ui/core/utils/currency_formatter.dart';
+import 'package:bingcook/ui/features/checkout/view_models/payment_result_view_model.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
 import 'package:webview_flutter/webview_flutter.dart';
 
-typedef PayOSCheckoutBuilder = Widget Function(Uri checkoutUri);
+typedef PayOSCheckoutBuilder =
+    Widget Function(Uri checkoutUri, ValueChanged<String> onPageFinished);
 
 class PaymentResultView extends StatelessWidget {
   const PaymentResultView({
     required this.checkout,
+    required this.viewModel,
     required this.onBackToExplore,
+    required this.onPaymentConfirmed,
     this.payOSCheckoutBuilder,
     super.key,
   });
 
   final BookingCheckout checkout;
+  final PaymentResultViewModel viewModel;
   final VoidCallback onBackToExplore;
+  final VoidCallback onPaymentConfirmed;
   final PayOSCheckoutBuilder? payOSCheckoutBuilder;
 
   bool get _isPayOS => checkout.paymentMethod.toLowerCase() == 'payos';
@@ -46,6 +52,8 @@ class PaymentResultView extends StatelessWidget {
                     checkoutUri: checkoutUri,
                     checkoutBuilder:
                         payOSCheckoutBuilder ?? _defaultPayOSCheckoutBuilder,
+                    viewModel: viewModel,
+                    onPaymentConfirmed: onPaymentConfirmed,
                   )
                 else
                   _FallbackPaymentResult(
@@ -72,8 +80,14 @@ class PaymentResultView extends StatelessWidget {
     return uri;
   }
 
-  static Widget _defaultPayOSCheckoutBuilder(Uri checkoutUri) {
-    return _PayOSCheckoutWebView(checkoutUri: checkoutUri);
+  static Widget _defaultPayOSCheckoutBuilder(
+    Uri checkoutUri,
+    ValueChanged<String> onPageFinished,
+  ) {
+    return _PayOSCheckoutWebView(
+      checkoutUri: checkoutUri,
+      onPageFinished: onPageFinished,
+    );
   }
 }
 
@@ -82,11 +96,15 @@ class _EmbeddedPayOSResult extends StatelessWidget {
     required this.checkout,
     required this.checkoutUri,
     required this.checkoutBuilder,
+    required this.viewModel,
+    required this.onPaymentConfirmed,
   });
 
   final BookingCheckout checkout;
   final Uri checkoutUri;
   final PayOSCheckoutBuilder checkoutBuilder;
+  final PaymentResultViewModel viewModel;
+  final VoidCallback onPaymentConfirmed;
 
   @override
   Widget build(BuildContext context) {
@@ -111,6 +129,11 @@ class _EmbeddedPayOSResult extends StatelessWidget {
                 ),
                 const SizedBox(height: 12),
                 _StatusCard(checkout: checkout),
+                const SizedBox(height: 10),
+                _PaymentVerificationBanner(
+                  viewModel: viewModel,
+                  onPaymentConfirmed: onPaymentConfirmed,
+                ),
               ],
             ),
           ),
@@ -123,7 +146,12 @@ class _EmbeddedPayOSResult extends StatelessWidget {
                 border: Border.all(color: const Color(0xFFE8F0FE)),
                 borderRadius: BorderRadius.circular(12),
               ),
-              child: checkoutBuilder(checkoutUri),
+              child: checkoutBuilder(checkoutUri, (url) async {
+                final confirmed = await viewModel.handlePageFinished(url);
+                if (confirmed) {
+                  onPaymentConfirmed();
+                }
+              }),
             ),
           ),
         ],
@@ -201,9 +229,13 @@ class _FallbackPaymentResult extends StatelessWidget {
 }
 
 class _PayOSCheckoutWebView extends StatefulWidget {
-  const _PayOSCheckoutWebView({required this.checkoutUri});
+  const _PayOSCheckoutWebView({
+    required this.checkoutUri,
+    required this.onPageFinished,
+  });
 
   final Uri checkoutUri;
+  final ValueChanged<String> onPageFinished;
 
   @override
   State<_PayOSCheckoutWebView> createState() => _PayOSCheckoutWebViewState();
@@ -229,10 +261,11 @@ class _PayOSCheckoutWebViewState extends State<_PayOSCheckoutWebView> {
               });
             }
           },
-          onPageFinished: (_) {
+          onPageFinished: (url) {
             if (mounted) {
               setState(() => _isLoading = false);
             }
+            widget.onPageFinished(url);
           },
           onWebResourceError: (_) {
             if (mounted) {
@@ -287,6 +320,105 @@ class _PayOSCheckoutWebViewState extends State<_PayOSCheckoutWebView> {
             ),
           ),
       ],
+    );
+  }
+}
+
+class _PaymentVerificationBanner extends StatelessWidget {
+  const _PaymentVerificationBanner({
+    required this.viewModel,
+    required this.onPaymentConfirmed,
+  });
+
+  final PaymentResultViewModel viewModel;
+  final VoidCallback onPaymentConfirmed;
+
+  @override
+  Widget build(BuildContext context) {
+    return ListenableBuilder(
+      listenable: viewModel,
+      builder: (context, _) {
+        final (icon, message, color) = switch (viewModel.state) {
+          PaymentResultState.waiting => (
+            Icons.hourglass_top_rounded,
+            'Waiting for PayOS confirmation.',
+            AppColors.textSecondary,
+          ),
+          PaymentResultState.checking => (
+            Icons.sync_rounded,
+            'Confirming payment with BingCook...',
+            AppColors.primaryDark,
+          ),
+          PaymentResultState.confirmed => (
+            Icons.check_circle_rounded,
+            'Payment confirmed. Opening Bookings...',
+            const Color(0xFF11875D),
+          ),
+          PaymentResultState.canceled => (
+            Icons.cancel_rounded,
+            'PayOS checkout was canceled.',
+            const Color(0xFFC2413A),
+          ),
+          PaymentResultState.expired => (
+            Icons.timer_off_rounded,
+            'The payment link has expired.',
+            const Color(0xFFC2413A),
+          ),
+          PaymentResultState.failed => (
+            Icons.error_rounded,
+            'PayOS could not complete this payment.',
+            const Color(0xFFC2413A),
+          ),
+          PaymentResultState.error => (
+            Icons.wifi_off_rounded,
+            viewModel.errorMessage ?? 'Unable to confirm payment status.',
+            const Color(0xFFC2413A),
+          ),
+        };
+
+        return Container(
+          padding: const EdgeInsets.fromLTRB(12, 8, 8, 8),
+          decoration: BoxDecoration(
+            color: color.withValues(alpha: 0.08),
+            borderRadius: BorderRadius.circular(10),
+          ),
+          child: Row(
+            children: [
+              Icon(icon, size: 18, color: color),
+              const SizedBox(width: 8),
+              Expanded(
+                child: Text(
+                  message,
+                  style: TextStyle(
+                    color: color,
+                    fontSize: 12,
+                    fontWeight: FontWeight.w700,
+                  ),
+                ),
+              ),
+              if (viewModel.canRetry)
+                TextButton(
+                  key: const Key('check_payment_status_button'),
+                  onPressed: () async {
+                    final confirmed = await viewModel.checkStatus();
+                    if (confirmed) {
+                      onPaymentConfirmed();
+                    }
+                  },
+                  child: const Text('Check'),
+                ),
+              if (viewModel.isChecking)
+                const Padding(
+                  padding: EdgeInsets.all(8),
+                  child: SizedBox.square(
+                    dimension: 16,
+                    child: CircularProgressIndicator(strokeWidth: 2),
+                  ),
+                ),
+            ],
+          ),
+        );
+      },
     );
   }
 }

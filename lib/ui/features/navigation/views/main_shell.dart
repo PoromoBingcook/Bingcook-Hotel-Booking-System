@@ -22,6 +22,7 @@ import 'package:bingcook/ui/features/bookings/views/bookings_view.dart';
 import 'package:bingcook/ui/features/checkout/models/checkout_data.dart';
 import 'package:bingcook/ui/features/checkout/view_models/add_card_view_model.dart';
 import 'package:bingcook/ui/features/checkout/view_models/checkout_view_model.dart';
+import 'package:bingcook/ui/features/checkout/view_models/payment_result_view_model.dart';
 import 'package:bingcook/ui/features/checkout/views/add_card_view.dart';
 import 'package:bingcook/ui/features/checkout/views/checkout_view.dart';
 import 'package:bingcook/ui/features/checkout/views/payment_result_view.dart';
@@ -86,6 +87,7 @@ class _MainShellState extends State<MainShell> {
   SelectRoomData? _selectedRoomData;
   CheckoutData? _checkoutData;
   BookingCheckout? _checkoutResult;
+  PaymentResultViewModel? _paymentResultViewModel;
   String? _propertyDetailsError;
   final SearchViewModel _searchViewModel = SearchViewModel();
   late final ExploreViewModel _exploreViewModel;
@@ -147,6 +149,7 @@ class _MainShellState extends State<MainShell> {
     _propertyDetailsViewModel.dispose();
     _selectRoomViewModel.dispose();
     _checkoutViewModel.dispose();
+    _paymentResultViewModel?.dispose();
     _addCardViewModel.dispose();
     _chatViewModel.dispose();
     _conversationsViewModel.dispose();
@@ -164,7 +167,9 @@ class _MainShellState extends State<MainShell> {
       if (_showPaymentResult)
         PaymentResultView(
           checkout: _checkoutResult!,
+          viewModel: _paymentResultViewModel!,
           onBackToExplore: _resetExploreFlow,
+          onPaymentConfirmed: () => unawaited(_handlePaymentConfirmed()),
           payOSCheckoutBuilder: widget.payOSCheckoutBuilder,
         )
       else if (_showAddCard)
@@ -180,13 +185,20 @@ class _MainShellState extends State<MainShell> {
           onBack: () => setState(() => _showCheckout = false),
           onAddCard: () => setState(() => _showAddCard = true),
           onConfirmed: (checkout) {
+            _paymentResultViewModel?.dispose();
+            _paymentResultViewModel = PaymentResultViewModel(
+              bookingId: checkout.bookingId,
+              bookingRepository: widget.bookingRepository,
+            );
             setState(() {
               _checkoutResult = checkout;
               _showPaymentResult = true;
               _showCheckout = false;
             });
-            unawaited(_bookingsViewModel.load());
-            unawaited(_notificationsViewModel.refresh());
+            if (checkout.paymentMethod.toLowerCase() != 'payos') {
+              unawaited(_bookingsViewModel.load());
+              unawaited(_notificationsViewModel.refresh());
+            }
           },
         )
       else if (_showSelectRoom)
@@ -457,6 +469,8 @@ class _MainShellState extends State<MainShell> {
   }
 
   void _resetExploreFlow() {
+    _paymentResultViewModel?.dispose();
+    _paymentResultViewModel = null;
     setState(() {
       _showSearch = false;
       _showSelectRoom = false;
@@ -471,6 +485,38 @@ class _MainShellState extends State<MainShell> {
       _propertyDetailsError = null;
       _isLoadingPropertyDetails = false;
     });
+  }
+
+  Future<void> _handlePaymentConfirmed() async {
+    _bookingsViewModel.selectTab(BookingListTab.upcoming);
+    await Future.wait([
+      _bookingsViewModel.load(),
+      _notificationsViewModel.refresh(),
+    ]);
+    if (!mounted) {
+      return;
+    }
+
+    _paymentResultViewModel?.dispose();
+    _paymentResultViewModel = null;
+    setState(() {
+      _selectedIndex = 2;
+      _showSearch = false;
+      _showSelectRoom = false;
+      _showCheckout = false;
+      _showAddCard = false;
+      _showPaymentResult = false;
+      _showChat = false;
+      _selectedProperty = null;
+      _selectedRoomData = null;
+      _checkoutData = null;
+      _checkoutResult = null;
+      _propertyDetailsError = null;
+      _isLoadingPropertyDetails = false;
+    });
+    ScaffoldMessenger.of(
+      context,
+    ).showSnackBar(const SnackBar(content: Text('Room booked successfully.')));
   }
 
   PropertyDetailsData _toPropertyDetailsData(

@@ -11,6 +11,7 @@ import 'package:bingcook/domain/repositories/booking_repository.dart';
 import 'package:bingcook/domain/repositories/chat_repository.dart';
 import 'package:bingcook/domain/repositories/notification_repository.dart';
 import 'package:bingcook/domain/repositories/product_repository.dart';
+import 'package:bingcook/ui/features/checkout/views/payment_result_view.dart';
 import 'package:bingcook/ui/features/navigation/views/main_shell.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter_test/flutter_test.dart';
@@ -267,6 +268,54 @@ void main() {
     expect(find.text('Find your next stay'), findsOneWidget);
   });
 
+  testWidgets('PayOS return refreshes data and opens bookings', (tester) async {
+    final repository = PaidBookingRepository();
+    await _pumpMainShell(
+      tester,
+      bookingRepository: repository,
+      payOSCheckoutBuilder: (url, onPageFinished) => FilledButton(
+        key: const Key('payos_complete_button'),
+        onPressed: () => onPageFinished(
+          'https://bingcook-api.mascoteach.com/api/payments/payos/return?orderCode=1',
+        ),
+        child: const Text('Complete PayOS'),
+      ),
+    );
+
+    await tester.tap(find.text('Ocean Pearl Hotel'));
+    await tester.pumpAndSettle();
+    await tester.scrollUntilVisible(
+      find.byKey(const Key('property_book_now_button')),
+      300,
+      scrollable: find.byType(Scrollable).first,
+    );
+    tester
+        .widget<FilledButton>(find.byKey(const Key('property_book_now_button')))
+        .onPressed!();
+    await tester.pumpAndSettle();
+    await tester.tap(find.text('Deluxe Ocean View'));
+    await tester.pump();
+    tester
+        .widget<FilledButton>(
+          find.byKey(const Key('continue_to_payment_button')),
+        )
+        .onPressed!();
+    await tester.pumpAndSettle();
+    tester
+        .widget<FilledButton>(find.byKey(const Key('confirm_booking_button')))
+        .onPressed!();
+    await tester.pumpAndSettle();
+
+    await tester.tap(find.byKey(const Key('payos_complete_button')));
+    await tester.pumpAndSettle();
+
+    expect(find.text('My Reservations'), findsOneWidget);
+    expect(find.text('Upcoming'), findsOneWidget);
+    expect(find.text('Room booked successfully.'), findsOneWidget);
+    expect(repository.fetchReservationsCalls, greaterThanOrEqualTo(2));
+    expect(repository.statusCalls, 1);
+  });
+
   testWidgets('profile tab logs out through repository', (tester) async {
     var loggedOut = false;
     final repository = FakeAuthRepository();
@@ -311,6 +360,7 @@ Future<void> _pumpMainShell(
   ProductRepository? productRepository,
   BookingRepository? bookingRepository,
   VoidCallback? onLogoutCompleted,
+  PayOSCheckoutBuilder? payOSCheckoutBuilder,
 }) async {
   await tester.pumpWidget(
     MaterialApp(
@@ -321,10 +371,12 @@ Future<void> _pumpMainShell(
         chatRepository: const FakeChatRepository(),
         notificationRepository: const FakeNotificationRepository(),
         onLogoutCompleted: onLogoutCompleted ?? () {},
-        payOSCheckoutBuilder: (url) => Text(
-          'Embedded PayOS: $url',
-          key: const Key('payos_checkout_webview'),
-        ),
+        payOSCheckoutBuilder:
+            payOSCheckoutBuilder ??
+            (url, _) => Text(
+              'Embedded PayOS: $url',
+              key: const Key('payos_checkout_webview'),
+            ),
       ),
     ),
   );
@@ -465,6 +517,32 @@ class FakeBookingRepository implements BookingRepository {
   @override
   Future<BookingCancellation> cancel(String bookingId) {
     throw UnimplementedError();
+  }
+}
+
+class PaidBookingRepository extends FakeBookingRepository {
+  int fetchReservationsCalls = 0;
+  int statusCalls = 0;
+
+  @override
+  Future<List<BookingReservation>> fetchReservations() async {
+    fetchReservationsCalls++;
+    return const [];
+  }
+
+  @override
+  Future<BookingPaymentStatus> fetchStatus(String bookingId) async {
+    statusCalls++;
+    return const BookingPaymentStatus(
+      bookingId: 'f4fb8b9d-b26c-4685-9454-0fbb9d927337',
+      bookingStatus: 'Paid',
+      paymentMethod: 'PayOS',
+      paymentStatus: 'Success',
+      amount: 255,
+      transactionCode: '88001234',
+      paidAt: null,
+      updatedAt: null,
+    );
   }
 }
 
