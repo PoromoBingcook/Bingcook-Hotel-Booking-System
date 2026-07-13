@@ -199,10 +199,12 @@ class ExploreView extends StatelessWidget {
     }
 
     if (viewModel.isEmpty) {
-      return const [
+      return [
         _ExploreMessage(
           icon: Icons.hotel_outlined,
           title: 'No stays match your search.',
+          actionLabel: 'Refresh',
+          onAction: viewModel.retry,
         ),
       ];
     }
