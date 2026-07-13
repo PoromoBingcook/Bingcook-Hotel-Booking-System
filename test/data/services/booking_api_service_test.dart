@@ -165,6 +165,76 @@ void main() {
       expect(checkout.bookingStatus, 'PendingPayment');
     });
 
+    test('fetchStatus gets authenticated payment status', () async {
+      http.Request? capturedRequest;
+      final service = BookingApiService(
+        client: MockClient((request) async {
+          capturedRequest = request;
+          return http.Response(
+            '''
+{
+  "bookingId": "booking-1",
+  "bookingStatus": "Paid",
+  "paymentMethod": "PayOS",
+  "paymentStatus": "Success",
+  "amount": 4080000,
+  "transactionCode": "88001234",
+  "paymentLinkId": "payos-link-id",
+  "checkoutUrl": "https://pay.payos.vn/web/88001234",
+  "expiresAt": null,
+  "paidAt": "2026-07-14T02:00:00Z",
+  "updatedAt": "2026-07-14T02:00:00Z"
+}
+''',
+            200,
+            headers: {'content-type': 'application/json'},
+          );
+        }),
+        baseUrl: Uri.parse('http://10.0.2.2:5115'),
+      );
+
+      final status = await service.fetchStatus(
+        token: 'jwt-token',
+        bookingId: 'booking-1',
+      );
+
+      expect(capturedRequest!.method, 'GET');
+      expect(capturedRequest!.url.path, '/api/bookings/booking-1/status');
+      expect(capturedRequest!.headers['authorization'], 'Bearer jwt-token');
+      expect(status.toDomain().isPaid, isTrue);
+    });
+
+    test('cancel posts to booking cancellation endpoint', () async {
+      http.Request? capturedRequest;
+      final service = BookingApiService(
+        client: MockClient((request) async {
+          capturedRequest = request;
+          return http.Response(
+            '''
+{
+  "bookingId": "booking-1",
+  "bookingStatus": "Cancelled",
+  "paymentStatus": "Success",
+  "message": "Booking cancelled."
+}
+''',
+            200,
+            headers: {'content-type': 'application/json'},
+          );
+        }),
+        baseUrl: Uri.parse('http://10.0.2.2:5115'),
+      );
+
+      final cancellation = await service.cancel(
+        token: 'jwt-token',
+        bookingId: 'booking-1',
+      );
+
+      expect(capturedRequest!.method, 'POST');
+      expect(capturedRequest!.url.path, '/api/bookings/booking-1/cancel');
+      expect(cancellation.paymentStatus, 'Success');
+    });
+
     test('throws BookingApiException with server message on failure', () {
       final service = BookingApiService(
         client: MockClient((request) async {

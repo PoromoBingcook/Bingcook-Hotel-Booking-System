@@ -105,6 +105,49 @@ class BookingApiService {
     return BookingCheckoutResponse.fromJson(decoded);
   }
 
+  Future<BookingStatusResponse> fetchStatus({
+    required String token,
+    required String bookingId,
+  }) async {
+    final decoded = await _getObject(
+      token: token,
+      path: '/api/bookings/$bookingId/status',
+    );
+    return BookingStatusResponse.fromJson(decoded);
+  }
+
+  Future<BookingCancellationResponse> cancel({
+    required String token,
+    required String bookingId,
+  }) async {
+    final decoded = await _postObject(
+      token: token,
+      path: '/api/bookings/$bookingId/cancel',
+      body: const {},
+    );
+    return BookingCancellationResponse.fromJson(decoded);
+  }
+
+  Future<Map<String, Object?>> _getObject({
+    required String token,
+    required String path,
+  }) async {
+    final response = await _client.get(
+      _baseUrl.replace(path: path),
+      headers: {'accept': 'application/json', 'authorization': 'Bearer $token'},
+    );
+
+    final decoded = _decodeObject(response.body);
+    if (response.statusCode < 200 || response.statusCode >= 300) {
+      throw BookingApiException(
+        _readMessage(decoded) ?? 'Booking request failed.',
+        statusCode: response.statusCode,
+      );
+    }
+
+    return decoded;
+  }
+
   Future<Map<String, Object?>> _postObject({
     required String token,
     required String path,

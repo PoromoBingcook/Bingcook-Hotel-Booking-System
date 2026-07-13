@@ -64,4 +64,12 @@ class _BookingRepository implements BookingRepository {
   @override
   Future<BookingCheckout> checkout(CheckoutBookingCommand command) =>
       throw UnimplementedError();
+
+  @override
+  Future<BookingPaymentStatus> fetchStatus(String bookingId) =>
+      throw UnimplementedError();
+
+  @override
+  Future<BookingCancellation> cancel(String bookingId) =>
+      throw UnimplementedError();
 }

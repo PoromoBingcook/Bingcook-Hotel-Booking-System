@@ -92,6 +92,52 @@ class ApiBookingRepository implements BookingRepository {
     }
   }
 
+  @override
+  Future<BookingPaymentStatus> fetchStatus(String bookingId) async {
+    try {
+      final response = await _bookingApiService.fetchStatus(
+        token: _token(),
+        bookingId: bookingId,
+      );
+      return response.toDomain();
+    } on BookingRepositoryException {
+      rethrow;
+    } on BookingApiException catch (error) {
+      throw BookingRepositoryException(error.message);
+    } on FormatException {
+      throw const BookingRepositoryException(
+        'Unable to read booking status response.',
+      );
+    } catch (_) {
+      throw const BookingRepositoryException(
+        'Unable to reach BingCook server.',
+      );
+    }
+  }
+
+  @override
+  Future<BookingCancellation> cancel(String bookingId) async {
+    try {
+      final response = await _bookingApiService.cancel(
+        token: _token(),
+        bookingId: bookingId,
+      );
+      return response.toDomain();
+    } on BookingRepositoryException {
+      rethrow;
+    } on BookingApiException catch (error) {
+      throw BookingRepositoryException(error.message);
+    } on FormatException {
+      throw const BookingRepositoryException(
+        'Unable to read cancellation response.',
+      );
+    } catch (_) {
+      throw const BookingRepositoryException(
+        'Unable to reach BingCook server.',
+      );
+    }
+  }
+
   String _token() {
     final token = _authRepository.currentSession?.token;
     if (token == null || token.isEmpty) {

@@ -40,6 +40,8 @@ class CheckoutBookingCommand {
   final String? identityNumber;
 }
 
+enum BookingCategory { active, past, canceled }
+
 class BookingReservation {
   const BookingReservation({
     required this.bookingId,
@@ -80,6 +82,82 @@ class BookingReservation {
   final String bookingStatus;
   final String? paymentStatus;
   final String? paymentMethod;
+
+  BookingCategory categoryAt(DateTime now) {
+    final normalizedStatus = bookingStatus.trim().toLowerCase();
+    if (normalizedStatus == 'cancelled' ||
+        normalizedStatus == 'canceled' ||
+        normalizedStatus == 'expired') {
+      return BookingCategory.canceled;
+    }
+    if (!checkOut.toUtc().isAfter(now.toUtc())) {
+      return BookingCategory.past;
+    }
+    return BookingCategory.active;
+  }
+
+  bool canCancelAt(DateTime now) {
+    final normalizedStatus = bookingStatus.trim().toLowerCase();
+    const cancellableStatuses = {
+      'pending',
+      'pendingpayment',
+      'confirmed',
+      'paid',
+    };
+    if (!cancellableStatuses.contains(normalizedStatus)) {
+      return false;
+    }
+
+    final checkInInstant = DateTime.utc(
+      checkIn.year,
+      checkIn.month,
+      checkIn.day,
+      7,
+    );
+    return now.toUtc().isBefore(
+      checkInInstant.subtract(const Duration(days: 1)),
+    );
+  }
+}
+
+class BookingPaymentStatus {
+  const BookingPaymentStatus({
+    required this.bookingId,
+    required this.bookingStatus,
+    required this.paymentMethod,
+    required this.paymentStatus,
+    required this.amount,
+    required this.transactionCode,
+    required this.paidAt,
+    required this.updatedAt,
+  });
+
+  final String bookingId;
+  final String bookingStatus;
+  final String? paymentMethod;
+  final String? paymentStatus;
+  final double? amount;
+  final String? transactionCode;
+  final DateTime? paidAt;
+  final DateTime? updatedAt;
+
+  bool get isPaid =>
+      bookingStatus.toLowerCase() == 'paid' &&
+      paymentStatus?.toLowerCase() == 'success';
+}
+
+class BookingCancellation {
+  const BookingCancellation({
+    required this.bookingId,
+    required this.bookingStatus,
+    required this.paymentStatus,
+    required this.message,
+  });
+
+  final String bookingId;
+  final String bookingStatus;
+  final String? paymentStatus;
+  final String message;
 }
 
 class BookingDraft {

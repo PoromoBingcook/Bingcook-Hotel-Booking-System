@@ -101,4 +101,14 @@ class FakeBookingRepository implements BookingRepository {
       message: 'Open checkoutUrl to pay with PayOS.',
     );
   }
+
+  @override
+  Future<BookingPaymentStatus> fetchStatus(String bookingId) {
+    throw UnimplementedError();
+  }
+
+  @override
+  Future<BookingCancellation> cancel(String bookingId) {
+    throw UnimplementedError();
+  }
 }

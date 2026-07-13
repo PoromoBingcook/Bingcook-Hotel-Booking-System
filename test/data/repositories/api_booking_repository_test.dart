@@ -63,6 +63,43 @@ void main() {
       expect(result.checkoutUrl, 'https://pay.payos.vn/web/88001234');
     });
 
+    test('fetches status with current session token', () async {
+      final service = FakeBookingApiService();
+      final repository = ApiBookingRepository(
+        bookingApiService: service,
+        authRepository: FakeAuthRepository(),
+      );
+
+      final status = await repository.fetchStatus('booking-1');
+
+      expect(service.lastToken, 'jwt-token');
+      expect(service.lastStatusBookingId, 'booking-1');
+      expect(status.isPaid, isTrue);
+    });
+
+    test('preserves cancellation conflict message', () async {
+      final repository = ApiBookingRepository(
+        bookingApiService: FakeBookingApiService(
+          cancellationError: const BookingApiException(
+            'Bookings must be cancelled at least 24 hours before check-in.',
+            statusCode: 409,
+          ),
+        ),
+        authRepository: FakeAuthRepository(),
+      );
+
+      expect(
+        () => repository.cancel('booking-1'),
+        throwsA(
+          isA<BookingRepositoryException>().having(
+            (error) => error.message,
+            'message',
+            'Bookings must be cancelled at least 24 hours before check-in.',
+          ),
+        ),
+      );
+    });
+
     test('throws repository exception when user is not authenticated', () {
       final repository = ApiBookingRepository(
         bookingApiService: FakeBookingApiService(),
@@ -96,9 +133,13 @@ void main() {
 }
 
 class FakeBookingApiService implements BookingApiService {
+  FakeBookingApiService({this.cancellationError});
+
+  final BookingApiException? cancellationError;
   String? lastToken;
   String? lastDraftPropertyId;
   String? lastPaymentMethod;
+  String? lastStatusBookingId;
 
   @override
   Future<List<BookingReservationResponse>> fetchReservations({
@@ -176,6 +217,40 @@ class FakeBookingApiService implements BookingApiService {
       checkoutUrl: 'https://pay.payos.vn/web/88001234',
       qrCode: 'qr-code-payload',
       message: 'Open checkoutUrl to pay with PayOS.',
+    );
+  }
+
+  @override
+  Future<BookingStatusResponse> fetchStatus({
+    required String token,
+    required String bookingId,
+  }) async {
+    lastToken = token;
+    lastStatusBookingId = bookingId;
+    return const BookingStatusResponse(
+      bookingId: 'booking-1',
+      bookingStatus: 'Paid',
+      paymentMethod: 'PayOS',
+      paymentStatus: 'Success',
+      amount: 4080000,
+      transactionCode: '88001234',
+      paidAt: null,
+      updatedAt: null,
+    );
+  }
+
+  @override
+  Future<BookingCancellationResponse> cancel({
+    required String token,
+    required String bookingId,
+  }) async {
+    if (cancellationError case final error?) throw error;
+    lastToken = token;
+    return const BookingCancellationResponse(
+      bookingId: 'booking-1',
+      bookingStatus: 'Cancelled',
+      paymentStatus: 'Success',
+      message: 'Booking cancelled.',
     );
   }
 }

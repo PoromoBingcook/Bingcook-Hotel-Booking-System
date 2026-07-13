@@ -260,6 +260,120 @@ class BookingCheckoutResponse {
   }
 }
 
+class BookingStatusResponse {
+  const BookingStatusResponse({
+    required this.bookingId,
+    required this.bookingStatus,
+    required this.paymentMethod,
+    required this.paymentStatus,
+    required this.amount,
+    required this.transactionCode,
+    required this.paidAt,
+    required this.updatedAt,
+  });
+
+  factory BookingStatusResponse.fromJson(Map<String, Object?> json) {
+    return BookingStatusResponse(
+      bookingId: BookingDraftResponse._readString(
+        json['bookingId'],
+        fallback: '',
+      ),
+      bookingStatus: BookingDraftResponse._readString(
+        json['bookingStatus'],
+        fallback: '',
+      ),
+      paymentMethod: BookingDraftResponse._readOptionalString(
+        json['paymentMethod'],
+      ),
+      paymentStatus: BookingDraftResponse._readOptionalString(
+        json['paymentStatus'],
+      ),
+      amount: _readOptionalDouble(json['amount']),
+      transactionCode: BookingDraftResponse._readOptionalString(
+        json['transactionCode'],
+      ),
+      paidAt: _readOptionalDateTime(json['paidAt']),
+      updatedAt: _readOptionalDateTime(json['updatedAt']),
+    );
+  }
+
+  final String bookingId;
+  final String bookingStatus;
+  final String? paymentMethod;
+  final String? paymentStatus;
+  final double? amount;
+  final String? transactionCode;
+  final DateTime? paidAt;
+  final DateTime? updatedAt;
+
+  BookingPaymentStatus toDomain() {
+    return BookingPaymentStatus(
+      bookingId: bookingId,
+      bookingStatus: bookingStatus,
+      paymentMethod: paymentMethod,
+      paymentStatus: paymentStatus,
+      amount: amount,
+      transactionCode: transactionCode,
+      paidAt: paidAt,
+      updatedAt: updatedAt,
+    );
+  }
+
+  static double? _readOptionalDouble(Object? value) {
+    return switch (value) {
+      num number => number.toDouble(),
+      String text => double.tryParse(text),
+      _ => null,
+    };
+  }
+
+  static DateTime? _readOptionalDateTime(Object? value) {
+    return value is String && value.trim().isNotEmpty
+        ? DateTime.tryParse(value)
+        : null;
+  }
+}
+
+class BookingCancellationResponse {
+  const BookingCancellationResponse({
+    required this.bookingId,
+    required this.bookingStatus,
+    required this.paymentStatus,
+    required this.message,
+  });
+
+  factory BookingCancellationResponse.fromJson(Map<String, Object?> json) {
+    return BookingCancellationResponse(
+      bookingId: BookingDraftResponse._readString(
+        json['bookingId'],
+        fallback: '',
+      ),
+      bookingStatus: BookingDraftResponse._readString(
+        json['bookingStatus'],
+        fallback: '',
+      ),
+      paymentStatus: BookingDraftResponse._readOptionalString(
+        json['paymentStatus'],
+      ),
+      message: BookingDraftResponse._readString(json['message'], fallback: ''),
+    );
+  }
+
+  final String bookingId;
+  final String bookingStatus;
+  final String? paymentStatus;
+  final String message;
+
+  BookingCancellation toDomain() {
+    return BookingCancellation(
+      bookingId: bookingId,
+      bookingStatus: bookingStatus,
+      paymentStatus: paymentStatus,
+      message: message,
+    );
+  }
+}
+
 class BookingReservationResponse {
   const BookingReservationResponse({
     required this.bookingId,

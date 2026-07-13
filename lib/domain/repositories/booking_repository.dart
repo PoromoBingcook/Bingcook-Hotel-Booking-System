@@ -6,6 +6,10 @@ abstract interface class BookingRepository {
   Future<BookingDraft> createDraft(CreateBookingDraftCommand command);
 
   Future<BookingCheckout> checkout(CheckoutBookingCommand command);
+
+  Future<BookingPaymentStatus> fetchStatus(String bookingId);
+
+  Future<BookingCancellation> cancel(String bookingId);
 }
 
 class BookingRepositoryException implements Exception {
