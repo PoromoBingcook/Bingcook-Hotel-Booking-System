@@ -25,6 +25,8 @@ migrate_working_dir/
 
 # Flutter/Dart/Pub related
 **/doc/api/
+docs/superpowers/spec/
+docs/superpowers/specs/
 **/ios/Flutter/.last_build_id
 .dart_tool/
 .flutter-plugins-dependencies
