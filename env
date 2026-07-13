@@ -1,0 +1,13 @@
+PayOS__ClientId=ac794397-f8d1-4434-ab25-5bcff977b1ec
+PayOS__ApiKey=abf8a557-f0bb-4686-bd7d-8a4c66ee8249
+PayOS__ChecksumKey=20592cfe14c35ff849b8717832272055acf5cd6a6ee99bb247368a89daf7256d
+PayOS__ReturnUrl=http://localhost:5115/api/payments/payos/return
+PayOS__CancelUrl=http://localhost:5115/api/payments/payos/cancel
+WelcomeEmail__Enabled=true
+WelcomeEmail__Host=smtp.gmail.com
+WelcomeEmail__Port=587
+WelcomeEmail__EnableSsl=true
+WelcomeEmail__Username=edwardblowurmind@gmail.com
+WelcomeEmail__Password=dpkruwmjofhyzbhs
+WelcomeEmail__FromEmail=edwardblowurmind@gmail.com
+WelcomeEmail__FromName=BingCook

@@ -12,10 +12,10 @@ class AppBottomNavigation extends StatelessWidget {
   final ValueChanged<int> onSelected;
 
   static const _items = [
-    (icon: Icons.search_rounded, label: 'Tìm kiếm'),
-    (icon: Icons.favorite_border_rounded, label: 'Đã lưu'),
-    (icon: Icons.confirmation_number_outlined, label: 'Đặt chỗ'),
-    (icon: Icons.person_outline_rounded, label: 'Tài khoản'),
+    (icon: Icons.search_rounded, label: 'Explore'),
+    (icon: Icons.favorite_border_rounded, label: 'Saved'),
+    (icon: Icons.confirmation_number_outlined, label: 'Bookings'),
+    (icon: Icons.person_outline_rounded, label: 'Profile'),
   ];
 
   @override
@@ -43,6 +43,7 @@ class AppBottomNavigation extends StatelessWidget {
 
             return Expanded(
               child: InkWell(
+                key: Key('bottom_nav_$index'),
                 onTap: () => onSelected(index),
                 child: Semantics(
                   selected: selected,

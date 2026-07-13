@@ -68,6 +68,11 @@ class ApiAuthRepository implements AuthRepository, RestorableAuthRepository {
       _currentSession = null;
       await _clearStoredSession();
     } on AuthApiException catch (error) {
+      if (error.statusCode == 401) {
+        _currentSession = null;
+        await _clearStoredSession();
+        return;
+      }
       throw AuthRepositoryException(error.message);
     } catch (_) {
       throw const AuthRepositoryException('Unable to reach BingCook server.');

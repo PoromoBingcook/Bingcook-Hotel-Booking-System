@@ -22,7 +22,15 @@ class ProfileViewModel extends ChangeNotifier {
     return email == null || email.isEmpty ? 'No email added' : email;
   }
 
-  String get membershipLabel => 'BingCook Cấp 1';
+  String get phone {
+    final phone = _authRepository.currentSession?.user.phone?.trim();
+    return phone == null || phone.isEmpty ? 'Not added' : phone;
+  }
+
+  String get roleLabel {
+    final role = _authRepository.currentSession?.user.role.trim();
+    return role == null || role.isEmpty ? 'BingCook user' : role;
+  }
 
   Future<bool> logout() async {
     if (_isLoggingOut) {
