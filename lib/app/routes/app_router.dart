@@ -60,6 +60,7 @@ class AppRouter {
       productRepository: _dependencies.productRepository,
       bookingRepository: _dependencies.bookingRepository,
       chatRepository: _dependencies.chatRepository,
+      notificationRepository: _dependencies.notificationRepository,
       chatRealtimeService: _dependencies.chatRealtimeService,
       onLogoutCompleted: logout,
     );

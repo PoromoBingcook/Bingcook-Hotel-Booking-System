@@ -2,12 +2,14 @@ import 'package:bingcook/domain/models/auth_session.dart';
 import 'package:bingcook/domain/models/auth_user.dart';
 import 'package:bingcook/domain/models/booking.dart';
 import 'package:bingcook/domain/models/chat.dart';
+import 'package:bingcook/domain/models/notification_item.dart';
 import 'package:bingcook/domain/models/product.dart';
 import 'package:bingcook/domain/models/product_details.dart';
 import 'package:bingcook/domain/models/product_search_query.dart';
 import 'package:bingcook/domain/repositories/auth_repository.dart';
 import 'package:bingcook/domain/repositories/booking_repository.dart';
 import 'package:bingcook/domain/repositories/chat_repository.dart';
+import 'package:bingcook/domain/repositories/notification_repository.dart';
 import 'package:bingcook/domain/repositories/product_repository.dart';
 import 'package:bingcook/ui/features/navigation/views/main_shell.dart';
 import 'package:flutter/material.dart';
@@ -288,6 +290,7 @@ Future<void> _pumpMainShell(
         productRepository: productRepository ?? const FakeProductRepository(),
         bookingRepository: bookingRepository ?? const FakeBookingRepository(),
         chatRepository: const FakeChatRepository(),
+        notificationRepository: const FakeNotificationRepository(),
         onLogoutCompleted: onLogoutCompleted ?? () {},
         payOSCheckoutBuilder: (url) => Text(
           'Embedded PayOS: $url',
@@ -297,6 +300,29 @@ Future<void> _pumpMainShell(
     ),
   );
   await tester.pumpAndSettle();
+}
+
+class FakeNotificationRepository implements NotificationRepository {
+  const FakeNotificationRepository();
+
+  @override
+  Future<List<NotificationItem>> fetchNotifications() async {
+    return [
+      NotificationItem(
+        id: 'notification-1',
+        title: 'Booking Confirmed',
+        message: 'Your stay at Ocean Pearl Hotel is confirmed.',
+        isRead: false,
+        createdAt: DateTime(2026, 7, 13, 9, 20),
+      ),
+    ];
+  }
+
+  @override
+  Future<void> markAllRead() async {}
+
+  @override
+  Future<void> markRead(String notificationId) async {}
 }
 
 class FakeChatRepository implements ChatRepository {

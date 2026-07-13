@@ -7,6 +7,7 @@ import 'package:bingcook/domain/models/product_search_query.dart';
 import 'package:bingcook/domain/repositories/auth_repository.dart';
 import 'package:bingcook/domain/repositories/booking_repository.dart';
 import 'package:bingcook/domain/repositories/chat_repository.dart';
+import 'package:bingcook/domain/repositories/notification_repository.dart';
 import 'package:bingcook/domain/repositories/product_repository.dart';
 import 'package:bingcook/domain/services/chat_realtime_service.dart';
 import 'package:bingcook/ui/core/constants/app_assets.dart';
@@ -30,6 +31,8 @@ import 'package:bingcook/ui/features/explore/views/explore_view.dart';
 import 'package:bingcook/ui/features/property_details/models/property_details_data.dart';
 import 'package:bingcook/ui/features/property_details/view_models/property_details_view_model.dart';
 import 'package:bingcook/ui/features/property_details/views/property_details_view.dart';
+import 'package:bingcook/ui/features/notifications/view_models/notifications_view_model.dart';
+import 'package:bingcook/ui/features/notifications/views/notifications_view.dart';
 import 'package:bingcook/ui/features/profile/view_models/profile_view_model.dart';
 import 'package:bingcook/ui/features/profile/views/profile_view.dart';
 import 'package:bingcook/ui/features/profile/views/personal_information_view.dart';
@@ -46,6 +49,7 @@ class MainShell extends StatefulWidget {
     required this.productRepository,
     required this.bookingRepository,
     required this.chatRepository,
+    required this.notificationRepository,
     required this.onLogoutCompleted,
     this.chatRealtimeService,
     this.payOSCheckoutBuilder,
@@ -56,6 +60,7 @@ class MainShell extends StatefulWidget {
   final ProductRepository productRepository;
   final BookingRepository bookingRepository;
   final ChatRepository chatRepository;
+  final NotificationRepository notificationRepository;
   final VoidCallback onLogoutCompleted;
   final ChatRealtimeService? chatRealtimeService;
   final PayOSCheckoutBuilder? payOSCheckoutBuilder;
@@ -73,6 +78,7 @@ class _MainShellState extends State<MainShell> {
   bool _showPaymentResult = false;
   bool _showChat = false;
   bool _showMessages = false;
+  bool _showNotifications = false;
   bool _showPersonalInformation = false;
   bool _showPropertyChat = false;
   bool _isLoadingPropertyDetails = false;
@@ -90,6 +96,7 @@ class _MainShellState extends State<MainShell> {
   final AddCardViewModel _addCardViewModel = AddCardViewModel();
   late final ChatViewModel _chatViewModel;
   late final ConversationsViewModel _conversationsViewModel;
+  late final NotificationsViewModel _notificationsViewModel;
   ChatViewModel? _selectedChatViewModel;
   ChatViewModel? _propertyChatViewModel;
   late final ProfileViewModel _profileViewModel;
@@ -122,6 +129,10 @@ class _MainShellState extends State<MainShell> {
     _conversationsViewModel = ConversationsViewModel(
       chatRepository: widget.chatRepository,
     );
+    _notificationsViewModel = NotificationsViewModel(
+      notificationRepository: widget.notificationRepository,
+    );
+    unawaited(_notificationsViewModel.load());
     _profileViewModel = ProfileViewModel(authRepository: widget.authRepository);
     _bookingsViewModel = BookingsViewModel(
       bookingRepository: widget.bookingRepository,
@@ -139,6 +150,7 @@ class _MainShellState extends State<MainShell> {
     _addCardViewModel.dispose();
     _chatViewModel.dispose();
     _conversationsViewModel.dispose();
+    _notificationsViewModel.dispose();
     _selectedChatViewModel?.dispose();
     _propertyChatViewModel?.dispose();
     _profileViewModel.dispose();
@@ -173,6 +185,8 @@ class _MainShellState extends State<MainShell> {
               _showPaymentResult = true;
               _showCheckout = false;
             });
+            unawaited(_bookingsViewModel.load());
+            unawaited(_notificationsViewModel.refresh());
           },
         )
       else if (_showSelectRoom)
@@ -214,13 +228,20 @@ class _MainShellState extends State<MainShell> {
         ),
       _savedDestination,
       BookingsView(viewModel: _bookingsViewModel),
-      ProfileView(
-        viewModel: _profileViewModel,
-        onMessagesRequested: _openMessages,
-        onPersonalInformationRequested: () =>
-            setState(() => _showPersonalInformation = true),
-        onSupportRequested: () => setState(() => _showChat = true),
-        onLoggedOut: widget.onLogoutCompleted,
+      ListenableBuilder(
+        listenable: _notificationsViewModel,
+        builder: (context, _) {
+          return ProfileView(
+            viewModel: _profileViewModel,
+            unreadNotifications: _notificationsViewModel.unreadCount,
+            onMessagesRequested: _openMessages,
+            onNotificationsRequested: _openNotifications,
+            onPersonalInformationRequested: () =>
+                setState(() => _showPersonalInformation = true),
+            onSupportRequested: () => setState(() => _showChat = true),
+            onLoggedOut: widget.onLogoutCompleted,
+          );
+        },
       ),
     ];
 
@@ -245,6 +266,11 @@ class _MainShellState extends State<MainShell> {
               onBack: () => setState(() => _showMessages = false),
               onConversationSelected: _openConversation,
             )
+          : _showNotifications
+          ? NotificationsView(
+              viewModel: _notificationsViewModel,
+              onBack: () => setState(() => _showNotifications = false),
+            )
           : _showPropertyChat && _selectedProperty != null
           ? ChatView(
               key: ValueKey('property-chat-${_selectedProperty!.id}'),
@@ -264,6 +290,7 @@ class _MainShellState extends State<MainShell> {
               _showPaymentResult ||
               _showChat ||
               _showMessages ||
+              _showNotifications ||
               _showPersonalInformation ||
               _selectedChatViewModel != null ||
               _showPropertyChat
@@ -280,6 +307,7 @@ class _MainShellState extends State<MainShell> {
                   _showPaymentResult = false;
                   _showChat = false;
                   _showMessages = false;
+                  _showNotifications = false;
                   _showPersonalInformation = false;
                   _showPropertyChat = false;
                   _isLoadingPropertyDetails = false;
@@ -386,6 +414,11 @@ class _MainShellState extends State<MainShell> {
   void _openMessages() {
     setState(() => _showMessages = true);
     unawaited(_conversationsViewModel.load());
+  }
+
+  void _openNotifications() {
+    setState(() => _showNotifications = true);
+    unawaited(_notificationsViewModel.load());
   }
 
   void _openConversation(ChatConversation conversation) {

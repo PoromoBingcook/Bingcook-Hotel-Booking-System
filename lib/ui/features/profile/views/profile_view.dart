@@ -5,7 +5,9 @@ import 'package:flutter/material.dart';
 class ProfileView extends StatelessWidget {
   const ProfileView({
     required this.viewModel,
+    required this.unreadNotifications,
     required this.onMessagesRequested,
+    required this.onNotificationsRequested,
     required this.onPersonalInformationRequested,
     required this.onSupportRequested,
     required this.onLoggedOut,
@@ -13,7 +15,9 @@ class ProfileView extends StatelessWidget {
   });
 
   final ProfileViewModel viewModel;
+  final int unreadNotifications;
   final VoidCallback onMessagesRequested;
+  final VoidCallback onNotificationsRequested;
   final VoidCallback onPersonalInformationRequested;
   final VoidCallback onSupportRequested;
   final VoidCallback onLoggedOut;
@@ -31,7 +35,9 @@ class ProfileView extends StatelessWidget {
               SliverToBoxAdapter(
                 child: _ProfileHeader(
                   viewModel: viewModel,
+                  unreadNotifications: unreadNotifications,
                   onMessagesRequested: onMessagesRequested,
+                  onNotificationsRequested: onNotificationsRequested,
                 ),
               ),
               SliverPadding(
@@ -112,11 +118,15 @@ class ProfileView extends StatelessWidget {
 class _ProfileHeader extends StatelessWidget {
   const _ProfileHeader({
     required this.viewModel,
+    required this.unreadNotifications,
     required this.onMessagesRequested,
+    required this.onNotificationsRequested,
   });
 
   final ProfileViewModel viewModel;
+  final int unreadNotifications;
   final VoidCallback onMessagesRequested;
+  final VoidCallback onNotificationsRequested;
 
   @override
   Widget build(BuildContext context) {
@@ -172,7 +182,10 @@ class _ProfileHeader extends StatelessWidget {
                     tooltip: 'Tin nhắn',
                   ),
                   const SizedBox(width: 8),
-                  const _NotificationButton(),
+                  _NotificationButton(
+                    unreadCount: unreadNotifications,
+                    onPressed: onNotificationsRequested,
+                  ),
                 ],
               ),
               const SizedBox(height: 22),
@@ -238,31 +251,40 @@ class _HeaderIconButton extends StatelessWidget {
 }
 
 class _NotificationButton extends StatelessWidget {
-  const _NotificationButton();
+  const _NotificationButton({
+    required this.unreadCount,
+    required this.onPressed,
+  });
+
+  final int unreadCount;
+  final VoidCallback onPressed;
 
   @override
   Widget build(BuildContext context) {
     return Stack(
       clipBehavior: Clip.none,
       children: [
-        const _HeaderIconButton(
+        _HeaderIconButton(
           icon: Icons.notifications_none_rounded,
+          onPressed: onPressed,
           tooltip: 'Thông báo',
         ),
-        Positioned(
+        if (unreadCount > 0)
+          Positioned(
           top: 4,
           right: 2,
           child: Container(
-            width: 20,
-            height: 20,
+            key: const Key('profile_notification_badge'),
+            constraints: const BoxConstraints(minWidth: 20, minHeight: 20),
+            padding: const EdgeInsets.symmetric(horizontal: 5),
             decoration: const BoxDecoration(
               color: Color(0xFFE11D2E),
               shape: BoxShape.circle,
             ),
             alignment: Alignment.center,
-            child: const Text(
-              '1',
-              style: TextStyle(
+            child: Text(
+              unreadCount > 9 ? '9+' : unreadCount.toString(),
+              style: const TextStyle(
                 color: Colors.white,
                 fontSize: 12,
                 height: 1,
