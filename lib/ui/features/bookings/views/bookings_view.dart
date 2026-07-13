@@ -1,12 +1,18 @@
+import 'package:bingcook/domain/models/booking.dart';
 import 'package:bingcook/ui/core/theme/app_colors.dart';
 import 'package:bingcook/ui/features/bookings/view_models/bookings_view_model.dart';
 import 'package:bingcook/ui/features/bookings/widgets/reservation_card.dart';
 import 'package:flutter/material.dart';
 
 class BookingsView extends StatelessWidget {
-  const BookingsView({required this.viewModel, super.key});
+  const BookingsView({
+    required this.viewModel,
+    this.onReservationCancelled,
+    super.key,
+  });
 
   final BookingsViewModel viewModel;
+  final VoidCallback? onReservationCancelled;
 
   @override
   Widget build(BuildContext context) {
@@ -20,6 +26,7 @@ class BookingsView extends StatelessWidget {
               padding: EdgeInsets.fromLTRB(16, 18, 16, 14),
               child: Text(
                 'My Reservations',
+                key: Key('bookings_title'),
                 style: TextStyle(
                   color: AppColors.gray900,
                   fontFamily: 'Manrope',
@@ -33,12 +40,16 @@ class BookingsView extends StatelessWidget {
               child: SegmentedButton<BookingListTab>(
                 segments: const [
                   ButtonSegment(
-                    value: BookingListTab.upcoming,
-                    label: Text('Upcoming'),
+                    value: BookingListTab.active,
+                    label: Text('Active'),
                   ),
                   ButtonSegment(
                     value: BookingListTab.past,
                     label: Text('Past'),
+                  ),
+                  ButtonSegment(
+                    value: BookingListTab.canceled,
+                    label: Text('Canceled'),
                   ),
                 ],
                 selected: {viewModel.selectedTab},
@@ -47,14 +58,14 @@ class BookingsView extends StatelessWidget {
               ),
             ),
             const SizedBox(height: 16),
-            Expanded(child: _content()),
+            Expanded(child: _content(context)),
           ],
         ),
       ),
     );
   }
 
-  Widget _content() {
+  Widget _content(BuildContext context) {
     if (viewModel.isLoading) {
       return const Center(child: CircularProgressIndicator());
     }
@@ -85,12 +96,11 @@ class BookingsView extends StatelessWidget {
     final reservations = viewModel.visibleReservations;
     if (reservations.isEmpty) {
       return Center(
-        child: Text(
-          viewModel.selectedTab == BookingListTab.upcoming
-              ? 'No upcoming reservations yet.'
-              : 'No past reservations yet.',
-          style: const TextStyle(color: AppColors.gray600),
-        ),
+        child: Text(switch (viewModel.selectedTab) {
+          BookingListTab.active => 'No active reservations yet.',
+          BookingListTab.past => 'No past reservations yet.',
+          BookingListTab.canceled => 'No canceled reservations yet.',
+        }, style: const TextStyle(color: AppColors.gray600)),
       );
     }
     return RefreshIndicator(
@@ -99,9 +109,69 @@ class BookingsView extends StatelessWidget {
         padding: const EdgeInsets.fromLTRB(12, 0, 12, 24),
         itemCount: reservations.length,
         separatorBuilder: (context, index) => const SizedBox(height: 12),
-        itemBuilder: (_, index) =>
-            ReservationCard(reservation: reservations[index]),
+        itemBuilder: (_, index) {
+          final reservation = reservations[index];
+          final canCancel =
+              viewModel.selectedTab == BookingListTab.active &&
+              viewModel.canCancel(reservation);
+          return ReservationCard(
+            reservation: reservation,
+            isCancelling:
+                viewModel.cancellingBookingId == reservation.bookingId,
+            onCancel: canCancel
+                ? () => _confirmCancellation(context, reservation)
+                : null,
+          );
+        },
       ),
     );
+  }
+
+  Future<void> _confirmCancellation(
+    BuildContext context,
+    BookingReservation reservation,
+  ) async {
+    final hasSuccessfulPayment =
+        reservation.paymentStatus?.toLowerCase() == 'success';
+    final confirmed = await showDialog<bool>(
+      context: context,
+      builder: (dialogContext) => AlertDialog(
+        title: const Text('Cancel reservation?'),
+        content: Text(
+          'Cancellation is available until 24 hours before the 14:00 check-in time.'
+          '${hasSuccessfulPayment ? ' Your successful payment remains recorded. Refund handling is separate.' : ''}',
+        ),
+        actions: [
+          TextButton(
+            onPressed: () => Navigator.pop(dialogContext, false),
+            child: const Text('Keep reservation'),
+          ),
+          FilledButton(
+            key: const Key('confirm_booking_cancellation'),
+            onPressed: () => Navigator.pop(dialogContext, true),
+            child: const Text('Cancel reservation'),
+          ),
+        ],
+      ),
+    );
+    if (confirmed != true || !context.mounted) {
+      return;
+    }
+
+    final success = await viewModel.cancel(reservation);
+    if (!context.mounted) {
+      return;
+    }
+    final message = success
+        ? viewModel.successMessage
+        : viewModel.actionErrorMessage;
+    if (message != null) {
+      ScaffoldMessenger.of(
+        context,
+      ).showSnackBar(SnackBar(content: Text(message)));
+    }
+    if (success) {
+      onReservationCancelled?.call();
+    }
   }
 }

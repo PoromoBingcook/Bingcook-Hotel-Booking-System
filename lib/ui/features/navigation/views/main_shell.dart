@@ -239,7 +239,12 @@ class _MainShellState extends State<MainShell> {
           onStaySelected: _handleStaySelected,
         ),
       _savedDestination,
-      BookingsView(viewModel: _bookingsViewModel),
+      BookingsView(
+        viewModel: _bookingsViewModel,
+        onReservationCancelled: () {
+          unawaited(_notificationsViewModel.refresh());
+        },
+      ),
       ListenableBuilder(
         listenable: _notificationsViewModel,
         builder: (context, _) {
@@ -488,7 +493,7 @@ class _MainShellState extends State<MainShell> {
   }
 
   Future<void> _handlePaymentConfirmed() async {
-    _bookingsViewModel.selectTab(BookingListTab.upcoming);
+    _bookingsViewModel.selectTab(BookingListTab.active);
     await Future.wait([
       _bookingsViewModel.load(),
       _notificationsViewModel.refresh(),

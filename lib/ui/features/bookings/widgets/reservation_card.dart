@@ -5,9 +5,16 @@ import 'package:bingcook/ui/features/bookings/views/reservation_map_view.dart';
 import 'package:flutter/material.dart';
 
 class ReservationCard extends StatelessWidget {
-  const ReservationCard({required this.reservation, super.key});
+  const ReservationCard({
+    required this.reservation,
+    this.onCancel,
+    this.isCancelling = false,
+    super.key,
+  });
 
   final BookingReservation reservation;
+  final VoidCallback? onCancel;
+  final bool isCancelling;
 
   @override
   Widget build(BuildContext context) {
@@ -129,6 +136,26 @@ class ReservationCard extends StatelessWidget {
                     ),
                   ],
                 ),
+                if (onCancel != null) ...[
+                  const SizedBox(height: 10),
+                  SizedBox(
+                    width: double.infinity,
+                    child: OutlinedButton.icon(
+                      key: Key('cancel_booking_${reservation.bookingId}'),
+                      onPressed: isCancelling ? null : onCancel,
+                      icon: isCancelling
+                          ? const SizedBox.square(
+                              key: Key('cancel_booking_progress'),
+                              dimension: 16,
+                              child: CircularProgressIndicator(strokeWidth: 2),
+                            )
+                          : const Icon(Icons.event_busy_outlined, size: 18),
+                      label: Text(
+                        isCancelling ? 'Canceling...' : 'Cancel reservation',
+                      ),
+                    ),
+                  ),
+                ],
               ],
             ),
           ),

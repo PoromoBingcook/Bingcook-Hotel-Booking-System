@@ -310,10 +310,30 @@ void main() {
     await tester.pumpAndSettle();
 
     expect(find.text('My Reservations'), findsOneWidget);
-    expect(find.text('Upcoming'), findsOneWidget);
+    expect(find.text('Active'), findsOneWidget);
     expect(find.text('Room booked successfully.'), findsOneWidget);
     expect(repository.fetchReservationsCalls, greaterThanOrEqualTo(2));
     expect(repository.statusCalls, 1);
+  });
+
+  testWidgets('booking cancellation refreshes notifications', (tester) async {
+    final bookingRepository = CancelableBookingRepository();
+    final notificationRepository = TrackingNotificationRepository();
+    await _pumpMainShell(
+      tester,
+      bookingRepository: bookingRepository,
+      notificationRepository: notificationRepository,
+    );
+
+    await tester.tap(find.byKey(const Key('bottom_nav_2')));
+    await tester.pumpAndSettle();
+    await tester.tap(find.text('Cancel reservation'));
+    await tester.pumpAndSettle();
+    await tester.tap(find.byKey(const Key('confirm_booking_cancellation')));
+    await tester.pumpAndSettle();
+
+    expect(notificationRepository.fetchCalls, greaterThanOrEqualTo(2));
+    expect(bookingRepository.cancelCalls, 1);
   });
 
   testWidgets('profile tab logs out through repository', (tester) async {
@@ -359,6 +379,7 @@ Future<void> _pumpMainShell(
   AuthRepository? authRepository,
   ProductRepository? productRepository,
   BookingRepository? bookingRepository,
+  NotificationRepository? notificationRepository,
   VoidCallback? onLogoutCompleted,
   PayOSCheckoutBuilder? payOSCheckoutBuilder,
 }) async {
@@ -369,7 +390,8 @@ Future<void> _pumpMainShell(
         productRepository: productRepository ?? const FakeProductRepository(),
         bookingRepository: bookingRepository ?? const FakeBookingRepository(),
         chatRepository: const FakeChatRepository(),
-        notificationRepository: const FakeNotificationRepository(),
+        notificationRepository:
+            notificationRepository ?? const FakeNotificationRepository(),
         onLogoutCompleted: onLogoutCompleted ?? () {},
         payOSCheckoutBuilder:
             payOSCheckoutBuilder ??
@@ -404,6 +426,16 @@ class FakeNotificationRepository implements NotificationRepository {
 
   @override
   Future<void> markRead(String notificationId) async {}
+}
+
+class TrackingNotificationRepository extends FakeNotificationRepository {
+  int fetchCalls = 0;
+
+  @override
+  Future<List<NotificationItem>> fetchNotifications() async {
+    fetchCalls++;
+    return super.fetchNotifications();
+  }
 }
 
 class FakeChatRepository implements ChatRepository {
@@ -542,6 +574,48 @@ class PaidBookingRepository extends FakeBookingRepository {
       transactionCode: '88001234',
       paidAt: null,
       updatedAt: null,
+    );
+  }
+}
+
+class CancelableBookingRepository extends FakeBookingRepository {
+  bool _canceled = false;
+  int cancelCalls = 0;
+
+  @override
+  Future<List<BookingReservation>> fetchReservations() async {
+    final checkIn = DateTime.now().add(const Duration(days: 3));
+    return [
+      BookingReservation(
+        bookingId: 'cancelable-booking',
+        propertyId: 'property-1',
+        propertyName: 'Cancelable Ocean Hotel',
+        propertyImageUrl: null,
+        roomId: 'room-1',
+        roomName: 'Deluxe Room',
+        roomImageUrl: null,
+        checkIn: checkIn,
+        checkOut: checkIn.add(const Duration(days: 2)),
+        adults: 2,
+        children: 0,
+        roomQuantity: 1,
+        totalPrice: 5000,
+        bookingStatus: _canceled ? 'Cancelled' : 'Paid',
+        paymentStatus: 'Success',
+        paymentMethod: 'PayOS',
+      ),
+    ];
+  }
+
+  @override
+  Future<BookingCancellation> cancel(String bookingId) async {
+    cancelCalls++;
+    _canceled = true;
+    return const BookingCancellation(
+      bookingId: 'cancelable-booking',
+      bookingStatus: 'Cancelled',
+      paymentStatus: 'Success',
+      message: 'Booking cancelled.',
     );
   }
 }

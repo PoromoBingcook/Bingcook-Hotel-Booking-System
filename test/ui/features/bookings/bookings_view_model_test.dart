@@ -1,36 +1,102 @@
+import 'dart:async';
+
 import 'package:bingcook/domain/models/booking.dart';
 import 'package:bingcook/domain/repositories/booking_repository.dart';
 import 'package:bingcook/ui/features/bookings/view_models/bookings_view_model.dart';
 import 'package:flutter_test/flutter_test.dart';
 
 void main() {
-  test('loads reservations and separates upcoming from past', () async {
+  test('separates active past and canceled reservations', () async {
     final repository = _BookingRepository([
-      _reservation(
-        id: 'upcoming',
-        checkIn: DateTime.now().add(const Duration(days: 2)),
-        checkOut: DateTime.now().add(const Duration(days: 4)),
-      ),
+      _reservation(id: 'active', status: 'Paid'),
       _reservation(
         id: 'past',
-        checkIn: DateTime.now().subtract(const Duration(days: 4)),
-        checkOut: DateTime.now().subtract(const Duration(days: 2)),
+        status: 'Confirmed',
+        checkIn: DateTime(2026, 7, 10),
+        checkOut: DateTime(2026, 7, 13),
       ),
+      _reservation(id: 'canceled', status: 'Cancelled'),
     ]);
-    final viewModel = BookingsViewModel(bookingRepository: repository);
+    final viewModel = BookingsViewModel(
+      bookingRepository: repository,
+      now: () => DateTime.utc(2026, 7, 14, 2),
+    );
 
     await viewModel.load();
-    expect(viewModel.visibleReservations.single.bookingId, 'upcoming');
+    expect(viewModel.visibleReservations.single.bookingId, 'active');
 
     viewModel.selectTab(BookingListTab.past);
     expect(viewModel.visibleReservations.single.bookingId, 'past');
+
+    viewModel.selectTab(BookingListTab.canceled);
+    expect(viewModel.visibleReservations.single.bookingId, 'canceled');
+  });
+
+  test('cancels eligible reservation and reloads server data', () async {
+    final reservation = _reservation(id: 'paid', status: 'Paid');
+    final repository = _BookingRepository([reservation]);
+    final viewModel = BookingsViewModel(
+      bookingRepository: repository,
+      now: () => DateTime.utc(2026, 7, 14, 2),
+    );
+    await viewModel.load();
+
+    final success = await viewModel.cancel(reservation);
+
+    expect(success, isTrue);
+    expect(repository.cancelledBookingId, reservation.bookingId);
+    expect(viewModel.cancellingBookingId, isNull);
+    expect(viewModel.successMessage, contains('Booking cancelled'));
+    expect(repository.fetchCalls, 2);
+  });
+
+  test('prevents duplicate cancellation while request is pending', () async {
+    final reservation = _reservation(id: 'paid', status: 'Paid');
+    final repository = _BookingRepository([
+      reservation,
+    ], cancellationCompleter: Completer<BookingCancellation>());
+    final viewModel = BookingsViewModel(
+      bookingRepository: repository,
+      now: () => DateTime.utc(2026, 7, 14, 2),
+    );
+    await viewModel.load();
+
+    final first = viewModel.cancel(reservation);
+    final second = await viewModel.cancel(reservation);
+
+    expect(second, isFalse);
+    expect(repository.cancelCalls, 1);
+    repository.cancellationCompleter!.complete(_cancellation(reservation));
+    expect(await first, isTrue);
+  });
+
+  test('keeps reservations loaded when cancellation fails', () async {
+    final reservation = _reservation(id: 'paid', status: 'Paid');
+    final repository = _BookingRepository([
+      reservation,
+    ], cancellationError: 'Cancellation is too close to check-in.');
+    final viewModel = BookingsViewModel(
+      bookingRepository: repository,
+      now: () => DateTime.utc(2026, 7, 14, 2),
+    );
+    await viewModel.load();
+
+    final success = await viewModel.cancel(reservation);
+
+    expect(success, isFalse);
+    expect(viewModel.visibleReservations.single.bookingId, 'paid');
+    expect(
+      viewModel.actionErrorMessage,
+      'Cancellation is too close to check-in.',
+    );
   });
 }
 
 BookingReservation _reservation({
   required String id,
-  required DateTime checkIn,
-  required DateTime checkOut,
+  required String status,
+  DateTime? checkIn,
+  DateTime? checkOut,
 }) => BookingReservation(
   bookingId: id,
   propertyId: 'property',
@@ -39,23 +105,86 @@ BookingReservation _reservation({
   roomId: 'room',
   roomName: 'Deluxe Ocean View',
   roomImageUrl: null,
-  checkIn: checkIn,
-  checkOut: checkOut,
+  checkIn: checkIn ?? DateTime(2026, 7, 16),
+  checkOut: checkOut ?? DateTime(2026, 7, 18),
   adults: 2,
   children: 0,
   roomQuantity: 1,
   totalPrice: 1240000,
-  bookingStatus: 'Confirmed',
-  paymentStatus: 'Pending',
-  paymentMethod: 'PayAtProperty',
+  bookingStatus: status,
+  paymentStatus: status == 'Paid' ? 'Success' : 'Pending',
+  paymentMethod: status == 'Paid' ? 'PayOS' : 'PayAtProperty',
 );
 
+BookingCancellation _cancellation(BookingReservation reservation) {
+  return BookingCancellation(
+    bookingId: reservation.bookingId,
+    bookingStatus: 'Cancelled',
+    paymentStatus: reservation.paymentStatus,
+    message: 'Booking cancelled.',
+  );
+}
+
 class _BookingRepository implements BookingRepository {
-  const _BookingRepository(this.reservations);
-  final List<BookingReservation> reservations;
+  _BookingRepository(
+    List<BookingReservation> reservations, {
+    this.cancellationCompleter,
+    this.cancellationError,
+  }) : _reservations = reservations;
+
+  List<BookingReservation> _reservations;
+  final Completer<BookingCancellation>? cancellationCompleter;
+  final String? cancellationError;
+  String? cancelledBookingId;
+  int fetchCalls = 0;
+  int cancelCalls = 0;
 
   @override
-  Future<List<BookingReservation>> fetchReservations() async => reservations;
+  Future<List<BookingReservation>> fetchReservations() async {
+    fetchCalls++;
+    return List.of(_reservations);
+  }
+
+  @override
+  Future<BookingCancellation> cancel(String bookingId) async {
+    cancelCalls++;
+    cancelledBookingId = bookingId;
+    if (cancellationError case final message?) {
+      throw BookingRepositoryException(message);
+    }
+    final reservation = _reservations.singleWhere(
+      (item) => item.bookingId == bookingId,
+    );
+    final cancellation = cancellationCompleter == null
+        ? _cancellation(reservation)
+        : await cancellationCompleter!.future;
+    _reservations = [
+      for (final item in _reservations)
+        item.bookingId == bookingId
+            ? BookingReservation(
+                bookingId: item.bookingId,
+                propertyId: item.propertyId,
+                propertyName: item.propertyName,
+                propertyImageUrl: item.propertyImageUrl,
+                latitude: item.latitude,
+                longitude: item.longitude,
+                roomId: item.roomId,
+                roomName: item.roomName,
+                roomImageUrl: item.roomImageUrl,
+                checkIn: item.checkIn,
+                checkOut: item.checkOut,
+                adults: item.adults,
+                children: item.children,
+                roomQuantity: item.roomQuantity,
+                totalPrice: item.totalPrice,
+                bookingStatus: 'Cancelled',
+                paymentStatus: item.paymentStatus,
+                paymentMethod: item.paymentMethod,
+              )
+            : item,
+    ];
+    return cancellation;
+  }
 
   @override
   Future<BookingDraft> createDraft(CreateBookingDraftCommand command) =>
@@ -67,9 +196,5 @@ class _BookingRepository implements BookingRepository {
 
   @override
   Future<BookingPaymentStatus> fetchStatus(String bookingId) =>
-      throw UnimplementedError();
-
-  @override
-  Future<BookingCancellation> cancel(String bookingId) =>
       throw UnimplementedError();
 }
