@@ -16,6 +16,8 @@ class PropertyDetailsView extends StatelessWidget {
     required this.onBack,
     required this.onBookNow,
     required this.onChat,
+    required this.isSaved,
+    required this.onSavedToggle,
     super.key,
   });
 
@@ -24,6 +26,8 @@ class PropertyDetailsView extends StatelessWidget {
   final VoidCallback onBack;
   final VoidCallback onBookNow;
   final VoidCallback onChat;
+  final bool isSaved;
+  final VoidCallback onSavedToggle;
 
   @override
   Widget build(BuildContext context) {
@@ -46,9 +50,9 @@ class PropertyDetailsView extends StatelessWidget {
                       crossAxisAlignment: CrossAxisAlignment.stretch,
                       children: [
                         _PropertyHeader(
-                          isFavorite: viewModel.isFavorite,
+                          isFavorite: isSaved,
                           onBack: onBack,
-                          onFavorite: viewModel.toggleFavorite,
+                          onFavorite: onSavedToggle,
                         ),
                         Expanded(
                           child: ListView(

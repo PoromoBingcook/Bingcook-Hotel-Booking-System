@@ -11,6 +11,7 @@ import 'package:bingcook/domain/repositories/booking_repository.dart';
 import 'package:bingcook/domain/repositories/chat_repository.dart';
 import 'package:bingcook/domain/repositories/notification_repository.dart';
 import 'package:bingcook/domain/repositories/product_repository.dart';
+import 'package:bingcook/domain/repositories/saved_property_repository.dart';
 import 'package:bingcook/ui/features/navigation/views/main_shell.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter_test/flutter_test.dart';
@@ -117,6 +118,35 @@ void main() {
     await tester.pumpAndSettle();
 
     expect(find.text('Find your next stay'), findsOneWidget);
+  });
+
+  testWidgets('saved stay persists in Saved tab and can be removed', (
+    tester,
+  ) async {
+    final savedRepository = FakeSavedPropertyRepository();
+    await _pumpMainShell(tester, savedPropertyRepository: savedRepository);
+
+    await tester.tap(find.text('Ocean Pearl Hotel'));
+    await tester.pumpAndSettle();
+    await tester.tap(find.byKey(const Key('property_favorite_button')));
+    await tester.pumpAndSettle();
+
+    expect(savedRepository.savedIds, contains(_oceanPearlId));
+    expect(find.byIcon(Icons.favorite_rounded), findsOneWidget);
+
+    await tester.tap(find.byKey(const Key('property_back_button')));
+    await tester.pumpAndSettle();
+    await tester.tap(find.byKey(const Key('bottom_nav_1')));
+    await tester.pumpAndSettle();
+
+    expect(find.byKey(const Key('saved_stays_title')), findsOneWidget);
+    expect(find.text('Ocean Pearl Hotel'), findsOneWidget);
+
+    await tester.tap(find.byKey(const Key('stay_saved_button_$_oceanPearlId')));
+    await tester.pumpAndSettle();
+
+    expect(savedRepository.savedIds, isEmpty);
+    expect(find.text('No saved stays yet'), findsOneWidget);
   });
 
   testWidgets('selecting another stay opens details with its product data', (
@@ -346,6 +376,7 @@ Future<void> _pumpMainShell(
   AuthRepository? authRepository,
   ProductRepository? productRepository,
   BookingRepository? bookingRepository,
+  SavedPropertyRepository? savedPropertyRepository,
   VoidCallback? onLogoutCompleted,
 }) async {
   await tester.pumpWidget(
@@ -356,6 +387,8 @@ Future<void> _pumpMainShell(
         bookingRepository: bookingRepository ?? const FakeBookingRepository(),
         chatRepository: const FakeChatRepository(),
         notificationRepository: const FakeNotificationRepository(),
+        savedPropertyRepository:
+            savedPropertyRepository ?? FakeSavedPropertyRepository(),
         onLogoutCompleted: onLogoutCompleted ?? () {},
         payOSCheckoutBuilder: (url) => Text(
           'Embedded PayOS: $url',
@@ -365,6 +398,30 @@ Future<void> _pumpMainShell(
     ),
   );
   await tester.pumpAndSettle();
+}
+
+const _oceanPearlId = '13430237-d5ed-4c9f-be3a-feddf4cb4fa8';
+
+class FakeSavedPropertyRepository implements SavedPropertyRepository {
+  final Set<String> savedIds = {};
+
+  @override
+  Future<List<Product>> fetchSavedProperties() async {
+    final products = await const FakeProductRepository().fetchProducts();
+    return products
+        .where((product) => savedIds.contains(product.id))
+        .toList(growable: false);
+  }
+
+  @override
+  Future<void> removeProperty(String propertyId) async {
+    savedIds.remove(propertyId);
+  }
+
+  @override
+  Future<void> saveProperty(String propertyId) async {
+    savedIds.add(propertyId);
+  }
 }
 
 class FakeNotificationRepository implements NotificationRepository {

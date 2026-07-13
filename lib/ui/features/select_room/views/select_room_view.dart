@@ -12,6 +12,8 @@ class SelectRoomView extends StatelessWidget {
     required this.viewModel,
     required this.onBack,
     required this.onContinue,
+    required this.isSaved,
+    required this.onSavedToggle,
     super.key,
   });
 
@@ -19,6 +21,8 @@ class SelectRoomView extends StatelessWidget {
   final SelectRoomViewModel viewModel;
   final VoidCallback onBack;
   final VoidCallback onContinue;
+  final bool isSaved;
+  final VoidCallback onSavedToggle;
 
   @override
   Widget build(BuildContext context) {
@@ -38,9 +42,9 @@ class SelectRoomView extends StatelessWidget {
                   crossAxisAlignment: CrossAxisAlignment.stretch,
                   children: [
                     _SelectRoomHeader(
-                      isFavorite: viewModel.isFavorite,
+                      isFavorite: isSaved,
                       onBack: onBack,
-                      onFavorite: viewModel.toggleFavorite,
+                      onFavorite: onSavedToggle,
                     ),
                     Expanded(
                       child: ListView(

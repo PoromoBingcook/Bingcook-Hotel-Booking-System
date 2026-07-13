@@ -3,6 +3,7 @@ import 'package:bingcook/data/repositories/api_booking_repository.dart';
 import 'package:bingcook/data/repositories/api_chat_repository.dart';
 import 'package:bingcook/data/repositories/api_notification_repository.dart';
 import 'package:bingcook/data/repositories/api_product_repository.dart';
+import 'package:bingcook/data/repositories/api_saved_property_repository.dart';
 import 'package:bingcook/data/services/api_config.dart';
 import 'package:bingcook/data/services/auth_api_service.dart';
 import 'package:bingcook/data/services/auth_session_storage.dart';
@@ -10,14 +11,17 @@ import 'package:bingcook/data/services/booking_api_service.dart';
 import 'package:bingcook/data/services/chat_api_service.dart';
 import 'package:bingcook/data/services/notification_api_service.dart';
 import 'package:bingcook/data/services/product_api_service.dart';
+import 'package:bingcook/data/services/saved_property_api_service.dart';
 import 'package:bingcook/data/services/signalr_chat_service.dart';
 import 'package:bingcook/domain/models/chat.dart';
 import 'package:bingcook/domain/models/notification_item.dart';
+import 'package:bingcook/domain/models/product.dart';
 import 'package:bingcook/domain/repositories/auth_repository.dart';
 import 'package:bingcook/domain/repositories/booking_repository.dart';
 import 'package:bingcook/domain/repositories/chat_repository.dart';
 import 'package:bingcook/domain/repositories/notification_repository.dart';
 import 'package:bingcook/domain/repositories/product_repository.dart';
+import 'package:bingcook/domain/repositories/saved_property_repository.dart';
 import 'package:bingcook/domain/services/chat_realtime_service.dart';
 import 'package:http/http.dart' as http;
 
@@ -28,6 +32,7 @@ class AppDependencies {
     required this.bookingRepository,
     required this.chatRepository,
     required this.notificationRepository,
+    required this.savedPropertyRepository,
     this.chatRealtimeService,
     http.Client? httpClient,
   }) : _httpClient = httpClient;
@@ -53,6 +58,10 @@ class AppDependencies {
       client: client,
       baseUrl: baseUrl,
     );
+    final savedPropertyApiService = SavedPropertyApiService(
+      client: client,
+      baseUrl: baseUrl,
+    );
 
     return AppDependencies._(
       authRepository: authRepository,
@@ -71,6 +80,10 @@ class AppDependencies {
         notificationApiService: notificationApiService,
         authRepository: authRepository,
       ),
+      savedPropertyRepository: ApiSavedPropertyRepository(
+        savedPropertyApiService: savedPropertyApiService,
+        authRepository: authRepository,
+      ),
       chatRealtimeService: SignalRChatService(
         baseUrl: baseUrl,
         authRepository: authRepository,
@@ -84,6 +97,7 @@ class AppDependencies {
     required ProductRepository productRepository,
     required BookingRepository bookingRepository,
     NotificationRepository? notificationRepository,
+    SavedPropertyRepository? savedPropertyRepository,
     ChatRepository? chatRepository,
     ChatRealtimeService? chatRealtimeService,
   }) {
@@ -93,6 +107,9 @@ class AppDependencies {
       bookingRepository: bookingRepository,
       notificationRepository:
           notificationRepository ?? const _UnavailableNotificationRepository(),
+      savedPropertyRepository:
+          savedPropertyRepository ??
+          const _UnavailableSavedPropertyRepository(),
       chatRepository: chatRepository ?? const _UnavailableChatRepository(),
       chatRealtimeService: chatRealtimeService,
     );
@@ -103,12 +120,34 @@ class AppDependencies {
   final BookingRepository bookingRepository;
   final ChatRepository chatRepository;
   final NotificationRepository notificationRepository;
+  final SavedPropertyRepository savedPropertyRepository;
   final ChatRealtimeService? chatRealtimeService;
   final http.Client? _httpClient;
 
   void dispose() {
     chatRealtimeService?.disconnect();
     _httpClient?.close();
+  }
+}
+
+class _UnavailableSavedPropertyRepository implements SavedPropertyRepository {
+  const _UnavailableSavedPropertyRepository();
+
+  @override
+  Future<List<Product>> fetchSavedProperties() async => const [];
+
+  @override
+  Future<void> removeProperty(String propertyId) {
+    throw const SavedPropertyRepositoryException(
+      'Saved stays are unavailable in this test.',
+    );
+  }
+
+  @override
+  Future<void> saveProperty(String propertyId) {
+    throw const SavedPropertyRepositoryException(
+      'Saved stays are unavailable in this test.',
+    );
   }
 }
 
