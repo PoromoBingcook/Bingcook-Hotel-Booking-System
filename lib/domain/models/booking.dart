@@ -90,7 +90,18 @@ class BookingReservation {
         normalizedStatus == 'expired') {
       return BookingCategory.canceled;
     }
-    if (!checkOut.toUtc().isAfter(now.toUtc())) {
+    final vietnamNow = now.toUtc().add(const Duration(hours: 7));
+    final todayInVietnam = DateTime.utc(
+      vietnamNow.year,
+      vietnamNow.month,
+      vietnamNow.day,
+    );
+    final checkOutDate = DateTime.utc(
+      checkOut.year,
+      checkOut.month,
+      checkOut.day,
+    );
+    if (checkOutDate.isBefore(todayInVietnam)) {
       return BookingCategory.past;
     }
     return BookingCategory.active;

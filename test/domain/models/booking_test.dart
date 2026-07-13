@@ -35,6 +35,19 @@ void main() {
     expect(reservation.canCancelAt(DateTime.utc(2026, 7, 15, 6, 59)), isTrue);
     expect(reservation.canCancelAt(DateTime.utc(2026, 7, 15, 7)), isFalse);
   });
+
+  test('keeps checkout-day reservation active in Vietnam', () {
+    final reservation = _reservation(
+      status: 'Paid',
+      checkIn: DateTime(2026, 7, 13),
+      checkOut: DateTime(2026, 7, 14),
+    );
+
+    expect(
+      reservation.categoryAt(DateTime.utc(2026, 7, 14, 10)),
+      BookingCategory.active,
+    );
+  });
 }
 
 BookingReservation _reservation({
