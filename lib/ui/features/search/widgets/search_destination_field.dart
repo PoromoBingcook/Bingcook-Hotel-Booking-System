@@ -112,20 +112,24 @@ class _SearchDestinationFieldState extends State<SearchDestinationField> {
                 ),
               ],
             ),
-            child: Column(
-              children: [
-                for (final city in widget.suggestions)
-                  ListTile(
-                    key: Key('city_suggestion_$city'),
-                    dense: true,
-                    leading: const Icon(
-                      Icons.location_city_outlined,
-                      color: AppColors.primaryDark,
+            child: Material(
+              color: Colors.transparent,
+              borderRadius: BorderRadius.circular(10),
+              child: Column(
+                children: [
+                  for (final city in widget.suggestions)
+                    ListTile(
+                      key: Key('city_suggestion_$city'),
+                      dense: true,
+                      leading: const Icon(
+                        Icons.location_city_outlined,
+                        color: AppColors.primaryDark,
+                      ),
+                      title: Text(city),
+                      onTap: () => widget.onSuggestionSelected(city),
                     ),
-                    title: Text(city),
-                    onTap: () => widget.onSuggestionSelected(city),
-                  ),
-              ],
+                ],
+              ),
             ),
           ),
         ],

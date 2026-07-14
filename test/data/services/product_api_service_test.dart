@@ -23,6 +23,8 @@ void main() {
     "location": "Da Nang, Vo Nguyen Giap, Son Tra",
     "city": "Da Nang",
     "address": "Vo Nguyen Giap, Son Tra",
+    "latitude": 16.0544,
+    "longitude": 108.2022,
     "imageUrl": "https://example.com/ocean.jpg",
     "rating": 4.7,
     "reviewCount": 3,
@@ -48,6 +50,8 @@ void main() {
         expect(products, hasLength(1));
         expect(products.single.name, 'Ocean Pearl Hotel');
         expect(products.single.pricePerNight, 68);
+        expect(products.single.latitude, 16.0544);
+        expect(products.single.longitude, 108.2022);
         expect(products.single.amenities, ['Wi-Fi', 'Pool']);
       },
     );

@@ -81,6 +81,8 @@ class ExploreViewModel extends ChangeNotifier {
       location: product.location,
       city: product.city,
       address: product.address,
+      latitude: product.latitude,
+      longitude: product.longitude,
       rating: product.rating,
       reviewCount: product.reviewCount,
       amenities: product.amenities,

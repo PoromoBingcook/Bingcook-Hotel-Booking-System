@@ -56,7 +56,10 @@ void main() {
       );
 
       expect(capturedRequest!.method, 'POST');
-      expect(capturedRequest!.url.path, '/api/notifications/notification-1/read');
+      expect(
+        capturedRequest!.url.path,
+        '/api/notifications/notification-1/read',
+      );
       expect(capturedRequest!.headers['authorization'], 'Bearer jwt-token');
     });
 

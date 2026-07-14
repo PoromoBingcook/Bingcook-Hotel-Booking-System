@@ -14,6 +14,8 @@ class StayCardData {
     required this.price,
     required this.status,
     this.imageUrl,
+    this.latitude,
+    this.longitude,
   });
 
   final String id;
@@ -25,6 +27,8 @@ class StayCardData {
   final String location;
   final String city;
   final String address;
+  final double? latitude;
+  final double? longitude;
   final double rating;
   final int reviewCount;
   final List<String> amenities;
@@ -32,4 +36,15 @@ class StayCardData {
   final String status;
 
   bool get isAvailable => status.toLowerCase() != 'soldout';
+
+  bool get hasCoordinates {
+    final latitude = this.latitude;
+    final longitude = this.longitude;
+    return latitude != null &&
+        longitude != null &&
+        latitude.isFinite &&
+        longitude.isFinite &&
+        latitude.abs() <= 90 &&
+        longitude.abs() <= 180;
+  }
 }

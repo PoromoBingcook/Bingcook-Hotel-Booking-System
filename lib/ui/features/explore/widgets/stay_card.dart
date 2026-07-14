@@ -4,10 +4,18 @@ import 'package:bingcook/ui/features/explore/models/stay_card_data.dart';
 import 'package:flutter/material.dart';
 
 class StayCard extends StatelessWidget {
-  const StayCard({required this.data, super.key, this.onTap});
+  const StayCard({
+    required this.data,
+    super.key,
+    this.onTap,
+    this.isSaved = false,
+    this.onSavedToggle,
+  });
 
   final StayCardData data;
   final VoidCallback? onTap;
+  final bool isSaved;
+  final VoidCallback? onSavedToggle;
 
   @override
   Widget build(BuildContext context) {
@@ -67,17 +75,46 @@ class StayCard extends StatelessWidget {
                         ],
                       ),
                       const SizedBox(height: 4),
-                      Text(
-                        data.name,
-                        maxLines: 2,
-                        overflow: TextOverflow.ellipsis,
-                        style: const TextStyle(
-                          color: AppColors.gray900,
-                          fontFamily: 'Manrope',
-                          fontSize: 18,
-                          height: 1.15,
-                          fontWeight: FontWeight.w700,
-                        ),
+                      Row(
+                        crossAxisAlignment: CrossAxisAlignment.start,
+                        children: [
+                          Expanded(
+                            child: Text(
+                              data.name,
+                              maxLines: 2,
+                              overflow: TextOverflow.ellipsis,
+                              style: const TextStyle(
+                                color: AppColors.gray900,
+                                fontFamily: 'Manrope',
+                                fontSize: 18,
+                                height: 1.15,
+                                fontWeight: FontWeight.w700,
+                              ),
+                            ),
+                          ),
+                          if (onSavedToggle != null)
+                            SizedBox(
+                              width: 36,
+                              height: 36,
+                              child: IconButton(
+                                key: Key('stay_saved_button_${data.id}'),
+                                onPressed: onSavedToggle,
+                                padding: EdgeInsets.zero,
+                                tooltip: isSaved
+                                    ? 'Remove from saved'
+                                    : 'Save property',
+                                icon: Icon(
+                                  isSaved
+                                      ? Icons.favorite_rounded
+                                      : Icons.favorite_border_rounded,
+                                  size: 21,
+                                  color: isSaved
+                                      ? const Color(0xFFEF4444)
+                                      : AppColors.gray500,
+                                ),
+                              ),
+                            ),
+                        ],
                       ),
                       const SizedBox(height: 3),
                       Row(

@@ -3,8 +3,9 @@ import 'package:bingcook/domain/repositories/notification_repository.dart';
 import 'package:flutter/foundation.dart';
 
 class NotificationsViewModel extends ChangeNotifier {
-  NotificationsViewModel({required NotificationRepository notificationRepository})
-    : _notificationRepository = notificationRepository;
+  NotificationsViewModel({
+    required NotificationRepository notificationRepository,
+  }) : _notificationRepository = notificationRepository;
 
   final NotificationRepository _notificationRepository;
   List<NotificationItem> _notifications = const [];
@@ -60,7 +61,9 @@ class NotificationsViewModel extends ChangeNotifier {
       await _notificationRepository.markRead(notificationId);
       _notifications = [
         for (var i = 0; i < _notifications.length; i++)
-          i == index ? _notifications[i].copyWith(isRead: true) : _notifications[i],
+          i == index
+              ? _notifications[i].copyWith(isRead: true)
+              : _notifications[i],
       ];
       _errorMessage = null;
       notifyListeners();

@@ -16,6 +16,8 @@ class ProductListItemResponse {
     required this.amenities,
     required this.pricePerNight,
     required this.status,
+    this.latitude,
+    this.longitude,
   });
 
   factory ProductListItemResponse.fromJson(Map<String, Object?> json) {
@@ -27,6 +29,8 @@ class ProductListItemResponse {
       location: _readString(json['location'], fallback: 'Vietnam'),
       city: _readString(json['city'], fallback: ''),
       address: _readString(json['address'], fallback: ''),
+      latitude: _readOptionalDouble(json['latitude']),
+      longitude: _readOptionalDouble(json['longitude']),
       imageUrl: _readOptionalString(json['imageUrl']),
       rating: _readDouble(json['rating']),
       reviewCount: _readInt(json['reviewCount']),
@@ -43,6 +47,8 @@ class ProductListItemResponse {
   final String location;
   final String city;
   final String address;
+  final double? latitude;
+  final double? longitude;
   final String? imageUrl;
   final double rating;
   final int reviewCount;
@@ -59,6 +65,8 @@ class ProductListItemResponse {
       location: location,
       city: city,
       address: address,
+      latitude: latitude,
+      longitude: longitude,
       imageUrl: imageUrl,
       rating: rating,
       reviewCount: reviewCount,
@@ -88,6 +96,13 @@ class ProductListItemResponse {
       return value.toDouble();
     }
     return 0;
+  }
+
+  static double? _readOptionalDouble(Object? value) {
+    if (value is num) {
+      return value.toDouble();
+    }
+    return null;
   }
 
   static int _readInt(Object? value) {

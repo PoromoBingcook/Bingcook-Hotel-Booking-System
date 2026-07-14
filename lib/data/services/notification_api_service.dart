@@ -55,16 +55,10 @@ class NotificationApiService {
   }
 
   Future<void> markAllRead({required String token}) async {
-    await _postEmpty(
-      token: token,
-      path: '/api/notifications/mark-all-read',
-    );
+    await _postEmpty(token: token, path: '/api/notifications/mark-all-read');
   }
 
-  Future<void> _postEmpty({
-    required String token,
-    required String path,
-  }) async {
+  Future<void> _postEmpty({required String token, required String path}) async {
     final response = await _client.post(
       _baseUrl.replace(path: path),
       headers: {'accept': 'application/json', 'authorization': 'Bearer $token'},

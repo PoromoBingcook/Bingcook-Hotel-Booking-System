@@ -9,6 +9,7 @@ import 'package:bingcook/domain/repositories/booking_repository.dart';
 import 'package:bingcook/domain/repositories/chat_repository.dart';
 import 'package:bingcook/domain/repositories/notification_repository.dart';
 import 'package:bingcook/domain/repositories/product_repository.dart';
+import 'package:bingcook/domain/repositories/saved_property_repository.dart';
 import 'package:bingcook/domain/services/chat_realtime_service.dart';
 import 'package:bingcook/ui/core/constants/app_assets.dart';
 import 'package:bingcook/ui/core/theme/app_colors.dart';
@@ -29,6 +30,7 @@ import 'package:bingcook/ui/features/checkout/views/payment_result_view.dart';
 import 'package:bingcook/ui/features/explore/models/stay_card_data.dart';
 import 'package:bingcook/ui/features/explore/view_models/explore_view_model.dart';
 import 'package:bingcook/ui/features/explore/views/explore_view.dart';
+import 'package:bingcook/ui/features/map/views/nearby_map_view.dart';
 import 'package:bingcook/ui/features/property_details/models/property_details_data.dart';
 import 'package:bingcook/ui/features/property_details/view_models/property_details_view_model.dart';
 import 'package:bingcook/ui/features/property_details/views/property_details_view.dart';
@@ -39,6 +41,8 @@ import 'package:bingcook/ui/features/profile/views/profile_view.dart';
 import 'package:bingcook/ui/features/profile/views/personal_information_view.dart';
 import 'package:bingcook/ui/features/search/view_models/search_view_model.dart';
 import 'package:bingcook/ui/features/search/views/search_view.dart';
+import 'package:bingcook/ui/features/saved/view_models/saved_stays_view_model.dart';
+import 'package:bingcook/ui/features/saved/views/saved_stays_view.dart';
 import 'package:bingcook/ui/features/select_room/models/select_room_data.dart';
 import 'package:bingcook/ui/features/select_room/view_models/select_room_view_model.dart';
 import 'package:bingcook/ui/features/select_room/views/select_room_view.dart';
@@ -51,6 +55,7 @@ class MainShell extends StatefulWidget {
     required this.bookingRepository,
     required this.chatRepository,
     required this.notificationRepository,
+    required this.savedPropertyRepository,
     required this.onLogoutCompleted,
     this.chatRealtimeService,
     this.payOSCheckoutBuilder,
@@ -62,6 +67,7 @@ class MainShell extends StatefulWidget {
   final BookingRepository bookingRepository;
   final ChatRepository chatRepository;
   final NotificationRepository notificationRepository;
+  final SavedPropertyRepository savedPropertyRepository;
   final VoidCallback onLogoutCompleted;
   final ChatRealtimeService? chatRealtimeService;
   final PayOSCheckoutBuilder? payOSCheckoutBuilder;
@@ -73,6 +79,7 @@ class MainShell extends StatefulWidget {
 class _MainShellState extends State<MainShell> {
   int _selectedIndex = 0;
   bool _showSearch = false;
+  bool _showMap = false;
   bool _showSelectRoom = false;
   bool _showCheckout = false;
   bool _showAddCard = false;
@@ -99,15 +106,11 @@ class _MainShellState extends State<MainShell> {
   late final ChatViewModel _chatViewModel;
   late final ConversationsViewModel _conversationsViewModel;
   late final NotificationsViewModel _notificationsViewModel;
+  late final SavedStaysViewModel _savedStaysViewModel;
   ChatViewModel? _selectedChatViewModel;
   ChatViewModel? _propertyChatViewModel;
   late final ProfileViewModel _profileViewModel;
   late final BookingsViewModel _bookingsViewModel;
-
-  static const _savedDestination = _PendingDestination(
-    icon: Icons.favorite_border_rounded,
-    title: 'Saved stays',
-  );
 
   @override
   void initState() {
@@ -135,6 +138,10 @@ class _MainShellState extends State<MainShell> {
       notificationRepository: widget.notificationRepository,
     );
     unawaited(_notificationsViewModel.load());
+    _savedStaysViewModel = SavedStaysViewModel(
+      savedPropertyRepository: widget.savedPropertyRepository,
+    );
+    unawaited(_savedStaysViewModel.load());
     _profileViewModel = ProfileViewModel(authRepository: widget.authRepository);
     _bookingsViewModel = BookingsViewModel(
       bookingRepository: widget.bookingRepository,
@@ -154,6 +161,7 @@ class _MainShellState extends State<MainShell> {
     _chatViewModel.dispose();
     _conversationsViewModel.dispose();
     _notificationsViewModel.dispose();
+    _savedStaysViewModel.dispose();
     _selectedChatViewModel?.dispose();
     _propertyChatViewModel?.dispose();
     _profileViewModel.dispose();
@@ -202,11 +210,19 @@ class _MainShellState extends State<MainShell> {
           },
         )
       else if (_showSelectRoom)
-        SelectRoomView(
-          data: _selectedRoomData!,
-          viewModel: _selectRoomViewModel,
-          onBack: () => setState(() => _showSelectRoom = false),
-          onContinue: () => unawaited(_continueToCheckout()),
+        ListenableBuilder(
+          listenable: _savedStaysViewModel,
+          builder: (context, _) => SelectRoomView(
+            data: _selectedRoomData!,
+            viewModel: _selectRoomViewModel,
+            isSaved: _savedStaysViewModel.isSaved(
+              _selectedRoomData!.propertyId,
+            ),
+            onSavedToggle: () =>
+                unawaited(_toggleSaved(_selectedRoomData!.propertyId)),
+            onBack: () => setState(() => _showSelectRoom = false),
+            onContinue: () => unawaited(_continueToCheckout()),
+          ),
         )
       else if (_isLoadingPropertyDetails)
         _DetailsStateView(
@@ -219,12 +235,23 @@ class _MainShellState extends State<MainShell> {
           onBack: () => setState(() => _propertyDetailsError = null),
         )
       else if (_selectedProperty != null)
-        PropertyDetailsView(
-          data: _selectedProperty!,
-          viewModel: _propertyDetailsViewModel,
-          onBack: () => setState(() => _selectedProperty = null),
-          onBookNow: _openSelectRoom,
-          onChat: _openPropertyChat,
+        ListenableBuilder(
+          listenable: _savedStaysViewModel,
+          builder: (context, _) => PropertyDetailsView(
+            data: _selectedProperty!,
+            viewModel: _propertyDetailsViewModel,
+            isSaved: _savedStaysViewModel.isSaved(_selectedProperty!.id),
+            onSavedToggle: () => unawaited(_toggleSaved(_selectedProperty!.id)),
+            onBack: () => setState(() => _selectedProperty = null),
+            onBookNow: _openSelectRoom,
+            onChat: _openPropertyChat,
+          ),
+        )
+      else if (_showMap)
+        NearbyMapView(
+          stays: _exploreViewModel.stays,
+          onBack: () => setState(() => _showMap = false),
+          onStaySelected: _handleStaySelected,
         )
       else if (_showSearch)
         SearchView(
@@ -236,9 +263,14 @@ class _MainShellState extends State<MainShell> {
         ExploreView(
           viewModel: _exploreViewModel,
           onSearchRequested: () => setState(() => _showSearch = true),
+          onMapRequested: () => setState(() => _showMap = true),
           onStaySelected: _handleStaySelected,
         ),
-      _savedDestination,
+      SavedStaysView(
+        viewModel: _savedStaysViewModel,
+        onStaySelected: (stay) => unawaited(_openSavedStay(stay)),
+        onToggleSaved: (propertyId) => unawaited(_toggleSaved(propertyId)),
+      ),
       BookingsView(
         viewModel: _bookingsViewModel,
         onReservationCancelled: () {
@@ -318,6 +350,7 @@ class _MainShellState extends State<MainShell> {
                 setState(() {
                   _selectedIndex = index;
                   _showSearch = false;
+                  _showMap = false;
                   _showSelectRoom = false;
                   _showCheckout = false;
                   _showAddCard = false;
@@ -334,6 +367,9 @@ class _MainShellState extends State<MainShell> {
                   _checkoutResult = null;
                   _propertyDetailsError = null;
                 });
+                if (index == 1) {
+                  unawaited(_savedStaysViewModel.refresh());
+                }
               },
             ),
     );
@@ -392,6 +428,24 @@ class _MainShellState extends State<MainShell> {
         _isLoadingPropertyDetails = false;
       });
     }
+  }
+
+  Future<void> _openSavedStay(StayCardData stay) async {
+    setState(() => _selectedIndex = 0);
+    await _handleStaySelected(stay);
+  }
+
+  Future<void> _toggleSaved(String propertyId) async {
+    final success = await _savedStaysViewModel.toggle(propertyId);
+    if (success || !mounted) return;
+
+    ScaffoldMessenger.of(context).showSnackBar(
+      SnackBar(
+        content: Text(
+          _savedStaysViewModel.errorMessage ?? 'Unable to update saved stays.',
+        ),
+      ),
+    );
   }
 
   void _openSelectRoom() {
@@ -478,6 +532,7 @@ class _MainShellState extends State<MainShell> {
     _paymentResultViewModel = null;
     setState(() {
       _showSearch = false;
+      _showMap = false;
       _showSelectRoom = false;
       _showCheckout = false;
       _showAddCard = false;
@@ -775,37 +830,6 @@ class _DetailsStateView extends StatelessWidget {
               TextButton(onPressed: onBack, child: const Text('Back')),
             ],
           ),
-        ),
-      ),
-    );
-  }
-}
-
-class _PendingDestination extends StatelessWidget {
-  const _PendingDestination({required this.icon, required this.title});
-
-  final IconData icon;
-  final String title;
-
-  @override
-  Widget build(BuildContext context) {
-    return SafeArea(
-      child: Center(
-        child: Column(
-          mainAxisSize: MainAxisSize.min,
-          children: [
-            Icon(icon, size: 48, color: AppColors.primary),
-            const SizedBox(height: 12),
-            Text(
-              title,
-              style: const TextStyle(
-                color: AppColors.gray900,
-                fontFamily: 'Manrope',
-                fontSize: 24,
-                fontWeight: FontWeight.w700,
-              ),
-            ),
-          ],
         ),
       ),
     );

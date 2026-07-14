@@ -21,13 +21,19 @@ void main() {
 
     expect(find.text('Notifications'), findsOneWidget);
     expect(find.text('Booking Confirmed'), findsOneWidget);
-    expect(find.byKey(const Key('notification_unread_dot_notification-1')), findsOneWidget);
+    expect(
+      find.byKey(const Key('notification_unread_dot_notification-1')),
+      findsOneWidget,
+    );
 
     await tester.tap(find.byKey(const Key('notifications_mark_all_read')));
     await tester.pump();
 
     expect(repository.markAllReadCalled, isTrue);
-    expect(find.byKey(const Key('notification_unread_dot_notification-1')), findsNothing);
+    expect(
+      find.byKey(const Key('notification_unread_dot_notification-1')),
+      findsNothing,
+    );
   });
 
   testWidgets('renders empty state', (tester) async {

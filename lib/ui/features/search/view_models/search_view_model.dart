@@ -170,10 +170,12 @@ class SearchViewModel extends ChangeNotifier {
 
   ProductSearchQuery buildQuery() {
     final trimmedDestination = _destination.trim();
+    final location = _canonicalLocation(trimmedDestination);
     return ProductSearchQuery(
-      keyword: trimmedDestination.isEmpty
+      keyword: trimmedDestination.isEmpty || location != null
           ? null
           : _foldVietnamese(trimmedDestination),
+      location: location,
       checkIn: _checkIn,
       checkOut: _checkOut,
       guests: guests,
@@ -187,6 +189,27 @@ class SearchViewModel extends ChangeNotifier {
 
   static DateTime _normalize(DateTime date) {
     return DateTime(date.year, date.month, date.day);
+  }
+
+  static String? _canonicalLocation(String value) {
+    final normalized = _foldVietnamese(value.trim());
+    return switch (normalized) {
+      'ha noi' || 'hanoi' => 'Ha Noi',
+      'hai phong' => 'Hai Phong',
+      'hue' => 'Hue',
+      'da nang' || 'danang' => 'Da Nang',
+      'thanh pho ho chi minh' ||
+      'ho chi minh' ||
+      'ho chi minh city' ||
+      'hcm' ||
+      'tp hcm' ||
+      'tp. hcm' ||
+      'sai gon' ||
+      'saigon' => 'Ho Chi Minh',
+      'can tho' => 'Can Tho',
+      'dong nai' => 'Dong Nai',
+      _ => null,
+    };
   }
 
   static String _foldVietnamese(String value) {

@@ -179,10 +179,7 @@ class _SectionHeader extends StatelessWidget {
 }
 
 class _NotificationCard extends StatelessWidget {
-  const _NotificationCard({
-    required this.notification,
-    required this.onTap,
-  });
+  const _NotificationCard({required this.notification, required this.onTap});
 
   final NotificationItem notification;
   final VoidCallback onTap;

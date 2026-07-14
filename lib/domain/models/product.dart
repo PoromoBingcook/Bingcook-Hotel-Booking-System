@@ -14,6 +14,8 @@ class Product {
     required this.pricePerNight,
     required this.status,
     required this.isAvailable,
+    this.latitude,
+    this.longitude,
   });
 
   final String id;
@@ -23,6 +25,8 @@ class Product {
   final String location;
   final String city;
   final String address;
+  final double? latitude;
+  final double? longitude;
   final String? imageUrl;
   final double rating;
   final int reviewCount;

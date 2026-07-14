@@ -19,33 +19,39 @@ void main() {
       expect(viewModel.errorMessage, isNull);
     });
 
-    test('markRead updates one notification after repository succeeds', () async {
-      final repository = FakeNotificationRepository();
-      final viewModel = NotificationsViewModel(
-        notificationRepository: repository,
-      );
-      await viewModel.load();
+    test(
+      'markRead updates one notification after repository succeeds',
+      () async {
+        final repository = FakeNotificationRepository();
+        final viewModel = NotificationsViewModel(
+          notificationRepository: repository,
+        );
+        await viewModel.load();
 
-      await viewModel.markRead('notification-1');
+        await viewModel.markRead('notification-1');
 
-      expect(repository.markedId, 'notification-1');
-      expect(viewModel.notifications.first.isRead, isTrue);
-      expect(viewModel.unreadCount, 0);
-    });
+        expect(repository.markedId, 'notification-1');
+        expect(viewModel.notifications.first.isRead, isTrue);
+        expect(viewModel.unreadCount, 0);
+      },
+    );
 
-    test('markAllRead updates all notifications after repository succeeds', () async {
-      final repository = FakeNotificationRepository();
-      final viewModel = NotificationsViewModel(
-        notificationRepository: repository,
-      );
-      await viewModel.load();
+    test(
+      'markAllRead updates all notifications after repository succeeds',
+      () async {
+        final repository = FakeNotificationRepository();
+        final viewModel = NotificationsViewModel(
+          notificationRepository: repository,
+        );
+        await viewModel.load();
 
-      await viewModel.markAllRead();
+        await viewModel.markAllRead();
 
-      expect(repository.markAllReadCalled, isTrue);
-      expect(viewModel.notifications.every((item) => item.isRead), isTrue);
-      expect(viewModel.unreadCount, 0);
-    });
+        expect(repository.markAllReadCalled, isTrue);
+        expect(viewModel.notifications.every((item) => item.isRead), isTrue);
+        expect(viewModel.unreadCount, 0);
+      },
+    );
   });
 }
 

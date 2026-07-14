@@ -99,6 +99,27 @@ void main() {
       expect(query.amenities, ['Self check-in', 'Wi-Fi']);
       expect(query.guests, 2);
     });
+
+    test('builds city destinations as location parameters', () {
+      final viewModel = _newViewModel()
+        ..updateDestination('Thành phố Hồ Chí Minh');
+
+      final query = viewModel.buildQuery();
+
+      expect(query.keyword, isNull);
+      expect(query.location, 'Ho Chi Minh');
+    });
+
+    test('maps common Ho Chi Minh aliases to the same location', () {
+      final aliases = ['Hồ Chí Minh', 'Ho Chi Minh City', 'HCM', 'Sài Gòn'];
+
+      for (final alias in aliases) {
+        final query = (_newViewModel()..updateDestination(alias)).buildQuery();
+
+        expect(query.keyword, isNull, reason: alias);
+        expect(query.location, 'Ho Chi Minh', reason: alias);
+      }
+    });
   });
 }
 
