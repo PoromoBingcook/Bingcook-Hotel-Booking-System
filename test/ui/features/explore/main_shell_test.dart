@@ -6,11 +6,13 @@ import 'package:bingcook/domain/models/notification_item.dart';
 import 'package:bingcook/domain/models/product.dart';
 import 'package:bingcook/domain/models/product_details.dart';
 import 'package:bingcook/domain/models/product_search_query.dart';
+import 'package:bingcook/domain/models/property_review.dart';
 import 'package:bingcook/domain/repositories/auth_repository.dart';
 import 'package:bingcook/domain/repositories/booking_repository.dart';
 import 'package:bingcook/domain/repositories/chat_repository.dart';
 import 'package:bingcook/domain/repositories/notification_repository.dart';
 import 'package:bingcook/domain/repositories/product_repository.dart';
+import 'package:bingcook/domain/repositories/review_repository.dart';
 import 'package:bingcook/domain/repositories/saved_property_repository.dart';
 import 'package:bingcook/ui/features/checkout/views/payment_result_view.dart';
 import 'package:bingcook/ui/features/navigation/views/main_shell.dart';
@@ -594,6 +596,41 @@ void main() {
     expect(repository.logoutCalled, isTrue);
     expect(loggedOut, isTrue);
   });
+
+  testWidgets('saving a review refreshes property details in place', (
+    tester,
+  ) async {
+    final productRepository = RefreshingReviewProductRepository();
+    final reviewRepository = TrackingReviewRepository();
+    await _pumpMainShell(
+      tester,
+      productRepository: productRepository,
+      reviewRepository: reviewRepository,
+    );
+
+    await tester.tap(find.text('Ocean Pearl Hotel'));
+    await tester.pumpAndSettle();
+    await tester.scrollUntilVisible(
+      find.byKey(const Key('write_review_button')),
+      300,
+      scrollable: find.byType(Scrollable).first,
+    );
+    await tester.tap(find.byKey(const Key('write_review_button')));
+    await tester.pumpAndSettle();
+    await tester.tap(find.byKey(const Key('review_star_5')));
+    await tester.tap(find.byKey(const Key('review_submit_button')));
+    await tester.pumpAndSettle();
+
+    expect(reviewRepository.savedPropertyId, _oceanPearlId);
+    expect(reviewRepository.savedRating, 5);
+    expect(productRepository.detailsCalls, 2);
+    expect(
+      find.byKey(const Key('property_details_scroll_view')),
+      findsOneWidget,
+    );
+    expect(find.byKey(const Key('edit_review_button')), findsOneWidget);
+    expect(find.text('4 reviews'), findsOneWidget);
+  });
 }
 
 Future<void> _pumpMainShell(
@@ -603,6 +640,7 @@ Future<void> _pumpMainShell(
   BookingRepository? bookingRepository,
   NotificationRepository? notificationRepository,
   SavedPropertyRepository? savedPropertyRepository,
+  ReviewRepository? reviewRepository,
   VoidCallback? onLogoutCompleted,
   PayOSCheckoutBuilder? payOSCheckoutBuilder,
 }) async {
@@ -617,6 +655,7 @@ Future<void> _pumpMainShell(
             notificationRepository ?? const FakeNotificationRepository(),
         savedPropertyRepository:
             savedPropertyRepository ?? FakeSavedPropertyRepository(),
+        reviewRepository: reviewRepository ?? TrackingReviewRepository(),
         onLogoutCompleted: onLogoutCompleted ?? () {},
         payOSCheckoutBuilder:
             payOSCheckoutBuilder ??
@@ -1110,6 +1149,73 @@ class FakeProductRepository implements ProductRepository {
         ProductRatingBreakdown(stars: 4, fraction: 0.2),
       ],
       reviews: const [],
+    );
+  }
+}
+
+class RefreshingReviewProductRepository extends FakeProductRepository {
+  int detailsCalls = 0;
+
+  @override
+  Future<ProductDetails> fetchProductDetails(
+    String id, {
+    ProductSearchQuery query = const ProductSearchQuery(),
+  }) async {
+    detailsCalls++;
+    final details = await super.fetchProductDetails(id, query: query);
+    if (detailsCalls == 1) return details;
+    return ProductDetails(
+      id: details.id,
+      type: details.type,
+      name: details.name,
+      description: details.description,
+      location: details.location,
+      city: details.city,
+      address: details.address,
+      imageUrls: details.imageUrls,
+      rating: 4.8,
+      reviewCount: 4,
+      amenities: details.amenities,
+      pricePerNight: details.pricePerNight,
+      status: details.status,
+      checkInPolicy: details.checkInPolicy,
+      checkOutPolicy: details.checkOutPolicy,
+      cancellationPolicy: details.cancellationPolicy,
+      rooms: details.rooms,
+      ratingDistribution: const [ProductRatingBreakdown(stars: 5, fraction: 1)],
+      reviews: const [
+        ProductReview(
+          author: 'Jane Cook',
+          rating: 5,
+          timeAgo: 'Just now',
+          comment: '',
+        ),
+      ],
+    );
+  }
+}
+
+class TrackingReviewRepository implements ReviewRepository {
+  String? savedPropertyId;
+  int? savedRating;
+
+  @override
+  Future<PropertyReview?> fetchMyReview(String propertyId) async => null;
+
+  @override
+  Future<PropertyReview> saveReview({
+    required String propertyId,
+    required int rating,
+    String? comment,
+  }) async {
+    savedPropertyId = propertyId;
+    savedRating = rating;
+    return PropertyReview(
+      id: 'review-1',
+      propertyId: propertyId,
+      rating: rating,
+      comment: comment,
+      createdAt: DateTime.utc(2026, 7, 15, 2),
     );
   }
 }

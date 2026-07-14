@@ -62,6 +62,7 @@ class AppRouter {
       chatRepository: _dependencies.chatRepository,
       notificationRepository: _dependencies.notificationRepository,
       savedPropertyRepository: _dependencies.savedPropertyRepository,
+      reviewRepository: _dependencies.reviewRepository,
       chatRealtimeService: _dependencies.chatRealtimeService,
       onLogoutCompleted: logout,
     );

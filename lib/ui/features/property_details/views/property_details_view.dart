@@ -6,6 +6,7 @@ import 'package:bingcook/ui/features/property_details/widgets/property_amenities
 import 'package:bingcook/ui/features/property_details/widgets/property_booking_card.dart';
 import 'package:bingcook/ui/features/property_details/widgets/property_guest_review.dart';
 import 'package:bingcook/ui/features/property_details/widgets/property_review_summary.dart';
+import 'package:bingcook/ui/features/property_details/widgets/property_review_sheet.dart';
 import 'package:bingcook/ui/features/select_room/models/select_room_data.dart';
 import 'package:flutter/material.dart';
 
@@ -16,6 +17,7 @@ class PropertyDetailsView extends StatelessWidget {
     required this.onBack,
     required this.onBookNow,
     required this.onChat,
+    required this.onReviewSaved,
     required this.isSaved,
     required this.onSavedToggle,
     super.key,
@@ -26,6 +28,7 @@ class PropertyDetailsView extends StatelessWidget {
   final VoidCallback onBack;
   final VoidCallback onBookNow;
   final VoidCallback onChat;
+  final Future<void> Function() onReviewSaved;
   final bool isSaved;
   final VoidCallback onSavedToggle;
 
@@ -235,6 +238,25 @@ class PropertyDetailsView extends StatelessWidget {
                                 rating: data.summaryRating,
                                 reviewCount: data.summaryReviewCount,
                               ),
+                              const SizedBox(height: 12),
+                              OutlinedButton.icon(
+                                key: Key(
+                                  viewModel.myReview == null
+                                      ? 'write_review_button'
+                                      : 'edit_review_button',
+                                ),
+                                onPressed: viewModel.isLoadingReview
+                                    ? null
+                                    : () => _openReviewSheet(context),
+                                icon: const Icon(Icons.rate_review_outlined),
+                                label: Text(
+                                  viewModel.isLoadingReview
+                                      ? 'Loading your review...'
+                                      : viewModel.myReview == null
+                                      ? 'Write a review'
+                                      : 'Edit your review',
+                                ),
+                              ),
                               const SizedBox(height: 24),
                               const _SectionTitle('Guest Reviews'),
                               const SizedBox(height: 16),
@@ -277,6 +299,18 @@ class PropertyDetailsView extends StatelessWidget {
             ),
           ),
         ),
+      ),
+    );
+  }
+
+  Future<void> _openReviewSheet(BuildContext context) {
+    return showModalBottomSheet<void>(
+      context: context,
+      isScrollControlled: true,
+      builder: (_) => PropertyReviewSheet(
+        viewModel: viewModel,
+        propertyId: data.id,
+        onSaved: onReviewSaved,
       ),
     );
   }

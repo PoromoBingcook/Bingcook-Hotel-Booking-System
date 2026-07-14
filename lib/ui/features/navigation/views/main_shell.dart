@@ -9,6 +9,7 @@ import 'package:bingcook/domain/repositories/booking_repository.dart';
 import 'package:bingcook/domain/repositories/chat_repository.dart';
 import 'package:bingcook/domain/repositories/notification_repository.dart';
 import 'package:bingcook/domain/repositories/product_repository.dart';
+import 'package:bingcook/domain/repositories/review_repository.dart';
 import 'package:bingcook/domain/repositories/saved_property_repository.dart';
 import 'package:bingcook/domain/services/chat_realtime_service.dart';
 import 'package:bingcook/ui/core/constants/app_assets.dart';
@@ -56,6 +57,7 @@ class MainShell extends StatefulWidget {
     required this.chatRepository,
     required this.notificationRepository,
     required this.savedPropertyRepository,
+    required this.reviewRepository,
     required this.onLogoutCompleted,
     this.chatRealtimeService,
     this.payOSCheckoutBuilder,
@@ -68,6 +70,7 @@ class MainShell extends StatefulWidget {
   final ChatRepository chatRepository;
   final NotificationRepository notificationRepository;
   final SavedPropertyRepository savedPropertyRepository;
+  final ReviewRepository reviewRepository;
   final VoidCallback onLogoutCompleted;
   final ChatRealtimeService? chatRealtimeService;
   final PayOSCheckoutBuilder? payOSCheckoutBuilder;
@@ -98,8 +101,7 @@ class _MainShellState extends State<MainShell> {
   String? _propertyDetailsError;
   final SearchViewModel _searchViewModel = SearchViewModel();
   late final ExploreViewModel _exploreViewModel;
-  final PropertyDetailsViewModel _propertyDetailsViewModel =
-      PropertyDetailsViewModel();
+  late final PropertyDetailsViewModel _propertyDetailsViewModel;
   late SelectRoomViewModel _selectRoomViewModel;
   late CheckoutViewModel _checkoutViewModel;
   final AddCardViewModel _addCardViewModel = AddCardViewModel();
@@ -117,6 +119,9 @@ class _MainShellState extends State<MainShell> {
     super.initState();
     _exploreViewModel = ExploreViewModel(
       productRepository: widget.productRepository,
+    );
+    _propertyDetailsViewModel = PropertyDetailsViewModel(
+      reviewRepository: widget.reviewRepository,
     );
     unawaited(_exploreViewModel.loadProducts());
     _selectRoomViewModel = SelectRoomViewModel(
@@ -247,6 +252,7 @@ class _MainShellState extends State<MainShell> {
             onBack: () => setState(() => _selectedProperty = null),
             onBookNow: _openSelectRoom,
             onChat: _openPropertyChat,
+            onReviewSaved: _refreshSelectedProperty,
           ),
         )
       else if (_showMap)
@@ -414,6 +420,7 @@ class _MainShellState extends State<MainShell> {
         );
         _isLoadingPropertyDetails = false;
       });
+      unawaited(_propertyDetailsViewModel.loadMyReview(stay.id));
     } on ProductRepositoryException catch (error) {
       if (!mounted) {
         return;
@@ -436,6 +443,30 @@ class _MainShellState extends State<MainShell> {
   Future<void> _openSavedStay(StayCardData stay) async {
     setState(() => _selectedIndex = 0);
     await _handleStaySelected(stay);
+  }
+
+  Future<void> _refreshSelectedProperty() async {
+    final selected = _selectedProperty;
+    if (selected == null) return;
+
+    try {
+      final details = await widget.productRepository.fetchProductDetails(
+        selected.id,
+        query: _exploreViewModel.activeQuery,
+      );
+      if (!mounted || _selectedProperty?.id != selected.id) return;
+      setState(() {
+        _selectedProperty = _toPropertyDetailsData(
+          details,
+          _exploreViewModel.activeQuery,
+        );
+      });
+    } on ProductRepositoryException catch (error) {
+      if (!mounted) return;
+      ScaffoldMessenger.of(
+        context,
+      ).showSnackBar(SnackBar(content: Text(error.message)));
+    }
   }
 
   Future<void> _toggleSaved(String propertyId) async {

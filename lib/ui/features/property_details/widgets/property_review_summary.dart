@@ -95,7 +95,7 @@ class PropertyReviewSummary extends StatelessWidget {
                       fontWeight: FontWeight.w800,
                     ),
                   ),
-                  const _RatingStars(rating: 4),
+                  _RatingStars(rating: rating.round()),
                   const SizedBox(height: 4),
                   Text(
                     '$reviewCount reviews',

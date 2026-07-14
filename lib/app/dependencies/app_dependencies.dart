@@ -3,6 +3,7 @@ import 'package:bingcook/data/repositories/api_booking_repository.dart';
 import 'package:bingcook/data/repositories/api_chat_repository.dart';
 import 'package:bingcook/data/repositories/api_notification_repository.dart';
 import 'package:bingcook/data/repositories/api_product_repository.dart';
+import 'package:bingcook/data/repositories/api_review_repository.dart';
 import 'package:bingcook/data/repositories/api_saved_property_repository.dart';
 import 'package:bingcook/data/services/api_config.dart';
 import 'package:bingcook/data/services/auth_api_service.dart';
@@ -11,16 +12,19 @@ import 'package:bingcook/data/services/booking_api_service.dart';
 import 'package:bingcook/data/services/chat_api_service.dart';
 import 'package:bingcook/data/services/notification_api_service.dart';
 import 'package:bingcook/data/services/product_api_service.dart';
+import 'package:bingcook/data/services/review_api_service.dart';
 import 'package:bingcook/data/services/saved_property_api_service.dart';
 import 'package:bingcook/data/services/signalr_chat_service.dart';
 import 'package:bingcook/domain/models/chat.dart';
 import 'package:bingcook/domain/models/notification_item.dart';
 import 'package:bingcook/domain/models/product.dart';
+import 'package:bingcook/domain/models/property_review.dart';
 import 'package:bingcook/domain/repositories/auth_repository.dart';
 import 'package:bingcook/domain/repositories/booking_repository.dart';
 import 'package:bingcook/domain/repositories/chat_repository.dart';
 import 'package:bingcook/domain/repositories/notification_repository.dart';
 import 'package:bingcook/domain/repositories/product_repository.dart';
+import 'package:bingcook/domain/repositories/review_repository.dart';
 import 'package:bingcook/domain/repositories/saved_property_repository.dart';
 import 'package:bingcook/domain/services/chat_realtime_service.dart';
 import 'package:http/http.dart' as http;
@@ -33,6 +37,7 @@ class AppDependencies {
     required this.chatRepository,
     required this.notificationRepository,
     required this.savedPropertyRepository,
+    required this.reviewRepository,
     this.chatRealtimeService,
     http.Client? httpClient,
   }) : _httpClient = httpClient;
@@ -62,6 +67,7 @@ class AppDependencies {
       client: client,
       baseUrl: baseUrl,
     );
+    final reviewApiService = ReviewApiService(client: client, baseUrl: baseUrl);
 
     return AppDependencies._(
       authRepository: authRepository,
@@ -84,6 +90,10 @@ class AppDependencies {
         savedPropertyApiService: savedPropertyApiService,
         authRepository: authRepository,
       ),
+      reviewRepository: ApiReviewRepository(
+        reviewApiService: reviewApiService,
+        authRepository: authRepository,
+      ),
       chatRealtimeService: SignalRChatService(
         baseUrl: baseUrl,
         authRepository: authRepository,
@@ -99,6 +109,7 @@ class AppDependencies {
     NotificationRepository? notificationRepository,
     SavedPropertyRepository? savedPropertyRepository,
     ChatRepository? chatRepository,
+    ReviewRepository? reviewRepository,
     ChatRealtimeService? chatRealtimeService,
   }) {
     return AppDependencies._(
@@ -111,6 +122,8 @@ class AppDependencies {
           savedPropertyRepository ??
           const _UnavailableSavedPropertyRepository(),
       chatRepository: chatRepository ?? const _UnavailableChatRepository(),
+      reviewRepository:
+          reviewRepository ?? const _UnavailableReviewRepository(),
       chatRealtimeService: chatRealtimeService,
     );
   }
@@ -121,12 +134,35 @@ class AppDependencies {
   final ChatRepository chatRepository;
   final NotificationRepository notificationRepository;
   final SavedPropertyRepository savedPropertyRepository;
+  final ReviewRepository reviewRepository;
   final ChatRealtimeService? chatRealtimeService;
   final http.Client? _httpClient;
 
   void dispose() {
     chatRealtimeService?.disconnect();
     _httpClient?.close();
+  }
+}
+
+class _UnavailableReviewRepository implements ReviewRepository {
+  const _UnavailableReviewRepository();
+
+  @override
+  Future<PropertyReview?> fetchMyReview(String propertyId) {
+    throw const ReviewRepositoryException(
+      'Reviews are unavailable in this test.',
+    );
+  }
+
+  @override
+  Future<PropertyReview> saveReview({
+    required String propertyId,
+    required int rating,
+    String? comment,
+  }) {
+    throw const ReviewRepositoryException(
+      'Reviews are unavailable in this test.',
+    );
   }
 }
 

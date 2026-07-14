@@ -24,6 +24,8 @@ migrate_working_dir/
 #.vscode/
 
 # Flutter/Dart/Pub related
+docs/BingCook_Implementation_and_Grading_Plan_updated.docx
+docs/~$ngCook_Implementation_and_Grading_Plan_updated.docx
 **/doc/api/
 docs/superpowers/spec/
 docs/superpowers/plans/
