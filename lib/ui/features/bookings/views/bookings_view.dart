@@ -8,11 +8,13 @@ class BookingsView extends StatelessWidget {
   const BookingsView({
     required this.viewModel,
     this.onReservationCancelled,
+    this.onResumePayment,
     super.key,
   });
 
   final BookingsViewModel viewModel;
   final VoidCallback? onReservationCancelled;
+  final ValueChanged<BookingReservation>? onResumePayment;
 
   @override
   Widget build(BuildContext context) {
@@ -114,8 +116,17 @@ class BookingsView extends StatelessWidget {
           final canCancel =
               viewModel.selectedTab == BookingListTab.active &&
               viewModel.canCancel(reservation);
+          final canResume =
+              viewModel.selectedTab == BookingListTab.active &&
+              viewModel.canResumePayment(reservation);
           return ReservationCard(
             reservation: reservation,
+            paymentCountdown: canResume
+                ? viewModel.paymentCountdown(reservation)
+                : null,
+            onResumePayment: canResume
+                ? () => onResumePayment?.call(reservation)
+                : null,
             isCancelling:
                 viewModel.cancellingBookingId == reservation.bookingId,
             onCancel: canCancel
@@ -133,12 +144,14 @@ class BookingsView extends StatelessWidget {
   ) async {
     final hasSuccessfulPayment =
         reservation.paymentStatus?.toLowerCase() == 'success';
+    final isPendingPayment =
+        reservation.bookingStatus.toLowerCase() == 'pendingpayment';
     final confirmed = await showDialog<bool>(
       context: context,
       builder: (dialogContext) => AlertDialog(
         title: const Text('Cancel reservation?'),
         content: Text(
-          'Cancellation is available until 24 hours before the 14:00 check-in time.'
+          '${isPendingPayment ? 'This closes the PayOS payment link and releases the room immediately.' : 'Cancellation is available until 24 hours before the 14:00 check-in time.'}'
           '${hasSuccessfulPayment ? ' Your successful payment remains recorded. Refund handling is separate.' : ''}',
         ),
         actions: [

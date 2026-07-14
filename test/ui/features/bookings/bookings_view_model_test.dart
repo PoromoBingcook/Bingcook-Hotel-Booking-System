@@ -90,6 +90,32 @@ void main() {
       'Cancellation is too close to check-in.',
     );
   });
+
+  test(
+    'exposes resume action only while pending payment is unexpired',
+    () async {
+      var now = DateTime.utc(2026, 7, 14, 3);
+      final reservation = _reservation(
+        id: 'pending',
+        status: 'PendingPayment',
+        expiresAt: DateTime.utc(2026, 7, 14, 3, 15),
+        checkoutUrl: 'https://pay.payos.vn/web/88001234',
+      );
+      final viewModel = BookingsViewModel(
+        bookingRepository: _BookingRepository([reservation]),
+        now: () => now,
+      );
+      await viewModel.load();
+
+      expect(viewModel.canResumePayment(reservation), isTrue);
+      expect(viewModel.paymentCountdown(reservation), '15:00');
+
+      now = DateTime.utc(2026, 7, 14, 3, 15);
+      expect(viewModel.canResumePayment(reservation), isFalse);
+      expect(viewModel.paymentCountdown(reservation), '00:00');
+      viewModel.dispose();
+    },
+  );
 }
 
 BookingReservation _reservation({
@@ -97,6 +123,8 @@ BookingReservation _reservation({
   required String status,
   DateTime? checkIn,
   DateTime? checkOut,
+  DateTime? expiresAt,
+  String? checkoutUrl,
 }) => BookingReservation(
   bookingId: id,
   propertyId: 'property',
@@ -114,6 +142,9 @@ BookingReservation _reservation({
   bookingStatus: status,
   paymentStatus: status == 'Paid' ? 'Success' : 'Pending',
   paymentMethod: status == 'Paid' ? 'PayOS' : 'PayAtProperty',
+  transactionCode: status == 'PendingPayment' ? '88001234' : null,
+  checkoutUrl: checkoutUrl,
+  expiresAt: expiresAt,
 );
 
 BookingCancellation _cancellation(BookingReservation reservation) {

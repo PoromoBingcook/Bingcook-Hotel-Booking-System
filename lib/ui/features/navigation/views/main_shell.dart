@@ -84,6 +84,7 @@ class _MainShellState extends State<MainShell> {
   bool _showCheckout = false;
   bool _showAddCard = false;
   bool _showPaymentResult = false;
+  bool _paymentOpenedFromBookings = false;
   bool _showChat = false;
   bool _showMessages = false;
   bool _showNotifications = false;
@@ -178,6 +179,7 @@ class _MainShellState extends State<MainShell> {
           viewModel: _paymentResultViewModel!,
           onBackToExplore: _resetExploreFlow,
           onPaymentConfirmed: () => unawaited(_handlePaymentConfirmed()),
+          onPaymentExpired: () => unawaited(_handlePaymentExpired()),
           payOSCheckoutBuilder: widget.payOSCheckoutBuilder,
         )
       else if (_showAddCard)
@@ -197,11 +199,13 @@ class _MainShellState extends State<MainShell> {
             _paymentResultViewModel = PaymentResultViewModel(
               bookingId: checkout.bookingId,
               bookingRepository: widget.bookingRepository,
+              expiresAt: checkout.expiresAt,
             );
             setState(() {
               _checkoutResult = checkout;
               _showPaymentResult = true;
               _showCheckout = false;
+              _paymentOpenedFromBookings = false;
             });
             if (checkout.paymentMethod.toLowerCase() != 'payos') {
               unawaited(_bookingsViewModel.load());
@@ -273,6 +277,7 @@ class _MainShellState extends State<MainShell> {
       ),
       BookingsView(
         viewModel: _bookingsViewModel,
+        onResumePayment: _resumePayment,
         onReservationCancelled: () {
           unawaited(_notificationsViewModel.refresh());
         },
@@ -513,7 +518,29 @@ class _MainShellState extends State<MainShell> {
 
     final success = await _selectRoomViewModel.createDraft(data);
     final draft = _selectRoomViewModel.draft;
-    if (!success || draft == null || !mounted) {
+    if (!success) {
+      final existingBookingId = _selectRoomViewModel.pendingPaymentBookingId;
+      if (existingBookingId != null) {
+        await _bookingsViewModel.load();
+        if (!mounted) {
+          return;
+        }
+        final reservation = _bookingsViewModel.findReservation(
+          existingBookingId,
+        );
+        if (reservation != null &&
+            _bookingsViewModel.canResumePayment(reservation)) {
+          _resumePayment(reservation);
+          ScaffoldMessenger.of(context).showSnackBar(
+            const SnackBar(
+              content: Text('Continuing your existing pending payment.'),
+            ),
+          );
+        }
+      }
+      return;
+    }
+    if (draft == null || !mounted) {
       return;
     }
 
@@ -528,6 +555,7 @@ class _MainShellState extends State<MainShell> {
   }
 
   void _resetExploreFlow() {
+    final returnToBookings = _paymentOpenedFromBookings;
     _paymentResultViewModel?.dispose();
     _paymentResultViewModel = null;
     setState(() {
@@ -537,6 +565,76 @@ class _MainShellState extends State<MainShell> {
       _showCheckout = false;
       _showAddCard = false;
       _showPaymentResult = false;
+      _paymentOpenedFromBookings = false;
+      _showChat = false;
+      _selectedProperty = null;
+      _selectedRoomData = null;
+      _checkoutData = null;
+      _checkoutResult = null;
+      _propertyDetailsError = null;
+      _isLoadingPropertyDetails = false;
+      if (returnToBookings) {
+        _selectedIndex = 2;
+      }
+    });
+    if (returnToBookings) {
+      unawaited(_bookingsViewModel.load());
+    }
+  }
+
+  void _resumePayment(BookingReservation reservation) {
+    final checkoutUrl = reservation.checkoutUrl;
+    if (checkoutUrl == null ||
+        !reservation.canResumePaymentAt(DateTime.now())) {
+      unawaited(_bookingsViewModel.load());
+      return;
+    }
+
+    _paymentResultViewModel?.dispose();
+    final checkout = BookingCheckout(
+      bookingId: reservation.bookingId,
+      bookingStatus: reservation.bookingStatus,
+      paymentMethod: reservation.paymentMethod ?? 'PayOS',
+      paymentStatus: reservation.paymentStatus ?? 'Pending',
+      amount: reservation.totalPrice,
+      transactionCode: reservation.transactionCode,
+      paymentLinkId: null,
+      checkoutUrl: checkoutUrl,
+      qrCode: null,
+      expiresAt: reservation.expiresAt,
+      message: 'Continue your existing PayOS payment.',
+    );
+    _paymentResultViewModel = PaymentResultViewModel(
+      bookingId: reservation.bookingId,
+      bookingRepository: widget.bookingRepository,
+      expiresAt: reservation.expiresAt,
+    );
+    setState(() {
+      _checkoutResult = checkout;
+      _showPaymentResult = true;
+      _paymentOpenedFromBookings = true;
+      _selectedIndex = 0;
+    });
+  }
+
+  Future<void> _handlePaymentExpired() async {
+    _bookingsViewModel.selectTab(BookingListTab.active);
+    await _bookingsViewModel.load();
+    if (!mounted) {
+      return;
+    }
+
+    _paymentResultViewModel?.dispose();
+    _paymentResultViewModel = null;
+    setState(() {
+      _selectedIndex = 2;
+      _showSearch = false;
+      _showMap = false;
+      _showSelectRoom = false;
+      _showCheckout = false;
+      _showAddCard = false;
+      _showPaymentResult = false;
+      _paymentOpenedFromBookings = false;
       _showChat = false;
       _selectedProperty = null;
       _selectedRoomData = null;
@@ -545,6 +643,11 @@ class _MainShellState extends State<MainShell> {
       _propertyDetailsError = null;
       _isLoadingPropertyDetails = false;
     });
+    ScaffoldMessenger.of(context).showSnackBar(
+      const SnackBar(
+        content: Text('Payment time expired. The room is available again.'),
+      ),
+    );
   }
 
   Future<void> _handlePaymentConfirmed() async {
@@ -566,6 +669,7 @@ class _MainShellState extends State<MainShell> {
       _showCheckout = false;
       _showAddCard = false;
       _showPaymentResult = false;
+      _paymentOpenedFromBookings = false;
       _showChat = false;
       _selectedProperty = null;
       _selectedRoomData = null;

@@ -142,6 +142,8 @@ class BookingApiService {
       throw BookingApiException(
         _readMessage(decoded) ?? 'Booking request failed.',
         statusCode: response.statusCode,
+        code: _readOptionalString(decoded, 'code'),
+        bookingId: _readOptionalString(decoded, 'bookingId'),
       );
     }
 
@@ -168,6 +170,8 @@ class BookingApiService {
       throw BookingApiException(
         _readMessage(decoded) ?? 'Booking request failed.',
         statusCode: response.statusCode,
+        code: _readOptionalString(decoded, 'code'),
+        bookingId: _readOptionalString(decoded, 'bookingId'),
       );
     }
 
@@ -187,6 +191,11 @@ class BookingApiService {
     return message is String && message.trim().isNotEmpty ? message : null;
   }
 
+  String? _readOptionalString(Map<String, Object?> json, String key) {
+    final value = json[key];
+    return value is String && value.trim().isNotEmpty ? value : null;
+  }
+
   String _formatIsoDate(DateTime value) {
     final month = value.month.toString().padLeft(2, '0');
     final day = value.day.toString().padLeft(2, '0');
@@ -195,10 +204,17 @@ class BookingApiService {
 }
 
 class BookingApiException implements Exception {
-  const BookingApiException(this.message, {this.statusCode});
+  const BookingApiException(
+    this.message, {
+    this.statusCode,
+    this.code,
+    this.bookingId,
+  });
 
   final String message;
   final int? statusCode;
+  final String? code;
+  final String? bookingId;
 
   @override
   String toString() => message;

@@ -1,3 +1,5 @@
+import 'dart:async';
+
 import 'package:bingcook/domain/models/booking.dart';
 import 'package:bingcook/domain/repositories/booking_repository.dart';
 import 'package:bingcook/ui/features/checkout/view_models/payment_result_view_model.dart';
@@ -90,6 +92,53 @@ void main() {
     expect(errorViewModel.state, PaymentResultState.error);
     expect(errorViewModel.errorMessage, 'Network unavailable.');
   });
+
+  test('counts down to expiry and cancels its timer on dispose', () {
+    var now = DateTime.utc(2026, 7, 14, 3);
+    void Function(Timer)? tick;
+    final timer = _Timer();
+    final viewModel = PaymentResultViewModel(
+      bookingId: 'booking-1',
+      bookingRepository: _BookingRepository(),
+      expiresAt: DateTime.utc(2026, 7, 14, 3, 0, 2),
+      now: () => now,
+      timerFactory: (_, callback) {
+        tick = callback;
+        return timer;
+      },
+    );
+
+    expect(viewModel.formattedRemaining, '00:02');
+    now = DateTime.utc(2026, 7, 14, 3, 0, 1);
+    tick!(timer);
+    expect(viewModel.formattedRemaining, '00:01');
+
+    now = DateTime.utc(2026, 7, 14, 3, 0, 2);
+    tick!(timer);
+    expect(viewModel.formattedRemaining, '00:00');
+    expect(viewModel.state, PaymentResultState.expired);
+    expect(timer.isActive, isFalse);
+
+    viewModel.dispose();
+    expect(timer.cancelCalls, 2);
+  });
+}
+
+class _Timer implements Timer {
+  var cancelCalls = 0;
+  var _isActive = true;
+
+  @override
+  bool get isActive => _isActive;
+
+  @override
+  int get tick => 0;
+
+  @override
+  void cancel() {
+    cancelCalls++;
+    _isActive = false;
+  }
 }
 
 const _paidStatus = BookingPaymentStatus(

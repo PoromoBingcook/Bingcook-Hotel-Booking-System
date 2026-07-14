@@ -61,6 +61,7 @@ void main() {
       expect(service.lastToken, 'jwt-token');
       expect(service.lastPaymentMethod, 'PayOS');
       expect(result.checkoutUrl, 'https://pay.payos.vn/web/88001234');
+      expect(result.expiresAt, DateTime.utc(2026, 7, 14, 3, 15));
     });
 
     test('fetches status with current session token', () async {
@@ -75,6 +76,54 @@ void main() {
       expect(service.lastToken, 'jwt-token');
       expect(service.lastStatusBookingId, 'booking-1');
       expect(status.isPaid, isTrue);
+      expect(status.expiresAt, DateTime.utc(2026, 7, 14, 3, 15));
+    });
+
+    test('maps pending reservation resume fields as UTC', () {
+      final response = BookingReservationResponse.fromJson({
+        'bookingId': 'booking-1',
+        'propertyId': 'property-1',
+        'propertyName': 'Ocean Pearl Hotel',
+        'roomId': 'room-1',
+        'roomName': 'Deluxe Ocean View',
+        'checkIn': '2026-07-15',
+        'checkOut': '2026-07-16',
+        'adults': 2,
+        'children': 0,
+        'roomQuantity': 1,
+        'totalPrice': 4080000,
+        'bookingStatus': 'PendingPayment',
+        'paymentStatus': 'Pending',
+        'paymentMethod': 'PayOS',
+        'transactionCode': '88001234',
+        'checkoutUrl': 'https://pay.payos.vn/web/88001234',
+        'expiresAt': '2026-07-14T03:15:00Z',
+      }).toDomain();
+
+      expect(response.transactionCode, '88001234');
+      expect(response.checkoutUrl, 'https://pay.payos.vn/web/88001234');
+      expect(response.expiresAt, DateTime.utc(2026, 7, 14, 3, 15));
+    });
+
+    test('treats backend timestamps without an offset as UTC', () {
+      final response = BookingReservationResponse.fromJson({
+        'bookingId': 'booking-1',
+        'propertyId': 'property-1',
+        'propertyName': 'Ocean Pearl Hotel',
+        'roomId': 'room-1',
+        'roomName': 'Deluxe Ocean View',
+        'checkIn': '2026-07-15',
+        'checkOut': '2026-07-16',
+        'adults': 2,
+        'children': 0,
+        'roomQuantity': 1,
+        'totalPrice': 4080000,
+        'bookingStatus': 'PendingPayment',
+        'expiresAt': '2026-07-14T03:15:00',
+      }).toDomain();
+
+      expect(response.expiresAt?.isUtc, isTrue);
+      expect(response.expiresAt, DateTime.utc(2026, 7, 14, 3, 15));
     });
 
     test('preserves cancellation conflict message', () async {
@@ -206,7 +255,7 @@ class FakeBookingApiService implements BookingApiService {
   }) async {
     lastToken = token;
     lastPaymentMethod = paymentMethod;
-    return const BookingCheckoutResponse(
+    return BookingCheckoutResponse(
       bookingId: 'f4fb8b9d-b26c-4685-9454-0fbb9d927337',
       bookingStatus: 'PendingPayment',
       paymentMethod: 'PayOS',
@@ -216,6 +265,7 @@ class FakeBookingApiService implements BookingApiService {
       paymentLinkId: 'payos-link-id',
       checkoutUrl: 'https://pay.payos.vn/web/88001234',
       qrCode: 'qr-code-payload',
+      expiresAt: DateTime.utc(2026, 7, 14, 3, 15),
       message: 'Open checkoutUrl to pay with PayOS.',
     );
   }
@@ -227,13 +277,15 @@ class FakeBookingApiService implements BookingApiService {
   }) async {
     lastToken = token;
     lastStatusBookingId = bookingId;
-    return const BookingStatusResponse(
+    return BookingStatusResponse(
       bookingId: 'booking-1',
       bookingStatus: 'Paid',
       paymentMethod: 'PayOS',
       paymentStatus: 'Success',
       amount: 4080000,
       transactionCode: '88001234',
+      checkoutUrl: 'https://pay.payos.vn/web/88001234',
+      expiresAt: DateTime.utc(2026, 7, 14, 3, 15),
       paidAt: null,
       updatedAt: null,
     );

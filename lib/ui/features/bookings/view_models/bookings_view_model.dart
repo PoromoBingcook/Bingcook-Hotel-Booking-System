@@ -1,3 +1,5 @@
+import 'dart:async';
+
 import 'package:bingcook/domain/models/booking.dart';
 import 'package:bingcook/domain/repositories/booking_repository.dart';
 import 'package:flutter/foundation.dart';
@@ -20,6 +22,7 @@ class BookingsViewModel extends ChangeNotifier {
   String? _cancellingBookingId;
   String? _successMessage;
   String? _actionErrorMessage;
+  Timer? _countdownTimer;
 
   BookingListTab get selectedTab => _selectedTab;
   bool get isLoading => _isLoading;
@@ -44,6 +47,36 @@ class BookingsViewModel extends ChangeNotifier {
         reservation.canCancelAt(_now());
   }
 
+  bool canResumePayment(BookingReservation reservation) {
+    return reservation.categoryAt(_now()) == BookingCategory.active &&
+        reservation.canResumePaymentAt(_now());
+  }
+
+  BookingReservation? findReservation(String bookingId) {
+    for (final reservation in _reservations) {
+      if (reservation.bookingId == bookingId) {
+        return reservation;
+      }
+    }
+    return null;
+  }
+
+  String paymentCountdown(BookingReservation reservation) {
+    final expiry = reservation.expiresAt;
+    if (expiry == null) {
+      return '00:00';
+    }
+    final milliseconds = expiry
+        .toUtc()
+        .difference(_now().toUtc())
+        .inMilliseconds;
+    final totalSeconds = milliseconds <= 0 ? 0 : (milliseconds + 999) ~/ 1000;
+    final minutes = totalSeconds ~/ 60;
+    final seconds = totalSeconds % 60;
+    return '${minutes.toString().padLeft(2, '0')}:'
+        '${seconds.toString().padLeft(2, '0')}';
+  }
+
   Future<void> load() async {
     if (_isLoading) {
       return;
@@ -53,6 +86,7 @@ class BookingsViewModel extends ChangeNotifier {
     notifyListeners();
     try {
       _reservations = await _bookingRepository.fetchReservations();
+      _updateCountdownTimer();
     } on BookingRepositoryException catch (error) {
       _errorMessage = error.message;
     } catch (_) {
@@ -87,6 +121,7 @@ class BookingsViewModel extends ChangeNotifier {
           : result.message;
       try {
         _reservations = await _bookingRepository.fetchReservations();
+        _updateCountdownTimer();
       } catch (_) {
         _actionErrorMessage =
             'Booking cancelled, but reservations could not be refreshed.';
@@ -108,5 +143,36 @@ class BookingsViewModel extends ChangeNotifier {
     if (_selectedTab == tab) return;
     _selectedTab = tab;
     notifyListeners();
+  }
+
+  void _updateCountdownTimer() {
+    final hasActiveCountdown = _reservations.any(
+      (reservation) => reservation.canResumePaymentAt(_now()),
+    );
+    if (hasActiveCountdown && _countdownTimer == null) {
+      _countdownTimer = Timer.periodic(const Duration(seconds: 1), (_) {
+        final hasExpiredPendingPayment = _reservations.any((reservation) {
+          final expiry = reservation.expiresAt;
+          return reservation.bookingStatus.toLowerCase() == 'pendingpayment' &&
+              expiry != null &&
+              !_now().toUtc().isBefore(expiry.toUtc());
+        });
+        notifyListeners();
+        if (hasExpiredPendingPayment) {
+          _countdownTimer?.cancel();
+          _countdownTimer = null;
+          unawaited(load());
+        }
+      });
+    } else if (!hasActiveCountdown) {
+      _countdownTimer?.cancel();
+      _countdownTimer = null;
+    }
+  }
+
+  @override
+  void dispose() {
+    _countdownTimer?.cancel();
+    super.dispose();
   }
 }

@@ -334,6 +334,46 @@ void main() {
     expect(find.text('Find your next stay'), findsOneWidget);
   });
 
+  testWidgets('expired PayOS checkout opens bookings with bottom navigation', (
+    tester,
+  ) async {
+    await _pumpMainShell(
+      tester,
+      bookingRepository: const ExpiredCheckoutBookingRepository(),
+    );
+
+    await tester.tap(find.text('Ocean Pearl Hotel'));
+    await tester.pumpAndSettle();
+    await tester.scrollUntilVisible(
+      find.byKey(const Key('property_book_now_button')),
+      300,
+      scrollable: find.byType(Scrollable).first,
+    );
+    tester
+        .widget<FilledButton>(find.byKey(const Key('property_book_now_button')))
+        .onPressed!();
+    await tester.pumpAndSettle();
+    await tester.tap(find.text('Deluxe Ocean View'));
+    await tester.pump();
+    tester
+        .widget<FilledButton>(
+          find.byKey(const Key('continue_to_payment_button')),
+        )
+        .onPressed!();
+    await tester.pumpAndSettle();
+    tester
+        .widget<FilledButton>(find.byKey(const Key('confirm_booking_button')))
+        .onPressed!();
+    await tester.pumpAndSettle();
+
+    expect(find.text('My Reservations'), findsOneWidget);
+    expect(find.byKey(const Key('bottom_nav_2')), findsOneWidget);
+    expect(
+      find.text('Payment time expired. The room is available again.'),
+      findsOneWidget,
+    );
+  });
+
   testWidgets('PayOS return refreshes data and opens bookings', (tester) async {
     final repository = PaidBookingRepository();
     await _pumpMainShell(
@@ -400,6 +440,84 @@ void main() {
 
     expect(notificationRepository.fetchCalls, greaterThanOrEqualTo(2));
     expect(bookingRepository.cancelCalls, 1);
+  });
+
+  testWidgets('resumes the existing PayOS checkout from bookings', (
+    tester,
+  ) async {
+    final repository = PendingPaymentBookingRepository();
+    await _pumpMainShell(
+      tester,
+      bookingRepository: repository,
+      payOSCheckoutBuilder: (url, _) =>
+          Text('Resumed PayOS: $url', key: const Key('resumed_payos_checkout')),
+    );
+
+    await tester.tap(find.byKey(const Key('bottom_nav_2')));
+    await tester.pumpAndSettle();
+    final resumeButton = find.byKey(
+      const Key('resume_payment_pending-booking'),
+    );
+    await tester.scrollUntilVisible(resumeButton, 300);
+    await tester.tap(resumeButton);
+    await tester.pump();
+
+    expect(find.byKey(const Key('payment_result_title')), findsOneWidget);
+    expect(
+      find.text('Resumed PayOS: https://pay.payos.vn/web/88001234'),
+      findsOneWidget,
+    );
+    expect(repository.checkoutCalls, 0);
+
+    await tester.tap(find.byKey(const Key('payment_result_back_button')));
+    await tester.pump();
+    expect(find.text('My Reservations'), findsOneWidget);
+
+    await tester.pumpWidget(const SizedBox());
+  });
+
+  testWidgets('same room draft continues its existing pending payment', (
+    tester,
+  ) async {
+    final repository = PendingPaymentBookingRepository();
+    await _pumpMainShell(
+      tester,
+      bookingRepository: repository,
+      payOSCheckoutBuilder: (url, _) => Text('Existing PayOS: $url'),
+    );
+
+    await tester.tap(find.text('Ocean Pearl Hotel'));
+    await tester.pumpAndSettle();
+    await tester.scrollUntilVisible(
+      find.byKey(const Key('property_book_now_button')),
+      300,
+      scrollable: find.byType(Scrollable).first,
+    );
+    tester
+        .widget<FilledButton>(find.byKey(const Key('property_book_now_button')))
+        .onPressed!();
+    await tester.pumpAndSettle();
+    await tester.tap(find.text('Deluxe Ocean View'));
+    await tester.pump();
+    tester
+        .widget<FilledButton>(
+          find.byKey(const Key('continue_to_payment_button')),
+        )
+        .onPressed!();
+    await tester.pumpAndSettle();
+
+    expect(find.byKey(const Key('payment_result_title')), findsOneWidget);
+    expect(
+      find.text('Existing PayOS: https://pay.payos.vn/web/88001234'),
+      findsOneWidget,
+    );
+    expect(
+      find.text('Continuing your existing pending payment.'),
+      findsOneWidget,
+    );
+    expect(repository.checkoutCalls, 0);
+
+    await tester.pumpWidget(const SizedBox());
   });
 
   testWidgets('profile tab logs out through repository', (tester) async {
@@ -668,6 +786,74 @@ class PaidBookingRepository extends FakeBookingRepository {
       paidAt: null,
       updatedAt: null,
     );
+  }
+}
+
+class ExpiredCheckoutBookingRepository extends FakeBookingRepository {
+  const ExpiredCheckoutBookingRepository();
+
+  @override
+  Future<BookingCheckout> checkout(CheckoutBookingCommand command) async {
+    return BookingCheckout(
+      bookingId: 'f4fb8b9d-b26c-4685-9454-0fbb9d927337',
+      bookingStatus: 'PendingPayment',
+      paymentMethod: 'PayOS',
+      paymentStatus: 'Pending',
+      amount: 255,
+      transactionCode: '88001234',
+      paymentLinkId: 'payos-link-id',
+      checkoutUrl: 'https://pay.payos.vn/web/88001234',
+      qrCode: 'qr-code-payload',
+      expiresAt: DateTime.now().subtract(const Duration(minutes: 1)),
+      message: 'Open checkoutUrl to pay with PayOS.',
+    );
+  }
+}
+
+class PendingPaymentBookingRepository extends FakeBookingRepository {
+  int checkoutCalls = 0;
+
+  @override
+  Future<BookingDraft> createDraft(CreateBookingDraftCommand command) {
+    throw const BookingRepositoryException(
+      'Payment is pending.',
+      code: 'PendingPaymentExists',
+      bookingId: 'pending-booking',
+    );
+  }
+
+  @override
+  Future<List<BookingReservation>> fetchReservations() async {
+    final now = DateTime.now().toUtc();
+    return [
+      BookingReservation(
+        bookingId: 'pending-booking',
+        propertyId: 'property-1',
+        propertyName: 'Pending Ocean Hotel',
+        propertyImageUrl: null,
+        roomId: 'room-1',
+        roomName: 'Deluxe Room',
+        roomImageUrl: null,
+        checkIn: now.add(const Duration(days: 3)),
+        checkOut: now.add(const Duration(days: 4)),
+        adults: 2,
+        children: 0,
+        roomQuantity: 1,
+        totalPrice: 5000,
+        bookingStatus: 'PendingPayment',
+        paymentStatus: 'Pending',
+        paymentMethod: 'PayOS',
+        transactionCode: '88001234',
+        checkoutUrl: 'https://pay.payos.vn/web/88001234',
+        expiresAt: now.add(const Duration(minutes: 15)),
+      ),
+    ];
+  }
+
+  @override
+  Future<BookingCheckout> checkout(CheckoutBookingCommand command) async {
+    checkoutCalls++;
+    return super.checkout(command);
   }
 }
 

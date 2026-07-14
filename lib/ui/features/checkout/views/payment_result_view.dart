@@ -9,12 +9,13 @@ import 'package:webview_flutter/webview_flutter.dart';
 typedef PayOSCheckoutBuilder =
     Widget Function(Uri checkoutUri, ValueChanged<String> onPageFinished);
 
-class PaymentResultView extends StatelessWidget {
+class PaymentResultView extends StatefulWidget {
   const PaymentResultView({
     required this.checkout,
     required this.viewModel,
     required this.onBackToExplore,
     required this.onPaymentConfirmed,
+    this.onPaymentExpired,
     this.payOSCheckoutBuilder,
     super.key,
   });
@@ -23,13 +24,57 @@ class PaymentResultView extends StatelessWidget {
   final PaymentResultViewModel viewModel;
   final VoidCallback onBackToExplore;
   final VoidCallback onPaymentConfirmed;
+  final VoidCallback? onPaymentExpired;
   final PayOSCheckoutBuilder? payOSCheckoutBuilder;
 
-  bool get _isPayOS => checkout.paymentMethod.toLowerCase() == 'payos';
+  @override
+  State<PaymentResultView> createState() => _PaymentResultViewState();
+}
+
+class _PaymentResultViewState extends State<PaymentResultView> {
+  bool _expiryDelivered = false;
+
+  bool get _isPayOS => widget.checkout.paymentMethod.toLowerCase() == 'payos';
+
+  @override
+  void initState() {
+    super.initState();
+    widget.viewModel.addListener(_handleViewModelChanged);
+    _handleViewModelChanged();
+  }
+
+  @override
+  void didUpdateWidget(covariant PaymentResultView oldWidget) {
+    super.didUpdateWidget(oldWidget);
+    if (oldWidget.viewModel != widget.viewModel) {
+      oldWidget.viewModel.removeListener(_handleViewModelChanged);
+      widget.viewModel.addListener(_handleViewModelChanged);
+      _expiryDelivered = false;
+      _handleViewModelChanged();
+    }
+  }
+
+  void _handleViewModelChanged() {
+    if (!_expiryDelivered &&
+        widget.viewModel.state == PaymentResultState.expired) {
+      _expiryDelivered = true;
+      WidgetsBinding.instance.addPostFrameCallback((_) {
+        if (mounted) {
+          widget.onPaymentExpired?.call();
+        }
+      });
+    }
+  }
+
+  @override
+  void dispose() {
+    widget.viewModel.removeListener(_handleViewModelChanged);
+    super.dispose();
+  }
 
   @override
   Widget build(BuildContext context) {
-    final checkoutUrl = checkout.checkoutUrl;
+    final checkoutUrl = widget.checkout.checkoutUrl;
     final checkoutUri = _checkoutUri(checkoutUrl);
     final shouldEmbedPayOS = _isPayOS && checkoutUri != null;
 
@@ -45,19 +90,20 @@ class PaymentResultView extends StatelessWidget {
             child: Column(
               crossAxisAlignment: CrossAxisAlignment.stretch,
               children: [
-                _PaymentResultHeader(onBack: onBackToExplore),
+                _PaymentResultHeader(onBack: widget.onBackToExplore),
                 if (shouldEmbedPayOS)
                   _EmbeddedPayOSResult(
-                    checkout: checkout,
+                    checkout: widget.checkout,
                     checkoutUri: checkoutUri,
                     checkoutBuilder:
-                        payOSCheckoutBuilder ?? _defaultPayOSCheckoutBuilder,
-                    viewModel: viewModel,
-                    onPaymentConfirmed: onPaymentConfirmed,
+                        widget.payOSCheckoutBuilder ??
+                        _defaultPayOSCheckoutBuilder,
+                    viewModel: widget.viewModel,
+                    onPaymentConfirmed: widget.onPaymentConfirmed,
                   )
                 else
                   _FallbackPaymentResult(
-                    checkout: checkout,
+                    checkout: widget.checkout,
                     isPayOS: _isPayOS,
                     checkoutUrl: checkoutUrl,
                   ),
@@ -387,13 +433,30 @@ class _PaymentVerificationBanner extends StatelessWidget {
               Icon(icon, size: 18, color: color),
               const SizedBox(width: 8),
               Expanded(
-                child: Text(
-                  message,
-                  style: TextStyle(
-                    color: color,
-                    fontSize: 12,
-                    fontWeight: FontWeight.w700,
-                  ),
+                child: Column(
+                  crossAxisAlignment: CrossAxisAlignment.start,
+                  children: [
+                    Text(
+                      message,
+                      style: TextStyle(
+                        color: color,
+                        fontSize: 12,
+                        fontWeight: FontWeight.w700,
+                      ),
+                    ),
+                    if (viewModel.hasExpiry) ...[
+                      const SizedBox(height: 2),
+                      Text(
+                        'Payment expires in ${viewModel.formattedRemaining}',
+                        key: const Key('payment_expiry_countdown'),
+                        style: TextStyle(
+                          color: color,
+                          fontSize: 12,
+                          fontWeight: FontWeight.w700,
+                        ),
+                      ),
+                    ],
+                  ],
                 ),
               ),
               if (viewModel.canRetry)

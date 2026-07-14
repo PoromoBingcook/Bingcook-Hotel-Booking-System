@@ -36,6 +36,25 @@ void main() {
       expect(result, isFalse);
       expect(viewModel.errorMessage, 'Select a room before continuing.');
     });
+
+    test('exposes existing booking id for pending payment conflict', () async {
+      final viewModel = SelectRoomViewModel(
+        nights: 3,
+        bookingRepository: FakeBookingRepository(
+          draftError: const BookingRepositoryException(
+            'Payment is pending.',
+            code: 'PendingPaymentExists',
+            bookingId: 'booking-1',
+          ),
+        ),
+      );
+
+      viewModel.selectRoom(_room);
+      final result = await viewModel.createDraft(_data);
+
+      expect(result, isFalse);
+      expect(viewModel.pendingPaymentBookingId, 'booking-1');
+    });
   });
 }
 
@@ -66,6 +85,9 @@ const _room = RoomOptionData(
 );
 
 class FakeBookingRepository implements BookingRepository {
+  FakeBookingRepository({this.draftError});
+
+  final BookingRepositoryException? draftError;
   CreateBookingDraftCommand? lastDraftCommand;
 
   @override
@@ -73,6 +95,9 @@ class FakeBookingRepository implements BookingRepository {
 
   @override
   Future<BookingDraft> createDraft(CreateBookingDraftCommand command) async {
+    if (draftError case final error?) {
+      throw error;
+    }
     lastDraftCommand = command;
     return BookingDraft(
       bookingId: 'booking-id',

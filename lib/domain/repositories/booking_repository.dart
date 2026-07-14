@@ -13,9 +13,11 @@ abstract interface class BookingRepository {
 }
 
 class BookingRepositoryException implements Exception {
-  const BookingRepositoryException(this.message);
+  const BookingRepositoryException(this.message, {this.code, this.bookingId});
 
   final String message;
+  final String? code;
+  final String? bookingId;
 
   @override
   String toString() => message;

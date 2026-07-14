@@ -269,5 +269,37 @@ void main() {
         ),
       );
     });
+
+    test('preserves existing pending payment conflict details', () async {
+      final service = BookingApiService(
+        client: MockClient(
+          (request) async => http.Response(
+            '''{"message":"Payment is pending.","code":"PendingPaymentExists","bookingId":"booking-1"}''',
+            409,
+            headers: {'content-type': 'application/json'},
+          ),
+        ),
+        baseUrl: Uri.parse('http://10.0.2.2:5115'),
+      );
+
+      try {
+        await service.createDraft(
+          token: 'jwt-token',
+          propertyId: 'property-1',
+          roomId: 'room-1',
+          checkIn: DateTime(2026, 7, 10),
+          checkOut: DateTime(2026, 7, 13),
+          adults: 2,
+          children: 0,
+          roomQuantity: 1,
+          addOns: const [],
+          note: null,
+        );
+        fail('Expected BookingApiException.');
+      } on BookingApiException catch (error) {
+        expect(error.code, 'PendingPaymentExists');
+        expect(error.bookingId, 'booking-1');
+      }
+    });
   });
 }

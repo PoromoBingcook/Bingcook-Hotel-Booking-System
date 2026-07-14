@@ -19,6 +19,7 @@ class SelectRoomViewModel extends ChangeNotifier {
   bool _isCreatingDraft = false;
   String? _errorMessage;
   BookingDraft? _draft;
+  String? _pendingPaymentBookingId;
 
   String? get selectedRoomId => _selectedRoomId;
   RoomOptionData? get selectedRoom => _selectedRoom;
@@ -26,6 +27,7 @@ class SelectRoomViewModel extends ChangeNotifier {
   bool get isCreatingDraft => _isCreatingDraft;
   String? get errorMessage => _errorMessage;
   BookingDraft? get draft => _draft;
+  String? get pendingPaymentBookingId => _pendingPaymentBookingId;
   int get totalPrice => _selectedNightlyPrice * nights;
   bool get canContinue => _selectedRoomId != null && !_isCreatingDraft;
 
@@ -38,6 +40,7 @@ class SelectRoomViewModel extends ChangeNotifier {
     _selectedNightlyPrice = room.pricePerNight;
     _errorMessage = null;
     _draft = null;
+    _pendingPaymentBookingId = null;
     notifyListeners();
   }
 
@@ -70,6 +73,7 @@ class SelectRoomViewModel extends ChangeNotifier {
 
     _isCreatingDraft = true;
     _errorMessage = null;
+    _pendingPaymentBookingId = null;
     notifyListeners();
 
     try {
@@ -91,6 +95,9 @@ class SelectRoomViewModel extends ChangeNotifier {
       return true;
     } on BookingRepositoryException catch (error) {
       _errorMessage = error.message;
+      if (error.code == 'PendingPaymentExists') {
+        _pendingPaymentBookingId = error.bookingId;
+      }
       _isCreatingDraft = false;
       notifyListeners();
       return false;

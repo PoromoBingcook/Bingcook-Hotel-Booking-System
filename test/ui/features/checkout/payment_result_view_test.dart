@@ -1,3 +1,5 @@
+import 'dart:async';
+
 import 'package:bingcook/domain/models/booking.dart';
 import 'package:bingcook/domain/repositories/booking_repository.dart';
 import 'package:bingcook/ui/features/checkout/view_models/payment_result_view_model.dart';
@@ -72,6 +74,92 @@ void main() {
     expect(confirmedCalls, 1);
     expect(viewModel.state, PaymentResultState.confirmed);
   });
+
+  testWidgets('shows the server-owned payment expiry countdown', (
+    tester,
+  ) async {
+    final viewModel = PaymentResultViewModel(
+      bookingId: 'booking-id',
+      bookingRepository: _BookingRepository(),
+      expiresAt: DateTime.utc(2026, 7, 14, 3, 15),
+      now: () => DateTime.utc(2026, 7, 14, 3),
+    );
+
+    await tester.pumpWidget(
+      MaterialApp(
+        home: PaymentResultView(
+          checkout: _payOSCheckout,
+          viewModel: viewModel,
+          onBackToExplore: () {},
+          onPaymentConfirmed: () {},
+          onPaymentExpired: () {},
+          payOSCheckoutBuilder: (_, _) => const SizedBox(),
+        ),
+      ),
+    );
+
+    expect(find.byKey(const Key('payment_expiry_countdown')), findsOneWidget);
+    expect(find.text('Payment expires in 15:00'), findsOneWidget);
+
+    await tester.pumpWidget(const SizedBox());
+    viewModel.dispose();
+  });
+
+  testWidgets('delivers payment expiry once', (tester) async {
+    var now = DateTime.utc(2026, 7, 14, 3);
+    void Function(Timer)? tick;
+    final timer = _Timer();
+    var expiryCalls = 0;
+    final viewModel = PaymentResultViewModel(
+      bookingId: 'booking-id',
+      bookingRepository: _BookingRepository(),
+      expiresAt: DateTime.utc(2026, 7, 14, 3, 0, 1),
+      now: () => now,
+      timerFactory: (_, callback) {
+        tick = callback;
+        return timer;
+      },
+    );
+
+    await tester.pumpWidget(
+      MaterialApp(
+        home: PaymentResultView(
+          checkout: _payOSCheckout,
+          viewModel: viewModel,
+          onBackToExplore: () {},
+          onPaymentConfirmed: () {},
+          onPaymentExpired: () => expiryCalls++,
+          payOSCheckoutBuilder: (_, _) => const SizedBox(),
+        ),
+      ),
+    );
+
+    now = DateTime.utc(2026, 7, 14, 3, 0, 1);
+    tick!(timer);
+    await tester.pump();
+    await tester.pump();
+    expect(expiryCalls, 1);
+
+    tick!(timer);
+    await tester.pump();
+    expect(expiryCalls, 1);
+
+    await tester.pumpWidget(const SizedBox());
+    viewModel.dispose();
+  });
+}
+
+class _Timer implements Timer {
+  var _isActive = true;
+
+  @override
+  bool get isActive => _isActive;
+
+  @override
+  int get tick => 0;
+
+  @override
+  void cancel() => _isActive = false;
 }
 
 const _payOSCheckout = BookingCheckout(

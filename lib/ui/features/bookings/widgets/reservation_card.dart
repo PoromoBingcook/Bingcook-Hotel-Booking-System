@@ -8,12 +8,16 @@ class ReservationCard extends StatelessWidget {
   const ReservationCard({
     required this.reservation,
     this.onCancel,
+    this.onResumePayment,
+    this.paymentCountdown,
     this.isCancelling = false,
     super.key,
   });
 
   final BookingReservation reservation;
   final VoidCallback? onCancel;
+  final VoidCallback? onResumePayment;
+  final String? paymentCountdown;
   final bool isCancelling;
 
   @override
@@ -136,7 +140,67 @@ class ReservationCard extends StatelessWidget {
                     ),
                   ],
                 ),
-                if (onCancel != null) ...[
+                if (onResumePayment != null) ...[
+                  const SizedBox(height: 10),
+                  Row(
+                    children: [
+                      const Icon(
+                        Icons.timer_outlined,
+                        size: 17,
+                        color: AppColors.warning,
+                      ),
+                      const SizedBox(width: 6),
+                      Text(
+                        'Payment expires in $paymentCountdown',
+                        key: Key(
+                          'reservation_payment_countdown_${reservation.bookingId}',
+                        ),
+                        style: const TextStyle(
+                          color: AppColors.gray600,
+                          fontSize: 12,
+                          fontWeight: FontWeight.w700,
+                        ),
+                      ),
+                    ],
+                  ),
+                  const SizedBox(height: 10),
+                  Row(
+                    children: [
+                      Expanded(
+                        child: FilledButton.icon(
+                          key: Key('resume_payment_${reservation.bookingId}'),
+                          onPressed: onResumePayment,
+                          icon: const Icon(Icons.open_in_new_rounded, size: 18),
+                          label: const Text('Resume payment'),
+                        ),
+                      ),
+                      if (onCancel != null) ...[
+                        const SizedBox(width: 8),
+                        Expanded(
+                          child: OutlinedButton.icon(
+                            key: Key('cancel_booking_${reservation.bookingId}'),
+                            onPressed: isCancelling ? null : onCancel,
+                            icon: isCancelling
+                                ? const SizedBox.square(
+                                    key: Key('cancel_booking_progress'),
+                                    dimension: 16,
+                                    child: CircularProgressIndicator(
+                                      strokeWidth: 2,
+                                    ),
+                                  )
+                                : const Icon(
+                                    Icons.event_busy_outlined,
+                                    size: 18,
+                                  ),
+                            label: Text(
+                              isCancelling ? 'Canceling...' : 'Cancel',
+                            ),
+                          ),
+                        ),
+                      ],
+                    ],
+                  ),
+                ] else if (onCancel != null) ...[
                   const SizedBox(height: 10),
                   SizedBox(
                     width: double.infinity,

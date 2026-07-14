@@ -23,7 +23,11 @@ class ApiBookingRepository implements BookingRepository {
     } on BookingRepositoryException {
       rethrow;
     } on BookingApiException catch (error) {
-      throw BookingRepositoryException(error.message);
+      throw BookingRepositoryException(
+        error.message,
+        code: error.code,
+        bookingId: error.bookingId,
+      );
     } on FormatException {
       throw const BookingRepositoryException('Unable to read reservations.');
     } catch (_) {
@@ -52,7 +56,11 @@ class ApiBookingRepository implements BookingRepository {
     } on BookingRepositoryException {
       rethrow;
     } on BookingApiException catch (error) {
-      throw BookingRepositoryException(error.message);
+      throw BookingRepositoryException(
+        error.message,
+        code: error.code,
+        bookingId: error.bookingId,
+      );
     } on FormatException {
       throw const BookingRepositoryException(
         'Unable to read booking response.',
@@ -80,7 +88,11 @@ class ApiBookingRepository implements BookingRepository {
     } on BookingRepositoryException {
       rethrow;
     } on BookingApiException catch (error) {
-      throw BookingRepositoryException(error.message);
+      throw BookingRepositoryException(
+        error.message,
+        code: error.code,
+        bookingId: error.bookingId,
+      );
     } on FormatException {
       throw const BookingRepositoryException(
         'Unable to read booking response.',
@@ -103,7 +115,11 @@ class ApiBookingRepository implements BookingRepository {
     } on BookingRepositoryException {
       rethrow;
     } on BookingApiException catch (error) {
-      throw BookingRepositoryException(error.message);
+      throw BookingRepositoryException(
+        error.message,
+        code: error.code,
+        bookingId: error.bookingId,
+      );
     } on FormatException {
       throw const BookingRepositoryException(
         'Unable to read booking status response.',
@@ -126,7 +142,11 @@ class ApiBookingRepository implements BookingRepository {
     } on BookingRepositoryException {
       rethrow;
     } on BookingApiException catch (error) {
-      throw BookingRepositoryException(error.message);
+      throw BookingRepositoryException(
+        error.message,
+        code: error.code,
+        bookingId: error.bookingId,
+      );
     } on FormatException {
       throw const BookingRepositoryException(
         'Unable to read cancellation response.',

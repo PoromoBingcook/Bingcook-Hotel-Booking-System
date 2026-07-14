@@ -198,6 +198,7 @@ class BookingCheckoutResponse {
     required this.checkoutUrl,
     required this.qrCode,
     required this.message,
+    this.expiresAt,
   });
 
   factory BookingCheckoutResponse.fromJson(Map<String, Object?> json) {
@@ -229,6 +230,7 @@ class BookingCheckoutResponse {
         json['checkoutUrl'],
       ),
       qrCode: BookingDraftResponse._readOptionalString(json['qrCode']),
+      expiresAt: BookingStatusResponse._readOptionalDateTime(json['expiresAt']),
       message: BookingDraftResponse._readString(json['message'], fallback: ''),
     );
   }
@@ -243,6 +245,7 @@ class BookingCheckoutResponse {
   final String? checkoutUrl;
   final String? qrCode;
   final String message;
+  final DateTime? expiresAt;
 
   BookingCheckout toDomain() {
     return BookingCheckout(
@@ -256,6 +259,7 @@ class BookingCheckoutResponse {
       checkoutUrl: checkoutUrl,
       qrCode: qrCode,
       message: message,
+      expiresAt: expiresAt,
     );
   }
 }
@@ -270,6 +274,8 @@ class BookingStatusResponse {
     required this.transactionCode,
     required this.paidAt,
     required this.updatedAt,
+    this.checkoutUrl,
+    this.expiresAt,
   });
 
   factory BookingStatusResponse.fromJson(Map<String, Object?> json) {
@@ -292,6 +298,10 @@ class BookingStatusResponse {
       transactionCode: BookingDraftResponse._readOptionalString(
         json['transactionCode'],
       ),
+      checkoutUrl: BookingDraftResponse._readOptionalString(
+        json['checkoutUrl'],
+      ),
+      expiresAt: _readOptionalDateTime(json['expiresAt']),
       paidAt: _readOptionalDateTime(json['paidAt']),
       updatedAt: _readOptionalDateTime(json['updatedAt']),
     );
@@ -305,6 +315,8 @@ class BookingStatusResponse {
   final String? transactionCode;
   final DateTime? paidAt;
   final DateTime? updatedAt;
+  final String? checkoutUrl;
+  final DateTime? expiresAt;
 
   BookingPaymentStatus toDomain() {
     return BookingPaymentStatus(
@@ -316,6 +328,8 @@ class BookingStatusResponse {
       transactionCode: transactionCode,
       paidAt: paidAt,
       updatedAt: updatedAt,
+      checkoutUrl: checkoutUrl,
+      expiresAt: expiresAt,
     );
   }
 
@@ -328,9 +342,23 @@ class BookingStatusResponse {
   }
 
   static DateTime? _readOptionalDateTime(Object? value) {
-    return value is String && value.trim().isNotEmpty
-        ? DateTime.tryParse(value)
-        : null;
+    if (value is! String || value.trim().isEmpty) {
+      return null;
+    }
+    final parsed = DateTime.tryParse(value.trim());
+    if (parsed == null || parsed.isUtc) {
+      return parsed;
+    }
+    return DateTime.utc(
+      parsed.year,
+      parsed.month,
+      parsed.day,
+      parsed.hour,
+      parsed.minute,
+      parsed.second,
+      parsed.millisecond,
+      parsed.microsecond,
+    );
   }
 }
 
@@ -394,6 +422,9 @@ class BookingReservationResponse {
     required this.bookingStatus,
     required this.paymentStatus,
     required this.paymentMethod,
+    this.transactionCode,
+    this.checkoutUrl,
+    this.expiresAt,
   });
 
   factory BookingReservationResponse.fromJson(Map<String, Object?> json) {
@@ -438,6 +469,9 @@ class BookingReservationResponse {
       bookingStatus: text('bookingStatus'),
       paymentStatus: optionalText('paymentStatus'),
       paymentMethod: optionalText('paymentMethod'),
+      transactionCode: optionalText('transactionCode'),
+      checkoutUrl: optionalText('checkoutUrl'),
+      expiresAt: BookingStatusResponse._readOptionalDateTime(json['expiresAt']),
     );
   }
 
@@ -459,6 +493,9 @@ class BookingReservationResponse {
   final String bookingStatus;
   final String? paymentStatus;
   final String? paymentMethod;
+  final String? transactionCode;
+  final String? checkoutUrl;
+  final DateTime? expiresAt;
 
   BookingReservation toDomain() => BookingReservation(
     bookingId: bookingId,
@@ -479,5 +516,8 @@ class BookingReservationResponse {
     bookingStatus: bookingStatus,
     paymentStatus: paymentStatus,
     paymentMethod: paymentMethod,
+    transactionCode: transactionCode,
+    checkoutUrl: checkoutUrl,
+    expiresAt: expiresAt,
   );
 }

@@ -36,6 +36,26 @@ void main() {
     expect(reservation.canCancelAt(DateTime.utc(2026, 7, 15, 7)), isFalse);
   });
 
+  test('allows pending PayOS cancellation and resume until hold expiry', () {
+    final reservation = _reservation(
+      status: 'PendingPayment',
+      checkIn: DateTime(2026, 7, 14),
+      expiresAt: DateTime.utc(2026, 7, 14, 3, 15),
+      checkoutUrl: 'https://pay.payos.vn/web/88001234',
+    );
+
+    expect(reservation.canCancelAt(DateTime.utc(2026, 7, 14, 3)), isTrue);
+    expect(
+      reservation.canResumePaymentAt(DateTime.utc(2026, 7, 14, 3)),
+      isTrue,
+    );
+    expect(reservation.canCancelAt(DateTime.utc(2026, 7, 14, 3, 15)), isFalse);
+    expect(
+      reservation.canResumePaymentAt(DateTime.utc(2026, 7, 14, 3, 15)),
+      isFalse,
+    );
+  });
+
   test('keeps checkout-day reservation active in Vietnam', () {
     final reservation = _reservation(
       status: 'Paid',
@@ -54,6 +74,8 @@ BookingReservation _reservation({
   required String status,
   DateTime? checkIn,
   DateTime? checkOut,
+  DateTime? expiresAt,
+  String? checkoutUrl,
 }) {
   return BookingReservation(
     bookingId: 'booking-1',
@@ -72,5 +94,8 @@ BookingReservation _reservation({
     bookingStatus: status,
     paymentStatus: status == 'Paid' ? 'Success' : 'Pending',
     paymentMethod: 'PayOS',
+    transactionCode: '88001234',
+    checkoutUrl: checkoutUrl,
+    expiresAt: expiresAt,
   );
 }

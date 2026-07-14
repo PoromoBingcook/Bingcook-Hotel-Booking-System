@@ -60,10 +60,46 @@ void main() {
     expect(find.text('Booking cancelled.'), findsOneWidget);
     expect(cancellationCallbacks, 1);
   });
+
+  testWidgets('shows countdown and resumes an existing PayOS payment', (
+    tester,
+  ) async {
+    final repository = _BookingRepository(includePending: true);
+    final viewModel = BookingsViewModel(
+      bookingRepository: repository,
+      now: () => DateTime.utc(2026, 7, 14, 3),
+    );
+    await viewModel.load();
+    BookingReservation? resumed;
+
+    await tester.pumpWidget(
+      MaterialApp(
+        home: Scaffold(
+          body: BookingsView(
+            viewModel: viewModel,
+            onResumePayment: (reservation) => resumed = reservation,
+          ),
+        ),
+      ),
+    );
+
+    expect(find.text('Payment expires in 15:00'), findsOneWidget);
+    final resumeButton = find.byKey(const Key('resume_payment_pending'));
+    await tester.scrollUntilVisible(resumeButton, 400);
+    await tester.pumpAndSettle();
+    await tester.tap(resumeButton);
+    expect(resumed?.bookingId, 'pending');
+
+    await tester.pumpWidget(const SizedBox());
+    viewModel.dispose();
+  });
 }
 
 class _BookingRepository implements BookingRepository {
+  _BookingRepository({this.includePending = false});
+
   final _cancellationCompleter = Completer<BookingCancellation>();
+  final bool includePending;
   var _canceled = false;
 
   void completeCancellation() {
@@ -90,6 +126,15 @@ class _BookingRepository implements BookingRepository {
       propertyName: 'Canceled Garden Stay',
       status: 'Cancelled',
     ),
+    if (includePending)
+      _reservation(
+        id: 'pending',
+        propertyName: 'Pending PayOS Stay',
+        status: 'PendingPayment',
+        paymentStatus: 'Pending',
+        checkoutUrl: 'https://pay.payos.vn/web/88001234',
+        expiresAt: DateTime.utc(2026, 7, 14, 3, 15),
+      ),
   ];
 
   @override
@@ -113,6 +158,9 @@ BookingReservation _reservation({
   required String id,
   required String propertyName,
   required String status,
+  String paymentStatus = 'Success',
+  String? checkoutUrl,
+  DateTime? expiresAt,
 }) {
   return BookingReservation(
     bookingId: id,
@@ -129,7 +177,10 @@ BookingReservation _reservation({
     roomQuantity: 1,
     totalPrice: 1240000,
     bookingStatus: status,
-    paymentStatus: 'Success',
+    paymentStatus: paymentStatus,
     paymentMethod: 'PayOS',
+    transactionCode: status == 'PendingPayment' ? '88001234' : null,
+    checkoutUrl: checkoutUrl,
+    expiresAt: expiresAt,
   );
 }
