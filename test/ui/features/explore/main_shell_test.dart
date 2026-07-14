@@ -290,7 +290,7 @@ void main() {
     expect(find.byKey(const Key('select_room_title')), findsOneWidget);
   });
 
-  testWidgets('Confirm Booking opens PayOS result and closes to explore', (
+  testWidgets('Confirm Booking opens PayOS result and closes to bookings', (
     tester,
   ) async {
     await _pumpMainShell(tester);
@@ -331,7 +331,45 @@ void main() {
     await tester.tap(find.byKey(const Key('payment_result_back_button')));
     await tester.pumpAndSettle();
 
-    expect(find.text('Find your next stay'), findsOneWidget);
+    expect(find.text('My Reservations'), findsOneWidget);
+  });
+
+  testWidgets('closing unpaid PayOS refreshes and opens bookings', (
+    tester,
+  ) async {
+    final repository = RefreshAfterCheckoutBookingRepository();
+    await _pumpMainShell(tester, bookingRepository: repository);
+
+    await tester.tap(find.text('Ocean Pearl Hotel'));
+    await tester.pumpAndSettle();
+    await tester.scrollUntilVisible(
+      find.byKey(const Key('property_book_now_button')),
+      300,
+      scrollable: find.byType(Scrollable).first,
+    );
+    tester
+        .widget<FilledButton>(find.byKey(const Key('property_book_now_button')))
+        .onPressed!();
+    await tester.pumpAndSettle();
+    await tester.tap(find.text('Deluxe Ocean View'));
+    await tester.pump();
+    tester
+        .widget<FilledButton>(
+          find.byKey(const Key('continue_to_payment_button')),
+        )
+        .onPressed!();
+    await tester.pumpAndSettle();
+    tester
+        .widget<FilledButton>(find.byKey(const Key('confirm_booking_button')))
+        .onPressed!();
+    await tester.pumpAndSettle();
+
+    await tester.tap(find.byKey(const Key('payment_result_back_button')));
+    await tester.pumpAndSettle();
+
+    expect(find.text('My Reservations'), findsOneWidget);
+    expect(find.text('Pending Ocean Hotel'), findsOneWidget);
+    expect(repository.fetchReservationsCalls, greaterThan(1));
   });
 
   testWidgets('expired PayOS checkout opens bookings with bottom navigation', (
@@ -810,6 +848,49 @@ class ExpiredCheckoutBookingRepository extends FakeBookingRepository {
   }
 }
 
+class RefreshAfterCheckoutBookingRepository extends FakeBookingRepository {
+  bool _checkedOut = false;
+  int fetchReservationsCalls = 0;
+
+  @override
+  Future<BookingCheckout> checkout(CheckoutBookingCommand command) async {
+    _checkedOut = true;
+    return super.checkout(command);
+  }
+
+  @override
+  Future<List<BookingReservation>> fetchReservations() async {
+    fetchReservationsCalls++;
+    if (!_checkedOut) {
+      return const [];
+    }
+    final now = DateTime.now().toUtc();
+    return [
+      BookingReservation(
+        bookingId: 'pending-booking',
+        propertyId: 'property-1',
+        propertyName: 'Pending Ocean Hotel',
+        propertyImageUrl: null,
+        roomId: 'room-1',
+        roomName: 'Deluxe Room',
+        roomImageUrl: null,
+        checkIn: now.add(const Duration(days: 3)),
+        checkOut: now.add(const Duration(days: 4)),
+        adults: 2,
+        children: 0,
+        roomQuantity: 1,
+        totalPrice: 5000,
+        bookingStatus: 'PendingPayment',
+        paymentStatus: 'Pending',
+        paymentMethod: 'PayOS',
+        transactionCode: '88001234',
+        checkoutUrl: 'https://pay.payos.vn/web/88001234',
+        expiresAt: now.add(const Duration(minutes: 15)),
+      ),
+    ];
+  }
+}
+
 class PendingPaymentBookingRepository extends FakeBookingRepository {
   int checkoutCalls = 0;
 
@@ -1012,7 +1093,7 @@ class FakeProductRepository implements ProductRepository {
       status: product.status,
       checkInPolicy: 'Check-in from 14:00.',
       checkOutPolicy: 'Check-out before 12:00.',
-      cancellationPolicy: 'Free cancellation up to 24 hours before check-in.',
+      cancellationPolicy: 'Free cancellation before the check-in date.',
       rooms: const [
         ProductRoom(
           id: 'deluxe-ocean-view',

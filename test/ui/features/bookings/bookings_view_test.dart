@@ -14,7 +14,7 @@ void main() {
     final repository = _BookingRepository();
     final viewModel = BookingsViewModel(
       bookingRepository: repository,
-      now: () => DateTime.utc(2026, 7, 14, 2),
+      now: () => DateTime.utc(2026, 7, 15, 16, 59, 59),
     );
     await viewModel.load();
     var cancellationCallbacks = 0;
@@ -41,10 +41,11 @@ void main() {
 
     await tester.tap(find.text('Active'));
     await tester.pump();
+    expect(find.byKey(const Key('cancel_booking_active')), findsOneWidget);
     await tester.tap(find.text('Cancel reservation'));
     await tester.pumpAndSettle();
 
-    expect(find.textContaining('24 hours'), findsOneWidget);
+    expect(find.textContaining('before the check-in date'), findsOneWidget);
     expect(
       find.textContaining('successful payment remains recorded'),
       findsOneWidget,

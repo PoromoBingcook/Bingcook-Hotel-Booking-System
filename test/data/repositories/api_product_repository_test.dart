@@ -61,6 +61,18 @@ void main() {
         ),
       );
     });
+
+    test('uses the pre-check-in-date cancellation policy fallback', () {
+      final details = ProductDetailsResponse.fromJson({
+        'id': 'property-1',
+        'name': 'Ocean Pearl Hotel',
+      });
+
+      expect(
+        details.cancellationPolicy,
+        'Free cancellation before the check-in date.',
+      );
+    });
   });
 }
 

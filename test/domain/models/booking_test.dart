@@ -26,14 +26,17 @@ void main() {
     );
   });
 
-  test('allows cancellation only before Vietnam check-in deadline', () {
+  test('allows cancellation only before check-in day starts in Vietnam', () {
     final reservation = _reservation(
       status: 'Paid',
       checkIn: DateTime(2026, 7, 16),
     );
 
-    expect(reservation.canCancelAt(DateTime.utc(2026, 7, 15, 6, 59)), isTrue);
-    expect(reservation.canCancelAt(DateTime.utc(2026, 7, 15, 7)), isFalse);
+    expect(
+      reservation.canCancelAt(DateTime.utc(2026, 7, 15, 16, 59, 59)),
+      isTrue,
+    );
+    expect(reservation.canCancelAt(DateTime.utc(2026, 7, 15, 17)), isFalse);
   });
 
   test('allows pending PayOS cancellation and resume until hold expiry', () {

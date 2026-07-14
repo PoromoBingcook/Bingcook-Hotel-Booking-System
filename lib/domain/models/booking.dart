@@ -127,15 +127,12 @@ class BookingReservation {
       return false;
     }
 
-    final checkInInstant = DateTime.utc(
+    final checkInDayStart = DateTime.utc(
       checkIn.year,
       checkIn.month,
       checkIn.day,
-      7,
-    );
-    return now.toUtc().isBefore(
-      checkInInstant.subtract(const Duration(days: 1)),
-    );
+    ).subtract(const Duration(hours: 7));
+    return now.toUtc().isBefore(checkInDayStart);
   }
 
   bool canResumePaymentAt(DateTime now) {

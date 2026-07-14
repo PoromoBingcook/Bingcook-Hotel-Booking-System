@@ -84,7 +84,6 @@ class _MainShellState extends State<MainShell> {
   bool _showCheckout = false;
   bool _showAddCard = false;
   bool _showPaymentResult = false;
-  bool _paymentOpenedFromBookings = false;
   bool _showChat = false;
   bool _showMessages = false;
   bool _showNotifications = false;
@@ -177,7 +176,7 @@ class _MainShellState extends State<MainShell> {
         PaymentResultView(
           checkout: _checkoutResult!,
           viewModel: _paymentResultViewModel!,
-          onBackToExplore: _resetExploreFlow,
+          onBackToExplore: () => unawaited(_handlePaymentClosed()),
           onPaymentConfirmed: () => unawaited(_handlePaymentConfirmed()),
           onPaymentExpired: () => unawaited(_handlePaymentExpired()),
           payOSCheckoutBuilder: widget.payOSCheckoutBuilder,
@@ -205,7 +204,6 @@ class _MainShellState extends State<MainShell> {
               _checkoutResult = checkout;
               _showPaymentResult = true;
               _showCheckout = false;
-              _paymentOpenedFromBookings = false;
             });
             if (checkout.paymentMethod.toLowerCase() != 'payos') {
               unawaited(_bookingsViewModel.load());
@@ -554,18 +552,18 @@ class _MainShellState extends State<MainShell> {
     });
   }
 
-  void _resetExploreFlow() {
-    final returnToBookings = _paymentOpenedFromBookings;
+  Future<void> _handlePaymentClosed() async {
     _paymentResultViewModel?.dispose();
     _paymentResultViewModel = null;
+    _bookingsViewModel.selectTab(BookingListTab.active);
     setState(() {
+      _selectedIndex = 2;
       _showSearch = false;
       _showMap = false;
       _showSelectRoom = false;
       _showCheckout = false;
       _showAddCard = false;
       _showPaymentResult = false;
-      _paymentOpenedFromBookings = false;
       _showChat = false;
       _selectedProperty = null;
       _selectedRoomData = null;
@@ -573,13 +571,8 @@ class _MainShellState extends State<MainShell> {
       _checkoutResult = null;
       _propertyDetailsError = null;
       _isLoadingPropertyDetails = false;
-      if (returnToBookings) {
-        _selectedIndex = 2;
-      }
     });
-    if (returnToBookings) {
-      unawaited(_bookingsViewModel.load());
-    }
+    await _bookingsViewModel.load();
   }
 
   void _resumePayment(BookingReservation reservation) {
@@ -612,7 +605,6 @@ class _MainShellState extends State<MainShell> {
     setState(() {
       _checkoutResult = checkout;
       _showPaymentResult = true;
-      _paymentOpenedFromBookings = true;
       _selectedIndex = 0;
     });
   }
@@ -634,7 +626,6 @@ class _MainShellState extends State<MainShell> {
       _showCheckout = false;
       _showAddCard = false;
       _showPaymentResult = false;
-      _paymentOpenedFromBookings = false;
       _showChat = false;
       _selectedProperty = null;
       _selectedRoomData = null;
@@ -669,7 +660,6 @@ class _MainShellState extends State<MainShell> {
       _showCheckout = false;
       _showAddCard = false;
       _showPaymentResult = false;
-      _paymentOpenedFromBookings = false;
       _showChat = false;
       _selectedProperty = null;
       _selectedRoomData = null;

@@ -103,7 +103,7 @@ class BookingsViewModel extends ChangeNotifier {
     }
     if (!canCancel(reservation)) {
       _actionErrorMessage =
-          'Bookings must be cancelled at least 24 hours before check-in.';
+          'Bookings can only be cancelled before the check-in date.';
       _successMessage = null;
       notifyListeners();
       return false;

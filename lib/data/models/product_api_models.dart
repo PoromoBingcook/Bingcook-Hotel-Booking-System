@@ -186,7 +186,7 @@ class ProductDetailsResponse {
       ),
       cancellationPolicy: ProductListItemResponse._readString(
         json['cancellationPolicy'],
-        fallback: 'Free cancellation up to 24 hours before check-in.',
+        fallback: 'Free cancellation before the check-in date.',
       ),
       rooms: _readMapList(
         json['rooms'],

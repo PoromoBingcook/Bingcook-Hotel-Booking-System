@@ -151,7 +151,7 @@ class BookingsView extends StatelessWidget {
       builder: (dialogContext) => AlertDialog(
         title: const Text('Cancel reservation?'),
         content: Text(
-          '${isPendingPayment ? 'This closes the PayOS payment link and releases the room immediately.' : 'Cancellation is available until 24 hours before the 14:00 check-in time.'}'
+          '${isPendingPayment ? 'This closes the PayOS payment link and releases the room immediately.' : 'Cancellation is available before the check-in date.'}'
           '${hasSuccessfulPayment ? ' Your successful payment remains recorded. Refund handling is separate.' : ''}',
         ),
         actions: [
