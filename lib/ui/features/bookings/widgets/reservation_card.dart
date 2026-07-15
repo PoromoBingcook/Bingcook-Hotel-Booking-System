@@ -116,7 +116,7 @@ class ReservationCard extends StatelessWidget {
                   children: [
                     Expanded(
                       child: FilledButton(
-                        onPressed: () => _showDetails(context),
+                        onPressed: () => _showFullWidthDetails(context),
                         style: FilledButton.styleFrom(
                           minimumSize: const Size.fromHeight(48),
                           shape: RoundedRectangleBorder(
@@ -228,6 +228,21 @@ class ReservationCard extends StatelessWidget {
     );
   }
 
+  void _showFullWidthDetails(BuildContext context) {
+    showModalBottomSheet<void>(
+      context: context,
+      isScrollControlled: true,
+      useSafeArea: true,
+      backgroundColor: Colors.transparent,
+      builder: (context) => FractionallySizedBox(
+        heightFactor: 0.88,
+        widthFactor: 1,
+        child: _ReservationDetailsSheet(reservation: reservation),
+      ),
+    );
+  }
+
+  // ignore: unused_element
   void _showDetails(BuildContext context) {
     showModalBottomSheet<void>(
       context: context,
@@ -288,6 +303,459 @@ class ReservationCard extends StatelessWidget {
     );
     return '$formatted ₫';
   }
+}
+
+class _ReservationDetailsSheet extends StatelessWidget {
+  const _ReservationDetailsSheet({required this.reservation});
+
+  final BookingReservation reservation;
+
+  @override
+  Widget build(BuildContext context) {
+    return DecoratedBox(
+      decoration: const BoxDecoration(
+        color: AppColors.background,
+        borderRadius: BorderRadius.vertical(top: Radius.circular(26)),
+      ),
+      child: ClipRRect(
+        borderRadius: const BorderRadius.vertical(top: Radius.circular(26)),
+        child: Column(
+          crossAxisAlignment: CrossAxisAlignment.stretch,
+          children: [
+            Expanded(
+              child: CustomScrollView(
+                slivers: [
+                  SliverToBoxAdapter(
+                    child: _DetailsHero(reservation: reservation),
+                  ),
+                  SliverPadding(
+                    padding: const EdgeInsets.fromLTRB(18, 18, 18, 24),
+                    sliver: SliverList.list(
+                      children: [
+                        _StaySummary(reservation: reservation),
+                        const SizedBox(height: 14),
+                        _DetailSection(
+                          title: 'Reservation',
+                          children: [
+                            _DetailRow(
+                              icon: Icons.meeting_room_outlined,
+                              label: 'Room',
+                              value: reservation.roomName,
+                            ),
+                            _DetailRow(
+                              icon: Icons.group_outlined,
+                              label: 'Guests',
+                              value:
+                                  '${reservation.adults} adults, ${reservation.children} children',
+                            ),
+                            _DetailRow(
+                              icon: Icons.king_bed_outlined,
+                              label: 'Rooms',
+                              value: reservation.roomQuantity.toString(),
+                            ),
+                          ],
+                        ),
+                        const SizedBox(height: 14),
+                        _DetailSection(
+                          title: 'Payment',
+                          children: [
+                            _DetailRow(
+                              icon: Icons.payments_outlined,
+                              label: 'Total',
+                              value: ReservationCard._money(
+                                reservation.totalPrice,
+                              ),
+                              emphasized: true,
+                            ),
+                            _DetailRow(
+                              icon: Icons.credit_card_outlined,
+                              label: 'Method',
+                              value:
+                                  reservation.paymentMethod ?? 'Not selected',
+                            ),
+                            _DetailRow(
+                              icon: Icons.verified_outlined,
+                              label: 'Payment status',
+                              value: reservation.paymentStatus ?? 'Pending',
+                            ),
+                          ],
+                        ),
+                      ],
+                    ),
+                  ),
+                ],
+              ),
+            ),
+            Padding(
+              padding: const EdgeInsets.fromLTRB(18, 0, 18, 18),
+              child: FilledButton(
+                onPressed: () => Navigator.of(context).pop(),
+                style: FilledButton.styleFrom(
+                  minimumSize: const Size.fromHeight(52),
+                  shape: RoundedRectangleBorder(
+                    borderRadius: BorderRadius.circular(12),
+                  ),
+                ),
+                child: const Text('Done'),
+              ),
+            ),
+          ],
+        ),
+      ),
+    );
+  }
+}
+
+class _DetailsHero extends StatelessWidget {
+  const _DetailsHero({required this.reservation});
+
+  final BookingReservation reservation;
+
+  @override
+  Widget build(BuildContext context) {
+    return Stack(
+      children: [
+        SizedBox(
+          height: 244,
+          width: double.infinity,
+          child: _ReservationImage(url: reservation.propertyImageUrl),
+        ),
+        Positioned.fill(
+          child: DecoratedBox(
+            decoration: BoxDecoration(
+              gradient: LinearGradient(
+                begin: Alignment.topCenter,
+                end: Alignment.bottomCenter,
+                colors: [
+                  Colors.black.withValues(alpha: 0.08),
+                  Colors.black.withValues(alpha: 0.68),
+                ],
+              ),
+            ),
+          ),
+        ),
+        Positioned(
+          top: 12,
+          left: 16,
+          right: 16,
+          child: Center(
+            child: Container(
+              width: 42,
+              height: 5,
+              decoration: BoxDecoration(
+                color: Colors.white.withValues(alpha: 0.72),
+                borderRadius: BorderRadius.circular(999),
+              ),
+            ),
+          ),
+        ),
+        Positioned(
+          top: 14,
+          right: 12,
+          child: IconButton.filled(
+            tooltip: 'Close details',
+            onPressed: () => Navigator.of(context).pop(),
+            style: IconButton.styleFrom(
+              backgroundColor: Colors.white.withValues(alpha: 0.92),
+              foregroundColor: AppColors.gray900,
+            ),
+            icon: const Icon(Icons.close_rounded),
+          ),
+        ),
+        Positioned(
+          left: 18,
+          right: 18,
+          bottom: 18,
+          child: Column(
+            crossAxisAlignment: CrossAxisAlignment.start,
+            children: [
+              Wrap(
+                spacing: 8,
+                runSpacing: 8,
+                children: [
+                  _StatusPill(
+                    label: _readableStatus(reservation.bookingStatus),
+                    color: _statusColor(reservation.bookingStatus),
+                  ),
+                  if (reservation.paymentStatus != null)
+                    _StatusPill(
+                      label: _readableStatus(reservation.paymentStatus!),
+                      color: AppColors.primary,
+                    ),
+                ],
+              ),
+              const SizedBox(height: 12),
+              Text(
+                reservation.propertyName,
+                maxLines: 2,
+                overflow: TextOverflow.ellipsis,
+                style: const TextStyle(
+                  color: Colors.white,
+                  fontFamily: 'Manrope',
+                  fontSize: 25,
+                  height: 1.08,
+                  fontWeight: FontWeight.w800,
+                ),
+              ),
+              const SizedBox(height: 6),
+              Row(
+                children: [
+                  const Icon(
+                    Icons.calendar_month_outlined,
+                    color: Colors.white,
+                    size: 18,
+                  ),
+                  const SizedBox(width: 7),
+                  Expanded(
+                    child: Text(
+                      '${ReservationCard._date(reservation.checkIn)} - ${ReservationCard._date(reservation.checkOut)}',
+                      maxLines: 1,
+                      overflow: TextOverflow.ellipsis,
+                      style: const TextStyle(
+                        color: Colors.white,
+                        fontSize: 14,
+                        fontWeight: FontWeight.w600,
+                      ),
+                    ),
+                  ),
+                ],
+              ),
+            ],
+          ),
+        ),
+      ],
+    );
+  }
+}
+
+class _StaySummary extends StatelessWidget {
+  const _StaySummary({required this.reservation});
+
+  final BookingReservation reservation;
+
+  @override
+  Widget build(BuildContext context) {
+    return Row(
+      children: [
+        Expanded(
+          child: _SummaryTile(
+            label: 'Check-in',
+            value: ReservationCard._date(reservation.checkIn),
+            icon: Icons.login_rounded,
+          ),
+        ),
+        const SizedBox(width: 10),
+        Expanded(
+          child: _SummaryTile(
+            label: 'Check-out',
+            value: ReservationCard._date(reservation.checkOut),
+            icon: Icons.logout_rounded,
+          ),
+        ),
+      ],
+    );
+  }
+}
+
+class _SummaryTile extends StatelessWidget {
+  const _SummaryTile({
+    required this.label,
+    required this.value,
+    required this.icon,
+  });
+
+  final String label;
+  final String value;
+  final IconData icon;
+
+  @override
+  Widget build(BuildContext context) {
+    return DecoratedBox(
+      decoration: BoxDecoration(
+        color: Colors.white,
+        borderRadius: BorderRadius.circular(14),
+        border: Border.all(color: AppColors.gray200),
+      ),
+      child: Padding(
+        padding: const EdgeInsets.fromLTRB(14, 13, 14, 13),
+        child: Column(
+          crossAxisAlignment: CrossAxisAlignment.start,
+          children: [
+            Icon(icon, color: AppColors.primary, size: 22),
+            const SizedBox(height: 10),
+            Text(
+              label,
+              style: const TextStyle(
+                color: AppColors.gray500,
+                fontSize: 12,
+                fontWeight: FontWeight.w700,
+              ),
+            ),
+            const SizedBox(height: 3),
+            Text(
+              value,
+              maxLines: 1,
+              overflow: TextOverflow.ellipsis,
+              style: const TextStyle(
+                color: AppColors.gray900,
+                fontFamily: 'Manrope',
+                fontSize: 15,
+                fontWeight: FontWeight.w800,
+              ),
+            ),
+          ],
+        ),
+      ),
+    );
+  }
+}
+
+class _DetailSection extends StatelessWidget {
+  const _DetailSection({required this.title, required this.children});
+
+  final String title;
+  final List<Widget> children;
+
+  @override
+  Widget build(BuildContext context) {
+    return DecoratedBox(
+      decoration: BoxDecoration(
+        color: Colors.white,
+        borderRadius: BorderRadius.circular(16),
+        border: Border.all(color: AppColors.gray200),
+      ),
+      child: Padding(
+        padding: const EdgeInsets.fromLTRB(16, 16, 16, 6),
+        child: Column(
+          crossAxisAlignment: CrossAxisAlignment.start,
+          children: [
+            Text(
+              title,
+              style: const TextStyle(
+                color: AppColors.gray900,
+                fontFamily: 'Manrope',
+                fontSize: 17,
+                fontWeight: FontWeight.w800,
+              ),
+            ),
+            const SizedBox(height: 8),
+            ...children,
+          ],
+        ),
+      ),
+    );
+  }
+}
+
+class _DetailRow extends StatelessWidget {
+  const _DetailRow({
+    required this.icon,
+    required this.label,
+    required this.value,
+    this.emphasized = false,
+  });
+
+  final IconData icon;
+  final String label;
+  final String value;
+  final bool emphasized;
+
+  @override
+  Widget build(BuildContext context) {
+    return Padding(
+      padding: const EdgeInsets.only(bottom: 12),
+      child: Row(
+        crossAxisAlignment: CrossAxisAlignment.start,
+        children: [
+          Container(
+            width: 34,
+            height: 34,
+            decoration: BoxDecoration(
+              color: AppColors.primary.withValues(alpha: 0.1),
+              borderRadius: BorderRadius.circular(10),
+            ),
+            child: Icon(icon, color: AppColors.primary, size: 19),
+          ),
+          const SizedBox(width: 12),
+          Expanded(
+            child: Column(
+              crossAxisAlignment: CrossAxisAlignment.start,
+              children: [
+                Text(
+                  label,
+                  style: const TextStyle(
+                    color: AppColors.gray500,
+                    fontSize: 12,
+                    fontWeight: FontWeight.w700,
+                  ),
+                ),
+                const SizedBox(height: 3),
+                Text(
+                  value,
+                  style: TextStyle(
+                    color: emphasized
+                        ? AppColors.primaryDark
+                        : AppColors.gray900,
+                    fontFamily: 'Manrope',
+                    fontSize: emphasized ? 18 : 15,
+                    fontWeight: emphasized ? FontWeight.w800 : FontWeight.w700,
+                  ),
+                ),
+              ],
+            ),
+          ),
+        ],
+      ),
+    );
+  }
+}
+
+class _StatusPill extends StatelessWidget {
+  const _StatusPill({required this.label, required this.color});
+
+  final String label;
+  final Color color;
+
+  @override
+  Widget build(BuildContext context) {
+    return DecoratedBox(
+      decoration: BoxDecoration(
+        color: color,
+        borderRadius: BorderRadius.circular(999),
+      ),
+      child: Padding(
+        padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 6),
+        child: Text(
+          label,
+          style: const TextStyle(
+            color: Colors.white,
+            fontSize: 12,
+            fontWeight: FontWeight.w800,
+          ),
+        ),
+      ),
+    );
+  }
+}
+
+String _readableStatus(String status) {
+  return status.replaceAllMapped(RegExp(r'(?<=[a-z])(?=[A-Z])'), (_) => ' ');
+}
+
+Color _statusColor(String status) {
+  final normalized = status.toLowerCase();
+  if (normalized == 'paid') {
+    return AppColors.primary;
+  }
+  if (normalized == 'confirmed') {
+    return AppColors.success;
+  }
+  if (normalized == 'cancelled' ||
+      normalized == 'canceled' ||
+      normalized == 'expired') {
+    return AppColors.gray600;
+  }
+  return AppColors.warning;
 }
 
 class _ReservationImage extends StatelessWidget {

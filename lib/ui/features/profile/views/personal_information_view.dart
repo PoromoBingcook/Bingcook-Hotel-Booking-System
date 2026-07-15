@@ -21,12 +21,12 @@ class PersonalInformationView extends StatelessWidget {
         surfaceTintColor: Colors.white,
         leading: IconButton(
           key: const Key('personal_information_back_button'),
-          tooltip: 'Quay lại',
+          tooltip: 'Back',
           onPressed: onBack,
           icon: const Icon(Icons.arrow_back_rounded),
         ),
         title: const Text(
-          'Thông tin cá nhân',
+          'Personal Information',
           style: TextStyle(fontFamily: 'Manrope', fontWeight: FontWeight.w800),
         ),
       ),
@@ -44,27 +44,30 @@ class PersonalInformationView extends StatelessWidget {
               ),
               child: Column(
                 children: [
-                  _InformationRow(
+                  _ReadOnlyInformationRow(
+                    key: const Key('personal_information_full_name_field'),
                     icon: Icons.person_outline_rounded,
-                    label: 'Họ và tên',
+                    label: 'Full Name',
                     value: _value(user?.fullName),
                   ),
                   const Divider(height: 1),
-                  _InformationRow(
+                  _ReadOnlyInformationRow(
+                    key: const Key('personal_information_email_field'),
                     icon: Icons.email_outlined,
                     label: 'Email',
                     value: _value(user?.email),
                   ),
                   const Divider(height: 1),
-                  _InformationRow(
+                  _ReadOnlyInformationRow(
+                    key: const Key('personal_information_phone_field'),
                     icon: Icons.phone_outlined,
-                    label: 'Số điện thoại',
+                    label: 'Phone',
                     value: _value(user?.phone),
                   ),
                   const Divider(height: 1),
-                  _InformationRow(
+                  _ReadOnlyInformationRow(
                     icon: Icons.badge_outlined,
-                    label: 'Vai trò',
+                    label: 'Role',
                     value: _value(user?.role),
                   ),
                 ],
@@ -78,15 +81,16 @@ class PersonalInformationView extends StatelessWidget {
 
   String _value(String? value) {
     final trimmed = value?.trim();
-    return trimmed == null || trimmed.isEmpty ? 'Chưa cập nhật' : trimmed;
+    return trimmed == null || trimmed.isEmpty ? 'Not updated' : trimmed;
   }
 }
 
-class _InformationRow extends StatelessWidget {
-  const _InformationRow({
+class _ReadOnlyInformationRow extends StatelessWidget {
+  const _ReadOnlyInformationRow({
     required this.icon,
     required this.label,
     required this.value,
+    super.key,
   });
 
   final IconData icon;
@@ -100,7 +104,7 @@ class _InformationRow extends StatelessWidget {
       child: Row(
         crossAxisAlignment: CrossAxisAlignment.start,
         children: [
-          Icon(icon, color: AppColors.primary, size: 24),
+          Icon(icon, color: AppColors.gray400, size: 24),
           const SizedBox(width: 16),
           Expanded(
             child: Column(
@@ -116,14 +120,25 @@ class _InformationRow extends StatelessWidget {
                   ),
                 ),
                 const SizedBox(height: 4),
-                Text(
-                  value,
-                  style: const TextStyle(
-                    color: AppColors.gray900,
-                    fontFamily: 'Manrope',
-                    fontSize: 16,
-                    fontWeight: FontWeight.w700,
-                  ),
+                Row(
+                  children: [
+                    Expanded(
+                      child: Text(
+                        value,
+                        style: const TextStyle(
+                          color: AppColors.gray900,
+                          fontFamily: 'Manrope',
+                          fontSize: 16,
+                          fontWeight: FontWeight.w700,
+                        ),
+                      ),
+                    ),
+                    const Icon(
+                      Icons.lock_outline_rounded,
+                      color: AppColors.gray400,
+                      size: 18,
+                    ),
+                  ],
                 ),
               ],
             ),

@@ -29,6 +29,13 @@ void main() {
     expect(find.text('Customer'), findsOneWidget);
     expect(find.text('private-user-id'), findsNothing);
 
+    expect(find.byType(TextField), findsNothing);
+    expect(
+      find.byKey(const Key('personal_information_save_button')),
+      findsNothing,
+    );
+    expect(find.text('Customer'), findsOneWidget);
+
     await tester.tap(find.byKey(const Key('personal_information_back_button')));
     expect(wentBack, isTrue);
   });

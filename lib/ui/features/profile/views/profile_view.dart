@@ -8,6 +8,7 @@ class ProfileView extends StatelessWidget {
     required this.unreadNotifications,
     required this.onMessagesRequested,
     required this.onNotificationsRequested,
+    required this.onBackRequested,
     required this.onPersonalInformationRequested,
     required this.onSupportRequested,
     required this.onLoggedOut,
@@ -18,6 +19,7 @@ class ProfileView extends StatelessWidget {
   final int unreadNotifications;
   final VoidCallback onMessagesRequested;
   final VoidCallback onNotificationsRequested;
+  final VoidCallback onBackRequested;
   final VoidCallback onPersonalInformationRequested;
   final VoidCallback onSupportRequested;
   final VoidCallback onLoggedOut;
@@ -37,6 +39,7 @@ class ProfileView extends StatelessWidget {
                 SliverToBoxAdapter(
                   child: _ProfileTopBar(
                     unreadNotifications: unreadNotifications,
+                    onBackRequested: onBackRequested,
                     onMessagesRequested: onMessagesRequested,
                     onNotificationsRequested: onNotificationsRequested,
                   ),
@@ -64,10 +67,6 @@ class ProfileView extends StatelessWidget {
                       const SizedBox(height: 12),
                       _ActionCard(
                         items: [
-                          _ProfileActionItem(
-                            icon: Icons.credit_card_rounded,
-                            label: 'Payment Methods',
-                          ),
                           _ProfileActionItem(
                             icon: Icons.settings_outlined,
                             label: 'Settings',
@@ -130,11 +129,13 @@ class ProfileView extends StatelessWidget {
 class _ProfileTopBar extends StatelessWidget {
   const _ProfileTopBar({
     required this.unreadNotifications,
+    required this.onBackRequested,
     required this.onMessagesRequested,
     required this.onNotificationsRequested,
   });
 
   final int unreadNotifications;
+  final VoidCallback onBackRequested;
   final VoidCallback onMessagesRequested;
   final VoidCallback onNotificationsRequested;
 
@@ -147,8 +148,9 @@ class _ProfileTopBar extends StatelessWidget {
         child: Row(
           children: [
             IconButton(
+              key: const Key('profile_back_button'),
               tooltip: 'Back',
-              onPressed: () {},
+              onPressed: onBackRequested,
               icon: const Icon(
                 Icons.arrow_back_rounded,
                 color: AppColors.primary,

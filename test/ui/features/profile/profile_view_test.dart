@@ -42,6 +42,7 @@ void main() {
       unreadNotifications: 3,
     );
 
+    await tester.tap(find.byKey(const Key('profile_back_button')));
     await tester.tap(find.byKey(const Key('profile_messages_button')));
     await tester.tap(find.byKey(const Key('profile_notifications_button')));
     await tester.tap(find.byKey(const Key('profile_personal_info_item')));
@@ -50,6 +51,8 @@ void main() {
       300,
       scrollable: find.byType(Scrollable).first,
     );
+    await tester.ensureVisible(find.byKey(const Key('profile_support_item')));
+    await tester.pumpAndSettle();
     await tester.tap(find.byKey(const Key('profile_support_item')));
     await tester.scrollUntilVisible(
       find.byKey(const Key('profile_logout_button')),
@@ -59,6 +62,7 @@ void main() {
     await tester.tap(find.byKey(const Key('profile_logout_button')));
     await tester.pumpAndSettle();
 
+    expect(callbacks.backRequested, isTrue);
     expect(callbacks.messagesOpened, isTrue);
     expect(callbacks.notificationsOpened, isTrue);
     expect(callbacks.personalInformationOpened, isTrue);
@@ -81,6 +85,7 @@ Future<void> _pumpProfile(
         body: ProfileView(
           viewModel: ProfileViewModel(authRepository: repository),
           unreadNotifications: unreadNotifications,
+          onBackRequested: () => callbacks.backRequested = true,
           onMessagesRequested: () => callbacks.messagesOpened = true,
           onNotificationsRequested: () => callbacks.notificationsOpened = true,
           onPersonalInformationRequested: () =>
@@ -94,6 +99,7 @@ Future<void> _pumpProfile(
 }
 
 class _ProfileCallbacks {
+  bool backRequested = false;
   bool messagesOpened = false;
   bool notificationsOpened = false;
   bool personalInformationOpened = false;

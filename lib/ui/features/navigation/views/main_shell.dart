@@ -81,6 +81,7 @@ class MainShell extends StatefulWidget {
 
 class _MainShellState extends State<MainShell> {
   int _selectedIndex = 0;
+  int _previousMainIndex = 0;
   bool _showSearch = false;
   bool _showMap = false;
   bool _showSelectRoom = false;
@@ -294,6 +295,7 @@ class _MainShellState extends State<MainShell> {
             unreadNotifications: _notificationsViewModel.unreadCount,
             onMessagesRequested: _openMessages,
             onNotificationsRequested: _openNotifications,
+            onBackRequested: _goBackFromProfile,
             onPersonalInformationRequested: () =>
                 setState(() => _showPersonalInformation = true),
             onSupportRequested: () => setState(() => _showChat = true),
@@ -356,26 +358,7 @@ class _MainShellState extends State<MainShell> {
           : AppBottomNavigation(
               selectedIndex: _selectedIndex,
               onSelected: (index) {
-                setState(() {
-                  _selectedIndex = index;
-                  _showSearch = false;
-                  _showMap = false;
-                  _showSelectRoom = false;
-                  _showCheckout = false;
-                  _showAddCard = false;
-                  _showPaymentResult = false;
-                  _showChat = false;
-                  _showMessages = false;
-                  _showNotifications = false;
-                  _showPersonalInformation = false;
-                  _showPropertyChat = false;
-                  _isLoadingPropertyDetails = false;
-                  _selectedProperty = null;
-                  _selectedRoomData = null;
-                  _checkoutData = null;
-                  _checkoutResult = null;
-                  _propertyDetailsError = null;
-                });
+                _selectMainDestination(index);
                 if (index == 1) {
                   unawaited(_savedStaysViewModel.refresh());
                 }
@@ -387,6 +370,37 @@ class _MainShellState extends State<MainShell> {
   void _handleSearch(ProductSearchQuery query) {
     setState(() => _showSearch = false);
     unawaited(_exploreViewModel.applySearch(query));
+  }
+
+  void _selectMainDestination(int index) {
+    setState(() {
+      if (index != _selectedIndex) {
+        _previousMainIndex = _selectedIndex;
+      }
+      _selectedIndex = index;
+      _showSearch = false;
+      _showMap = false;
+      _showSelectRoom = false;
+      _showCheckout = false;
+      _showAddCard = false;
+      _showPaymentResult = false;
+      _showChat = false;
+      _showMessages = false;
+      _showNotifications = false;
+      _showPersonalInformation = false;
+      _showPropertyChat = false;
+      _isLoadingPropertyDetails = false;
+      _selectedProperty = null;
+      _selectedRoomData = null;
+      _checkoutData = null;
+      _checkoutResult = null;
+      _propertyDetailsError = null;
+    });
+  }
+
+  void _goBackFromProfile() {
+    final destination = _previousMainIndex == 3 ? 0 : _previousMainIndex;
+    _selectMainDestination(destination);
   }
 
   Future<void> _handleStaySelected(StayCardData stay) async {
