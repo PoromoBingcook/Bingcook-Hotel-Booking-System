@@ -56,6 +56,39 @@ void main() {
       },
     );
 
+    test('fetchProductDetails parses map coordinates', () async {
+      final service = ProductApiService(
+        client: MockClient((request) async {
+          return http.Response(
+            '''
+{
+  "id": "13430237-d5ed-4c9f-be3a-feddf4cb4fa8",
+  "type": "Hotel",
+  "name": "Ocean Pearl Hotel",
+  "location": "Da Nang, Vo Nguyen Giap, Son Tra",
+  "city": "Da Nang",
+  "address": "Vo Nguyen Giap, Son Tra",
+  "latitude": 16.0544,
+  "longitude": 108.2022,
+  "pricePerNight": 68.0,
+  "status": "Available"
+}
+''',
+            200,
+            headers: {'content-type': 'application/json'},
+          );
+        }),
+        baseUrl: Uri.parse('http://10.0.2.2:5115'),
+      );
+
+      final details = await service.fetchProductDetails(
+        '13430237-d5ed-4c9f-be3a-feddf4cb4fa8',
+      );
+
+      expect(details.latitude, 16.0544);
+      expect(details.longitude, 108.2022);
+    });
+
     test('throws ProductApiException with server message on failure', () async {
       final service = ProductApiService(
         client: MockClient((request) async {

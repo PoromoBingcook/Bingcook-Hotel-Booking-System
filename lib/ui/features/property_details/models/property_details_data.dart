@@ -26,6 +26,8 @@ class PropertyDetailsData {
     this.checkOutPolicy = '',
     this.cancellationPolicy = '',
     this.rooms = const [],
+    this.latitude,
+    this.longitude,
   });
 
   final String id;
@@ -37,6 +39,8 @@ class PropertyDetailsData {
   final String description;
   final String location;
   final String address;
+  final double? latitude;
+  final double? longitude;
   final double rating;
   final int reviewCount;
   final int pricePerNight;
@@ -54,6 +58,17 @@ class PropertyDetailsData {
   final List<GuestReviewData> reviews;
 
   bool get canBook => rooms.isNotEmpty && status.toLowerCase() != 'soldout';
+
+  bool get hasCoordinates {
+    final latitude = this.latitude;
+    final longitude = this.longitude;
+    return latitude != null &&
+        longitude != null &&
+        latitude.isFinite &&
+        longitude.isFinite &&
+        latitude.abs() <= 90 &&
+        longitude.abs() <= 180;
+  }
 }
 
 class PropertyAmenityData {

@@ -9,6 +9,8 @@ import 'package:bingcook/ui/features/property_details/widgets/property_review_su
 import 'package:bingcook/ui/features/property_details/widgets/property_review_sheet.dart';
 import 'package:bingcook/ui/features/select_room/models/select_room_data.dart';
 import 'package:flutter/material.dart';
+import 'package:flutter_map/flutter_map.dart';
+import 'package:latlong2/latlong.dart';
 
 class PropertyDetailsView extends StatelessWidget {
   const PropertyDetailsView({
@@ -18,6 +20,8 @@ class PropertyDetailsView extends StatelessWidget {
     required this.onBookNow,
     required this.onChat,
     required this.onReviewSaved,
+    required this.onStayChanged,
+
     required this.isSaved,
     required this.onSavedToggle,
     super.key,
@@ -29,6 +33,8 @@ class PropertyDetailsView extends StatelessWidget {
   final VoidCallback onBookNow;
   final VoidCallback onChat;
   final Future<void> Function() onReviewSaved;
+  final VoidCallback onStayChanged;
+
   final bool isSaved;
   final VoidCallback onSavedToggle;
 
@@ -62,22 +68,14 @@ class PropertyDetailsView extends StatelessWidget {
                             key: const Key('property_details_scroll_view'),
                             padding: const EdgeInsets.fromLTRB(20, 22, 20, 28),
                             children: [
-                              Wrap(
-                                spacing: 8,
-                                runSpacing: 8,
-                                crossAxisAlignment: WrapCrossAlignment.center,
-                                children: [
-                                  _TypeBadge(label: data.type),
-                                  Text(
-                                    '${formatVnd(data.pricePerNight)}/night',
-                                    style: const TextStyle(
-                                      color: AppColors.primaryDark,
-                                      fontFamily: 'Manrope',
-                                      fontSize: 14,
-                                      fontWeight: FontWeight.w800,
-                                    ),
-                                  ),
-                                ],
+                              Text(
+                                '${formatVnd(data.pricePerNight)}/night',
+                                style: const TextStyle(
+                                  color: AppColors.primaryDark,
+                                  fontFamily: 'Manrope',
+                                  fontSize: 14,
+                                  fontWeight: FontWeight.w800,
+                                ),
                               ),
                               const SizedBox(height: 8),
                               Text(
@@ -161,14 +159,31 @@ class PropertyDetailsView extends StatelessWidget {
                               ),
                               const SizedBox(height: 24),
                               PropertyBookingCard(
-                                checkIn: data.checkIn,
-                                checkOut: data.checkOut,
+                                checkIn: viewModel.checkIn,
+                                checkOut: viewModel.checkOut,
+                                guests: viewModel.guests,
                                 canBook: data.canBook,
                                 unavailableMessage:
                                     'No available rooms for selected dates.',
+                                onDatesChanged: (range) {
+                                  viewModel.updateDates(range);
+                                  onStayChanged();
+                                },
+                                onIncrementGuests: () {
+                                  viewModel.incrementGuests();
+                                  onStayChanged();
+                                },
+                                onDecrementGuests: () {
+                                  viewModel.decrementGuests();
+                                  onStayChanged();
+                                },
                                 onBookNow: onBookNow,
                               ),
-                              const SizedBox(height: 20),
+                              const SizedBox(height: 24),
+                              const _SectionTitle('Location'),
+                              const SizedBox(height: 12),
+                              _PropertyLocationMap(data: data),
+                              const SizedBox(height: 24),
                               if (data.description.trim().isNotEmpty) ...[
                                 const _SectionTitle('Overview'),
                                 const SizedBox(height: 10),
@@ -192,7 +207,7 @@ class PropertyDetailsView extends StatelessWidget {
                                 icon: Icons.login_rounded,
                                 title: 'Check-in',
                                 body: data.checkInPolicy.isEmpty
-                                    ? data.checkIn
+                                    ? 'Check-in time varies by room.'
                                     : data.checkInPolicy,
                               ),
                               const SizedBox(height: 10),
@@ -200,7 +215,7 @@ class PropertyDetailsView extends StatelessWidget {
                                 icon: Icons.logout_rounded,
                                 title: 'Check-out',
                                 body: data.checkOutPolicy.isEmpty
-                                    ? data.checkOut
+                                    ? 'Check-out time varies by room.'
                                     : data.checkOutPolicy,
                               ),
                               const SizedBox(height: 10),
@@ -316,33 +331,6 @@ class PropertyDetailsView extends StatelessWidget {
   }
 }
 
-class _TypeBadge extends StatelessWidget {
-  const _TypeBadge({required this.label});
-
-  final String label;
-
-  @override
-  Widget build(BuildContext context) {
-    return Container(
-      padding: const EdgeInsets.symmetric(horizontal: 10, vertical: 5),
-      decoration: BoxDecoration(
-        color: const Color(0xFFDBEAFE),
-        borderRadius: BorderRadius.circular(6),
-      ),
-      child: Text(
-        label.toUpperCase(),
-        style: const TextStyle(
-          color: Color(0xFF2563EB),
-          fontFamily: 'Manrope',
-          fontSize: 11,
-          height: 1.3,
-          fontWeight: FontWeight.w800,
-        ),
-      ),
-    );
-  }
-}
-
 class _PropertyImage extends StatelessWidget {
   const _PropertyImage({required this.data});
 
@@ -404,6 +392,98 @@ class _InfoChip extends StatelessWidget {
           fontFamily: 'JetBrains Mono',
           fontSize: 10,
           fontWeight: FontWeight.w700,
+        ),
+      ),
+    );
+  }
+}
+
+class _PropertyLocationMap extends StatelessWidget {
+  const _PropertyLocationMap({required this.data});
+
+  final PropertyDetailsData data;
+
+  @override
+  Widget build(BuildContext context) {
+    if (!data.hasCoordinates) {
+      return Container(
+        key: const Key('property_location_unavailable'),
+        padding: const EdgeInsets.all(16),
+        decoration: BoxDecoration(
+          color: AppColors.gray100,
+          borderRadius: BorderRadius.circular(12),
+        ),
+        child: const Row(
+          children: [
+            Icon(Icons.location_off_outlined, color: AppColors.textSecondary),
+            SizedBox(width: 10),
+            Expanded(
+              child: Text(
+                'Map coordinates are not available for this property.',
+                style: TextStyle(color: AppColors.textSecondary, fontSize: 13),
+              ),
+            ),
+          ],
+        ),
+      );
+    }
+
+    final point = LatLng(data.latitude!, data.longitude!);
+    return Semantics(
+      label: 'Map location for ${data.name}',
+      child: ClipRRect(
+        borderRadius: BorderRadius.circular(12),
+        child: SizedBox(
+          key: const Key('property_location_map'),
+          height: 220,
+          child: Stack(
+            children: [
+              FlutterMap(
+                options: MapOptions(initialCenter: point, initialZoom: 15.5),
+                children: [
+                  // ponytail: public OSM tiles cover MVP traffic; switch both
+                  // app maps to a hosted provider before scale.
+                  TileLayer(
+                    urlTemplate:
+                        'https://tile.openstreetmap.org/{z}/{x}/{y}.png',
+                    userAgentPackageName: 'com.bingcook.bingcook',
+                  ),
+                  MarkerLayer(
+                    markers: [
+                      Marker(
+                        point: point,
+                        width: 44,
+                        height: 44,
+                        child: const Icon(
+                          Icons.location_on_rounded,
+                          color: AppColors.primaryDark,
+                          size: 42,
+                        ),
+                      ),
+                    ],
+                  ),
+                ],
+              ),
+              Positioned(
+                right: 6,
+                bottom: 6,
+                child: Container(
+                  padding: const EdgeInsets.symmetric(
+                    horizontal: 6,
+                    vertical: 3,
+                  ),
+                  color: Colors.white.withValues(alpha: 0.88),
+                  child: const Text(
+                    '(c) OpenStreetMap contributors',
+                    style: TextStyle(
+                      color: AppColors.textSecondary,
+                      fontSize: 9,
+                    ),
+                  ),
+                ),
+              ),
+            ],
+          ),
         ),
       ),
     );
@@ -581,16 +661,19 @@ class _PropertyHeader extends StatelessWidget {
             icon: const Icon(Icons.arrow_back_rounded),
             color: AppColors.primaryDark,
           ),
-          const Text(
-            'Property Details',
-            style: TextStyle(
-              color: AppColors.textPrimary,
-              fontFamily: 'Manrope',
-              fontSize: 18,
-              fontWeight: FontWeight.w700,
+          const Expanded(
+            child: Text(
+              'Property Details',
+              maxLines: 1,
+              overflow: TextOverflow.ellipsis,
+              style: TextStyle(
+                color: AppColors.textPrimary,
+                fontFamily: 'Manrope',
+                fontSize: 18,
+                fontWeight: FontWeight.w700,
+              ),
             ),
           ),
-          const Spacer(),
           IconButton(
             key: const Key('property_favorite_button'),
             onPressed: onFavorite,

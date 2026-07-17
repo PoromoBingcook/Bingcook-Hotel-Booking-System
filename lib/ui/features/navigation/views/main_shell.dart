@@ -254,6 +254,7 @@ class _MainShellState extends State<MainShell> {
             onBookNow: _openSelectRoom,
             onChat: _openPropertyChat,
             onReviewSaved: _refreshSelectedProperty,
+            onStayChanged: () => unawaited(_reloadSelectedProperty()),
           ),
         )
       else if (_showMap)
@@ -404,6 +405,10 @@ class _MainShellState extends State<MainShell> {
   }
 
   Future<void> _handleStaySelected(StayCardData stay) async {
+    _propertyDetailsViewModel.configure(_exploreViewModel.activeQuery);
+    final query = _propertyDetailsViewModel.buildQuery(
+      _exploreViewModel.activeQuery,
+    );
     setState(() {
       _showSearch = false;
       _showSelectRoom = false;
@@ -419,22 +424,45 @@ class _MainShellState extends State<MainShell> {
       _isLoadingPropertyDetails = true;
     });
 
+    await _loadPropertyDetails(stay.id, query);
+    if (_selectedProperty?.id == stay.id) {
+      unawaited(_propertyDetailsViewModel.loadMyReview(stay.id));
+    }
+  }
+
+  Future<void> _reloadSelectedProperty() async {
+    final property = _selectedProperty;
+    if (property == null) {
+      return;
+    }
+
+    final query = _propertyDetailsViewModel.buildQuery(
+      _exploreViewModel.activeQuery,
+    );
+    setState(() {
+      _selectedProperty = null;
+      _propertyDetailsError = null;
+      _isLoadingPropertyDetails = true;
+    });
+    await _loadPropertyDetails(property.id, query);
+  }
+
+  Future<void> _loadPropertyDetails(
+    String propertyId,
+    ProductSearchQuery query,
+  ) async {
     try {
       final details = await widget.productRepository.fetchProductDetails(
-        stay.id,
-        query: _exploreViewModel.activeQuery,
+        propertyId,
+        query: query,
       );
       if (!mounted) {
         return;
       }
       setState(() {
-        _selectedProperty = _toPropertyDetailsData(
-          details,
-          _exploreViewModel.activeQuery,
-        );
+        _selectedProperty = _toPropertyDetailsData(details, query);
         _isLoadingPropertyDetails = false;
       });
-      unawaited(_propertyDetailsViewModel.loadMyReview(stay.id));
     } on ProductRepositoryException catch (error) {
       if (!mounted) {
         return;
@@ -462,18 +490,18 @@ class _MainShellState extends State<MainShell> {
   Future<void> _refreshSelectedProperty() async {
     final selected = _selectedProperty;
     if (selected == null) return;
+    final query = _propertyDetailsViewModel.buildQuery(
+      _exploreViewModel.activeQuery,
+    );
 
     try {
       final details = await widget.productRepository.fetchProductDetails(
         selected.id,
-        query: _exploreViewModel.activeQuery,
+        query: query,
       );
       if (!mounted || _selectedProperty?.id != selected.id) return;
       setState(() {
-        _selectedProperty = _toPropertyDetailsData(
-          details,
-          _exploreViewModel.activeQuery,
-        );
+        _selectedProperty = _toPropertyDetailsData(details, query);
       });
     } on ProductRepositoryException catch (error) {
       if (!mounted) return;
@@ -502,7 +530,7 @@ class _MainShellState extends State<MainShell> {
       return;
     }
 
-    final data = _toSelectRoomData(property, _exploreViewModel.activeQuery);
+    final data = _toSelectRoomData(property);
     _selectRoomViewModel.dispose();
     _selectRoomViewModel = SelectRoomViewModel(
       nights: data.nights,
@@ -735,6 +763,8 @@ class _MainShellState extends State<MainShell> {
       location: details.location,
       description: details.description,
       address: details.address,
+      latitude: details.latitude,
+      longitude: details.longitude,
       rating: details.rating,
       reviewCount: details.reviewCount,
       pricePerNight: details.pricePerNight.round(),
@@ -776,13 +806,10 @@ class _MainShellState extends State<MainShell> {
     );
   }
 
-  SelectRoomData _toSelectRoomData(
-    PropertyDetailsData property,
-    ProductSearchQuery query,
-  ) {
-    final checkIn = query.checkIn ?? _fallbackCheckIn();
-    final checkOut = query.checkOut ?? checkIn.add(const Duration(days: 1));
-    final guests = query.guests ?? 2;
+  SelectRoomData _toSelectRoomData(PropertyDetailsData property) {
+    final checkIn = _propertyDetailsViewModel.checkIn;
+    final checkOut = _propertyDetailsViewModel.checkOut;
+    final guests = _propertyDetailsViewModel.guests;
     return SelectRoomData(
       propertyId: property.id,
       propertyName: property.name,
@@ -889,11 +916,6 @@ class _MainShellState extends State<MainShell> {
   int _nightsForDates(DateTime checkIn, DateTime checkOut) {
     final nights = checkOut.difference(checkIn).inDays;
     return nights <= 0 ? 1 : nights;
-  }
-
-  DateTime _fallbackCheckIn() {
-    final now = DateTime.now();
-    return DateTime(now.year, now.month, now.day).add(const Duration(days: 1));
   }
 
   String _formatDate(DateTime? value, {String fallback = ''}) {

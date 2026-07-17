@@ -144,6 +144,8 @@ class ProductDetailsResponse {
     required this.rooms,
     required this.ratingDistribution,
     required this.reviews,
+    this.latitude,
+    this.longitude,
   });
 
   factory ProductDetailsResponse.fromJson(Map<String, Object?> json) {
@@ -167,6 +169,8 @@ class ProductDetailsResponse {
         json['address'],
         fallback: '',
       ),
+      latitude: ProductListItemResponse._readOptionalDouble(json['latitude']),
+      longitude: ProductListItemResponse._readOptionalDouble(json['longitude']),
       imageUrls: ProductListItemResponse._readStringList(json['imageUrls']),
       rating: ProductListItemResponse._readDouble(json['rating']),
       reviewCount: ProductListItemResponse._readInt(json['reviewCount']),
@@ -207,6 +211,8 @@ class ProductDetailsResponse {
   final String location;
   final String city;
   final String address;
+  final double? latitude;
+  final double? longitude;
   final List<String> imageUrls;
   final double rating;
   final int reviewCount;
@@ -229,6 +235,8 @@ class ProductDetailsResponse {
       location: location,
       city: city,
       address: address,
+      latitude: latitude,
+      longitude: longitude,
       imageUrls: List.unmodifiable(imageUrls),
       rating: rating,
       reviewCount: reviewCount,

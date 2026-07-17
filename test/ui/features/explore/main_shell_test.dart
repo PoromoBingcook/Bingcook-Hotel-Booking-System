@@ -48,8 +48,14 @@ void main() {
     expect(find.text('Find your next stay'), findsOneWidget);
   });
 
-  testWidgets('explore opens nearby map and returns', (tester) async {
+  testWidgets('nearby map appears after search and returns', (tester) async {
     await _pumpMainShell(tester);
+
+    expect(find.byKey(const Key('explore_map_button')), findsNothing);
+    await tester.tap(find.byKey(const Key('explore_search_card')));
+    await tester.pumpAndSettle();
+    await tester.tap(find.byKey(const Key('search_submit_button')));
+    await tester.pumpAndSettle();
 
     await tester.tap(find.byKey(const Key('explore_map_button')));
     await tester.pumpAndSettle();
@@ -108,7 +114,10 @@ void main() {
     await tester.scrollUntilVisible(
       find.byKey(const Key('property_book_now_button')),
       300,
-      scrollable: find.byType(Scrollable).first,
+      scrollable: find.descendant(
+        of: find.byKey(const Key('property_details_scroll_view')),
+        matching: find.byType(Scrollable),
+      ),
     );
     expect(find.byKey(const Key('property_book_now_button')), findsOneWidget);
 
@@ -121,6 +130,27 @@ void main() {
     await tester.pumpAndSettle();
 
     expect(find.text('Find your next stay'), findsOneWidget);
+  });
+
+  testWidgets('property details show a map without duplicate type tags', (
+    tester,
+  ) async {
+    await _pumpMainShell(tester);
+
+    await tester.tap(find.text('Ocean Pearl Hotel'));
+    await tester.pumpAndSettle();
+
+    expect(find.text('HOTEL'), findsNothing);
+    expect(find.text('Hotel'), findsOneWidget);
+    await tester.scrollUntilVisible(
+      find.byKey(const Key('property_location_map')),
+      300,
+      scrollable: find.descendant(
+        of: find.byKey(const Key('property_details_scroll_view')),
+        matching: find.byType(Scrollable),
+      ),
+    );
+    expect(find.byKey(const Key('property_location_map')), findsOneWidget);
   });
 
   testWidgets('saved stay persists in Saved tab and can be removed', (
@@ -167,17 +197,29 @@ void main() {
     expect(find.text('Blue Garden Homestay'), findsOneWidget);
     expect(find.text('Hoi An, Cam Chau'), findsOneWidget);
     expect(find.text('42 VND/night'), findsOneWidget);
-    final detailsScrollable = find.byKey(
-      const Key('property_details_scroll_view'),
+    final detailsScrollable = find.descendant(
+      of: find.byKey(const Key('property_details_scroll_view')),
+      matching: find.byType(Scrollable),
     );
-    await tester.drag(detailsScrollable, const Offset(0, -450));
-    await tester.pumpAndSettle();
+    await tester.scrollUntilVisible(
+      find.text('Quiet garden homestay in Cam Chau.'),
+      300,
+      scrollable: detailsScrollable,
+    );
     expect(find.text('Quiet garden homestay in Cam Chau.'), findsOneWidget);
+    await tester.scrollUntilVisible(
+      find.text('Parking'),
+      300,
+      scrollable: detailsScrollable,
+    );
     expect(find.text('Parking'), findsOneWidget);
     await tester.scrollUntilVisible(
       find.text('Guest Reviews'),
       300,
-      scrollable: find.byType(Scrollable).first,
+      scrollable: find.descendant(
+        of: find.byKey(const Key('property_details_scroll_view')),
+        matching: find.byType(Scrollable),
+      ),
     );
     expect(find.text('Guest Reviews'), findsOneWidget);
   });
@@ -192,7 +234,10 @@ void main() {
     await tester.scrollUntilVisible(
       find.byKey(const Key('property_book_now_button')),
       300,
-      scrollable: find.byType(Scrollable).first,
+      scrollable: find.descendant(
+        of: find.byKey(const Key('property_details_scroll_view')),
+        matching: find.byType(Scrollable),
+      ),
     );
     final bookNowButton = tester.widget<FilledButton>(
       find.byKey(const Key('property_book_now_button')),
@@ -227,7 +272,10 @@ void main() {
     await tester.scrollUntilVisible(
       find.byKey(const Key('property_book_now_button')),
       300,
-      scrollable: find.byType(Scrollable).first,
+      scrollable: find.descendant(
+        of: find.byKey(const Key('property_details_scroll_view')),
+        matching: find.byType(Scrollable),
+      ),
     );
     tester
         .widget<FilledButton>(find.byKey(const Key('property_book_now_button')))
@@ -250,7 +298,10 @@ void main() {
     await tester.scrollUntilVisible(
       find.byKey(const Key('property_book_now_button')),
       300,
-      scrollable: find.byType(Scrollable).first,
+      scrollable: find.descendant(
+        of: find.byKey(const Key('property_details_scroll_view')),
+        matching: find.byType(Scrollable),
+      ),
     );
     tester
         .widget<FilledButton>(find.byKey(const Key('property_book_now_button')))
@@ -269,14 +320,20 @@ void main() {
     await tester.scrollUntilVisible(
       find.text('Price Breakdown'),
       300,
-      scrollable: find.byType(Scrollable).first,
+      scrollable: find.descendant(
+        of: find.byKey(const Key('property_details_scroll_view')),
+        matching: find.byType(Scrollable),
+      ),
     );
     expect(find.text('Price Breakdown'), findsOneWidget);
 
     await tester.scrollUntilVisible(
       find.byKey(const Key('payment_method_payAtProperty')),
       -250,
-      scrollable: find.byType(Scrollable).first,
+      scrollable: find.descendant(
+        of: find.byKey(const Key('property_details_scroll_view')),
+        matching: find.byType(Scrollable),
+      ),
     );
     await tester.tap(find.byKey(const Key('payment_method_payAtProperty')));
     await tester.pump();
@@ -302,7 +359,10 @@ void main() {
     await tester.scrollUntilVisible(
       find.byKey(const Key('property_book_now_button')),
       300,
-      scrollable: find.byType(Scrollable).first,
+      scrollable: find.descendant(
+        of: find.byKey(const Key('property_details_scroll_view')),
+        matching: find.byType(Scrollable),
+      ),
     );
     tester
         .widget<FilledButton>(find.byKey(const Key('property_book_now_button')))
@@ -347,7 +407,10 @@ void main() {
     await tester.scrollUntilVisible(
       find.byKey(const Key('property_book_now_button')),
       300,
-      scrollable: find.byType(Scrollable).first,
+      scrollable: find.descendant(
+        of: find.byKey(const Key('property_details_scroll_view')),
+        matching: find.byType(Scrollable),
+      ),
     );
     tester
         .widget<FilledButton>(find.byKey(const Key('property_book_now_button')))
@@ -387,7 +450,10 @@ void main() {
     await tester.scrollUntilVisible(
       find.byKey(const Key('property_book_now_button')),
       300,
-      scrollable: find.byType(Scrollable).first,
+      scrollable: find.descendant(
+        of: find.byKey(const Key('property_details_scroll_view')),
+        matching: find.byType(Scrollable),
+      ),
     );
     tester
         .widget<FilledButton>(find.byKey(const Key('property_book_now_button')))
@@ -433,7 +499,10 @@ void main() {
     await tester.scrollUntilVisible(
       find.byKey(const Key('property_book_now_button')),
       300,
-      scrollable: find.byType(Scrollable).first,
+      scrollable: find.descendant(
+        of: find.byKey(const Key('property_details_scroll_view')),
+        matching: find.byType(Scrollable),
+      ),
     );
     tester
         .widget<FilledButton>(find.byKey(const Key('property_book_now_button')))
@@ -531,7 +600,10 @@ void main() {
     await tester.scrollUntilVisible(
       find.byKey(const Key('property_book_now_button')),
       300,
-      scrollable: find.byType(Scrollable).first,
+      scrollable: find.descendant(
+        of: find.byKey(const Key('property_details_scroll_view')),
+        matching: find.byType(Scrollable),
+      ),
     );
     tester
         .widget<FilledButton>(find.byKey(const Key('property_book_now_button')))
@@ -613,7 +685,10 @@ void main() {
     await tester.scrollUntilVisible(
       find.byKey(const Key('write_review_button')),
       300,
-      scrollable: find.byType(Scrollable).first,
+      scrollable: find.descendant(
+        of: find.byKey(const Key('property_details_scroll_view')),
+        matching: find.byType(Scrollable),
+      ),
     );
     await tester.tap(find.byKey(const Key('write_review_button')));
     await tester.pumpAndSettle();
@@ -1124,6 +1199,8 @@ class FakeProductRepository implements ProductRepository {
       location: product.location,
       city: product.city,
       address: product.address,
+      latitude: product.latitude,
+      longitude: product.longitude,
       imageUrls: const [],
       rating: product.rating,
       reviewCount: product.reviewCount,

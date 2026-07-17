@@ -19,6 +19,8 @@ class ProductDetails {
     required this.rooms,
     required this.ratingDistribution,
     required this.reviews,
+    this.latitude,
+    this.longitude,
   });
 
   final String id;
@@ -28,6 +30,8 @@ class ProductDetails {
   final String location;
   final String city;
   final String address;
+  final double? latitude;
+  final double? longitude;
   final List<String> imageUrls;
   final double rating;
   final int reviewCount;

@@ -1,6 +1,8 @@
+import 'package:bingcook/domain/models/product_search_query.dart';
 import 'package:bingcook/domain/models/property_review.dart';
 import 'package:bingcook/domain/repositories/review_repository.dart';
 import 'package:bingcook/ui/features/property_details/view_models/property_details_view_model.dart';
+import 'package:flutter/material.dart';
 import 'package:flutter_test/flutter_test.dart';
 
 void main() {
@@ -90,6 +92,27 @@ void main() {
       expect(viewModel.selectedRating, 2);
       expect(viewModel.errorMessage, 'Reviews unavailable.');
       expect(viewModel.isSubmittingReview, isFalse);
+    });
+
+    test('updates stay dates and guests while preserving search filters', () {
+      final viewModel = PropertyDetailsViewModel(
+        reviewRepository: FakeReviewRepository(),
+        now: DateTime(2026, 7, 17),
+      );
+      const baseQuery = ProductSearchQuery(location: 'Da Nang', type: 'Hotel');
+
+      viewModel.configure(baseQuery);
+      viewModel.updateDates(
+        DateTimeRange(start: DateTime(2026, 8, 10), end: DateTime(2026, 8, 13)),
+      );
+      viewModel.incrementGuests();
+      final query = viewModel.buildQuery(baseQuery);
+
+      expect(query.location, 'Da Nang');
+      expect(query.type, 'Hotel');
+      expect(query.checkIn, DateTime(2026, 8, 10));
+      expect(query.checkOut, DateTime(2026, 8, 13));
+      expect(query.guests, 3);
     });
   });
 }
