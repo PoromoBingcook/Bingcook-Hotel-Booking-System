@@ -14,6 +14,7 @@ import 'package:bingcook/ui/features/auth/view_models/sign_up_view_model.dart';
 import 'package:bingcook/ui/features/auth/views/sign_up_view.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter_test/flutter_test.dart';
+import 'package:provider/provider.dart';
 
 void main() {
   testWidgets('shows BingCook splash then opens login', (tester) async {
@@ -36,10 +37,9 @@ void main() {
 
   testWidgets('sign up screen contains reusable form fields', (tester) async {
     await tester.pumpWidget(
-      MaterialApp(
-        home: SignUpView(
-          viewModel: SignUpViewModel(authRepository: FakeAuthRepository()),
-        ),
+      ChangeNotifierProvider(
+        create: (_) => SignUpViewModel(authRepository: FakeAuthRepository()),
+        child: const MaterialApp(home: SignUpView()),
       ),
     );
 
@@ -73,10 +73,9 @@ void main() {
     tester,
   ) async {
     await tester.pumpWidget(
-      MaterialApp(
-        home: SignUpView(
-          viewModel: SignUpViewModel(authRepository: FakeAuthRepository()),
-        ),
+      ChangeNotifierProvider(
+        create: (_) => SignUpViewModel(authRepository: FakeAuthRepository()),
+        child: const MaterialApp(home: SignUpView()),
       ),
     );
 
@@ -102,10 +101,9 @@ void main() {
     tester,
   ) async {
     await tester.pumpWidget(
-      MaterialApp(
-        home: SignUpView(
-          viewModel: SignUpViewModel(authRepository: FakeAuthRepository()),
-        ),
+      ChangeNotifierProvider(
+        create: (_) => SignUpViewModel(authRepository: FakeAuthRepository()),
+        child: const MaterialApp(home: SignUpView()),
       ),
     );
 

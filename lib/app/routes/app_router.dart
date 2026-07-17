@@ -8,70 +8,72 @@ import 'package:bingcook/ui/features/auth/views/sign_up_view.dart';
 import 'package:bingcook/ui/features/navigation/views/main_shell.dart';
 import 'package:bingcook/ui/features/staff/views/staff_portal_view.dart';
 import 'package:flutter/material.dart';
+import 'package:provider/provider.dart';
 
 class AppRouter {
-  const AppRouter({required AppDependencies dependencies})
-    : _dependencies = dependencies;
-
-  final AppDependencies _dependencies;
+  const AppRouter();
 
   Route<dynamic> onGenerateRoute(RouteSettings settings) {
     return MaterialPageRoute<void>(
       settings: settings,
       builder: (context) {
+        final dependencies = context.read<AppDependencies>();
         return switch (settings.name) {
-          AppRoutes.signUp => SignUpView(
-            viewModel: SignUpViewModel(
-              authRepository: _dependencies.authRepository,
-            ),
+          AppRoutes.signUp => ChangeNotifierProvider(
+            create: (_) =>
+                SignUpViewModel(authRepository: dependencies.authRepository),
+            child: const SignUpView(),
           ),
-          AppRoutes.login => LoginView(
-            viewModel: LoginViewModel(
-              authRepository: _dependencies.authRepository,
-            ),
+          AppRoutes.login => ChangeNotifierProvider(
+            create: (_) =>
+                LoginViewModel(authRepository: dependencies.authRepository),
+            child: const LoginView(),
           ),
           AppRoutes.loginSuccess => const LoginSuccessView(),
-          AppRoutes.staffPortal => _buildStaffPortal(context),
-          AppRoutes.explore => _buildAuthenticatedHome(context),
-          _ => LoginView(
-            viewModel: LoginViewModel(
-              authRepository: _dependencies.authRepository,
-            ),
+          AppRoutes.staffPortal => _buildStaffPortal(context, dependencies),
+          AppRoutes.explore => _buildAuthenticatedHome(context, dependencies),
+          _ => ChangeNotifierProvider(
+            create: (_) =>
+                LoginViewModel(authRepository: dependencies.authRepository),
+            child: const LoginView(),
           ),
         };
       },
     );
   }
 
-  Widget _buildAuthenticatedHome(BuildContext context) {
+  Widget _buildAuthenticatedHome(
+    BuildContext context,
+    AppDependencies dependencies,
+  ) {
     void logout() {
       Navigator.of(
         context,
       ).pushNamedAndRemoveUntil(AppRoutes.login, (route) => false);
     }
 
-    final role = _dependencies.authRepository.currentSession?.user.role;
+    final role = dependencies.authRepository.currentSession?.user.role;
     if (usesStaffPortal(role)) {
-      return _buildStaffPortal(context);
+      return _buildStaffPortal(context, dependencies);
     }
 
     return MainShell(
-      authRepository: _dependencies.authRepository,
-      productRepository: _dependencies.productRepository,
-      bookingRepository: _dependencies.bookingRepository,
-      chatRepository: _dependencies.chatRepository,
-      notificationRepository: _dependencies.notificationRepository,
-      savedPropertyRepository: _dependencies.savedPropertyRepository,
-      reviewRepository: _dependencies.reviewRepository,
-      chatRealtimeService: _dependencies.chatRealtimeService,
+      authRepository: dependencies.authRepository,
+      productRepository: dependencies.productRepository,
+      bookingRepository: dependencies.bookingRepository,
+      chatRepository: dependencies.chatRepository,
+      notificationRepository: dependencies.notificationRepository,
+      savedPropertyRepository: dependencies.savedPropertyRepository,
+      reviewRepository: dependencies.reviewRepository,
+      chatRealtimeService: dependencies.chatRealtimeService,
       onLogoutCompleted: logout,
     );
   }
 
-  Widget _buildStaffPortal(BuildContext context) {
+  Widget _buildStaffPortal(BuildContext context, AppDependencies dependencies) {
     return StaffPortalView(
-      authRepository: _dependencies.authRepository,
-      chatRepository: _dependencies.chatRepository,
+      authRepository: dependencies.authRepository,
+      chatRepository: dependencies.chatRepository,
       onLoggedOut: () {
         Navigator.of(
           context,

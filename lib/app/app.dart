@@ -6,6 +6,7 @@ import 'package:bingcook/ui/features/splash/views/splash_view.dart';
 import 'package:bingcook/domain/repositories/auth_repository.dart';
 import 'dart:async';
 import 'package:flutter/material.dart';
+import 'package:provider/provider.dart';
 
 class BingCookApp extends StatefulWidget {
   const BingCookApp({
@@ -31,7 +32,7 @@ class _BingCookAppState extends State<BingCookApp> {
   void initState() {
     super.initState();
     _dependencies = widget.dependencies ?? AppDependencies.production();
-    _router = AppRouter(dependencies: _dependencies);
+    _router = const AppRouter();
   }
 
   @override
@@ -44,18 +45,21 @@ class _BingCookAppState extends State<BingCookApp> {
 
   @override
   Widget build(BuildContext context) {
-    return MaterialApp(
-      title: 'BingCook',
-      debugShowCheckedModeBanner: false,
-      theme: AppTheme.light,
-      initialRoute: widget.initialRoute,
-      onGenerateRoute: _router.onGenerateRoute,
-      home: widget.initialRoute == null
-          ? _SplashEntry(
-              duration: widget.splashDuration,
-              authRepository: _dependencies.authRepository,
-            )
-          : null,
+    return Provider.value(
+      value: _dependencies,
+      child: MaterialApp(
+        title: 'BingCook',
+        debugShowCheckedModeBanner: false,
+        theme: AppTheme.light,
+        initialRoute: widget.initialRoute,
+        onGenerateRoute: _router.onGenerateRoute,
+        home: widget.initialRoute == null
+            ? _SplashEntry(
+                duration: widget.splashDuration,
+                authRepository: _dependencies.authRepository,
+              )
+            : null,
+      ),
     );
   }
 }

@@ -84,6 +84,7 @@ class _CheckoutViewState extends State<CheckoutView> {
                     listenable: widget.viewModel,
                     builder: (context, _) {
                       return ListView(
+                        key: const Key('checkout_scroll_view'),
                         padding: const EdgeInsets.fromLTRB(20, 16, 20, 28),
                         keyboardDismissBehavior:
                             ScrollViewKeyboardDismissBehavior.onDrag,

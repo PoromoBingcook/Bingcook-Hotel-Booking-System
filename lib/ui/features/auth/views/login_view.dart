@@ -5,11 +5,10 @@ import 'package:bingcook/ui/core/widgets/app_button.dart';
 import 'package:bingcook/ui/features/auth/view_models/login_view_model.dart';
 import 'package:bingcook/ui/features/auth/widgets/login_text_field.dart';
 import 'package:flutter/material.dart';
+import 'package:provider/provider.dart';
 
 class LoginView extends StatefulWidget {
-  const LoginView({required this.viewModel, super.key});
-
-  final LoginViewModel viewModel;
+  const LoginView({super.key});
 
   @override
   State<LoginView> createState() => _LoginViewState();
@@ -23,7 +22,6 @@ class _LoginViewState extends State<LoginView> {
   void dispose() {
     _emailController.dispose();
     _passwordController.dispose();
-    widget.viewModel.dispose();
     super.dispose();
   }
 
@@ -49,9 +47,8 @@ class _LoginViewState extends State<LoginView> {
                         child: Column(
                           crossAxisAlignment: CrossAxisAlignment.start,
                           children: [
-                            ListenableBuilder(
-                              listenable: widget.viewModel,
-                              builder: (context, _) {
+                            Consumer<LoginViewModel>(
+                              builder: (context, viewModel, _) {
                                 return Column(
                                   crossAxisAlignment: CrossAxisAlignment.start,
                                   children: [
@@ -76,21 +73,18 @@ class _LoginViewState extends State<LoginView> {
                                       label: 'Password',
                                       hint: '........',
                                       iconAsset: AppAssets.password,
-                                      obscureText:
-                                          !widget.viewModel.isPasswordVisible,
+                                      obscureText: !viewModel.isPasswordVisible,
                                       suffixIcon: IconButton(
-                                        onPressed: widget
-                                            .viewModel
-                                            .togglePasswordVisibility,
+                                        onPressed:
+                                            viewModel.togglePasswordVisibility,
                                         icon: Icon(
-                                          widget.viewModel.isPasswordVisible
+                                          viewModel.isPasswordVisible
                                               ? Icons.visibility_off_outlined
                                               : Icons.visibility_outlined,
                                           size: 20,
                                         ),
                                         color: AppColors.slate400,
-                                        tooltip:
-                                            widget.viewModel.isPasswordVisible
+                                        tooltip: viewModel.isPasswordVisible
                                             ? 'Hide password'
                                             : 'Show password',
                                       ),
@@ -102,9 +96,9 @@ class _LoginViewState extends State<LoginView> {
                                           width: 22,
                                           height: 22,
                                           child: Checkbox(
-                                            value: widget.viewModel.rememberMe,
+                                            value: viewModel.rememberMe,
                                             onChanged: (value) {
-                                              widget.viewModel.setRememberMe(
+                                              viewModel.setRememberMe(
                                                 value ?? false,
                                               );
                                             },
@@ -150,7 +144,7 @@ class _LoginViewState extends State<LoginView> {
                                     const SizedBox(height: 28),
                                     AppButton(
                                       key: const Key('login_button'),
-                                      label: widget.viewModel.isSubmitting
+                                      label: viewModel.isSubmitting
                                           ? 'Logging in...'
                                           : 'Login',
                                       height: 58,
@@ -158,15 +152,14 @@ class _LoginViewState extends State<LoginView> {
                                       fontWeight: FontWeight.w700,
                                       backgroundColor: AppColors.primary,
                                       shadowColor: AppColors.primary,
-                                      onPressed: widget.viewModel.isSubmitting
+                                      onPressed: viewModel.isSubmitting
                                           ? null
                                           : _submit,
                                     ),
-                                    if (widget.viewModel.errorMessage !=
-                                        null) ...[
+                                    if (viewModel.errorMessage != null) ...[
                                       const SizedBox(height: 12),
                                       Text(
-                                        widget.viewModel.errorMessage!,
+                                        viewModel.errorMessage!,
                                         style: const TextStyle(
                                           color: Color(0xFFF43F5E),
                                           fontFamily: 'Manrope',
@@ -245,7 +238,8 @@ class _LoginViewState extends State<LoginView> {
   }
 
   Future<void> _submit() async {
-    final isValid = await widget.viewModel.submit(
+    final viewModel = context.read<LoginViewModel>();
+    final isValid = await viewModel.submit(
       identity: _emailController.text,
       password: _passwordController.text,
     );
@@ -256,7 +250,7 @@ class _LoginViewState extends State<LoginView> {
 
     FocusScope.of(context).unfocus();
     Navigator.of(context).pushReplacementNamed(
-      widget.viewModel.shouldOpenStaffPortal
+      viewModel.shouldOpenStaffPortal
           ? AppRoutes.staffPortal
           : AppRoutes.loginSuccess,
     );

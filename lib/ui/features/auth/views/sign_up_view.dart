@@ -8,11 +8,10 @@ import 'package:bingcook/ui/features/auth/widgets/auth_text_field.dart';
 import 'package:bingcook/ui/features/auth/widgets/brand_header.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
+import 'package:provider/provider.dart';
 
 class SignUpView extends StatefulWidget {
-  const SignUpView({required this.viewModel, super.key});
-
-  final SignUpViewModel viewModel;
+  const SignUpView({super.key});
 
   @override
   State<SignUpView> createState() => _SignUpViewState();
@@ -65,7 +64,6 @@ class _SignUpViewState extends State<SignUpView> {
     _phoneFocusNode.dispose();
     _passwordFocusNode.dispose();
     _confirmPasswordFocusNode.dispose();
-    widget.viewModel.dispose();
     super.dispose();
   }
 
@@ -81,10 +79,9 @@ class _SignUpViewState extends State<SignUpView> {
             children: [
               const BrandHeader(),
               Expanded(
-                child: ListenableBuilder(
-                  listenable: widget.viewModel,
-                  builder: (context, _) {
-                    final errors = widget.viewModel.errors;
+                child: Consumer<SignUpViewModel>(
+                  builder: (context, viewModel, _) {
+                    final errors = viewModel.errors;
                     return SingleChildScrollView(
                       padding: const EdgeInsets.fromLTRB(20, 29, 20, 32),
                       child: Center(
@@ -118,8 +115,8 @@ class _SignUpViewState extends State<SignUpView> {
                                 focusNode: _fullNameFocusNode,
                                 onTapOutside: () =>
                                     _validateField(SignUpField.fullName),
-                                onChanged: (value) => widget.viewModel
-                                    .updateInput(fullName: value),
+                                onChanged: (value) =>
+                                    viewModel.updateInput(fullName: value),
                               ),
                               const SizedBox(height: 16),
                               AuthTextField(
@@ -135,7 +132,7 @@ class _SignUpViewState extends State<SignUpView> {
                                 onTapOutside: () =>
                                     _validateField(SignUpField.email),
                                 onChanged: (value) =>
-                                    widget.viewModel.updateInput(email: value),
+                                    viewModel.updateInput(email: value),
                               ),
                               const SizedBox(height: 16),
                               AuthTextField(
@@ -156,7 +153,7 @@ class _SignUpViewState extends State<SignUpView> {
                                   ),
                                 ],
                                 onChanged: (value) =>
-                                    widget.viewModel.updateInput(phone: value),
+                                    viewModel.updateInput(phone: value),
                               ),
                               const SizedBox(height: 16),
                               AuthTextField(
@@ -167,23 +164,21 @@ class _SignUpViewState extends State<SignUpView> {
                                 hint: '********',
                                 iconAsset: AppAssets.password,
                                 errorText: errors.password,
-                                obscureText:
-                                    !widget.viewModel.isPasswordVisible,
+                                obscureText: !viewModel.isPasswordVisible,
                                 focusNode: _passwordFocusNode,
                                 onTapOutside: () =>
                                     _validateField(SignUpField.password),
-                                onChanged: (value) => widget.viewModel
-                                    .updateInput(password: value),
+                                onChanged: (value) =>
+                                    viewModel.updateInput(password: value),
                                 suffixIcon: IconButton(
-                                  onPressed:
-                                      widget.viewModel.togglePasswordVisibility,
+                                  onPressed: viewModel.togglePasswordVisibility,
                                   icon: Icon(
-                                    widget.viewModel.isPasswordVisible
+                                    viewModel.isPasswordVisible
                                         ? Icons.visibility_off_outlined
                                         : Icons.visibility_outlined,
                                   ),
                                   color: AppColors.textSecondary,
-                                  tooltip: widget.viewModel.isPasswordVisible
+                                  tooltip: viewModel.isPasswordVisible
                                       ? 'Hide password'
                                       : 'Show password',
                                 ),
@@ -197,41 +192,40 @@ class _SignUpViewState extends State<SignUpView> {
                                 hint: '********',
                                 iconAsset: AppAssets.password,
                                 errorText: errors.confirmPassword,
-                                obscureText:
-                                    !widget.viewModel.isPasswordVisible,
+                                obscureText: !viewModel.isPasswordVisible,
                                 focusNode: _confirmPasswordFocusNode,
                                 onTapOutside: () =>
                                     _validateField(SignUpField.confirmPassword),
-                                onChanged: (value) => widget.viewModel
-                                    .updateInput(confirmPassword: value),
+                                onChanged: (value) => viewModel.updateInput(
+                                  confirmPassword: value,
+                                ),
                                 suffixIcon: IconButton(
-                                  onPressed:
-                                      widget.viewModel.togglePasswordVisibility,
+                                  onPressed: viewModel.togglePasswordVisibility,
                                   icon: Icon(
-                                    widget.viewModel.isPasswordVisible
+                                    viewModel.isPasswordVisible
                                         ? Icons.visibility_off_outlined
                                         : Icons.visibility_outlined,
                                   ),
                                   color: AppColors.textSecondary,
-                                  tooltip: widget.viewModel.isPasswordVisible
+                                  tooltip: viewModel.isPasswordVisible
                                       ? 'Hide password'
                                       : 'Show password',
                                 ),
                               ),
                               const SizedBox(height: 16),
                               AppButton(
-                                label: widget.viewModel.isSubmitting
+                                label: viewModel.isSubmitting
                                     ? 'Signing up...'
                                     : 'Sign Up',
                                 backgroundColor: AppColors.primary,
-                                onPressed: widget.viewModel.isSubmitting
+                                onPressed: viewModel.isSubmitting
                                     ? null
                                     : _submit,
                               ),
-                              if (widget.viewModel.errorMessage != null) ...[
+                              if (viewModel.errorMessage != null) ...[
                                 const SizedBox(height: 12),
                                 Text(
-                                  widget.viewModel.errorMessage!,
+                                  viewModel.errorMessage!,
                                   textAlign: TextAlign.center,
                                   style: const TextStyle(
                                     color: Color(0xFFF43F5E),
@@ -308,11 +302,12 @@ class _SignUpViewState extends State<SignUpView> {
   }
 
   void _validateField(SignUpField field) {
-    widget.viewModel.validateField(field);
+    context.read<SignUpViewModel>().validateField(field);
   }
 
   Future<void> _submit() async {
-    final isValid = await widget.viewModel.submit(
+    final viewModel = context.read<SignUpViewModel>();
+    final isValid = await viewModel.submit(
       fullName: _fullNameController.text,
       email: _emailController.text,
       phone: _phoneController.text,

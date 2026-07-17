@@ -197,10 +197,12 @@ void main() {
     expect(find.text('Blue Garden Homestay'), findsOneWidget);
     expect(find.text('Hoi An, Cam Chau'), findsOneWidget);
     expect(find.text('42 VND/night'), findsOneWidget);
-    final detailsScrollable = find.descendant(
-      of: find.byKey(const Key('property_details_scroll_view')),
-      matching: find.byType(Scrollable),
-    );
+    final detailsScrollable = find
+        .descendant(
+          of: find.byKey(const Key('property_details_scroll_view')),
+          matching: find.byType(Scrollable),
+        )
+        .first;
     await tester.scrollUntilVisible(
       find.text('Quiet garden homestay in Cam Chau.'),
       300,
@@ -216,10 +218,7 @@ void main() {
     await tester.scrollUntilVisible(
       find.text('Guest Reviews'),
       300,
-      scrollable: find.descendant(
-        of: find.byKey(const Key('property_details_scroll_view')),
-        matching: find.byType(Scrollable),
-      ),
+      scrollable: detailsScrollable,
     );
     expect(find.text('Guest Reviews'), findsOneWidget);
   });
@@ -317,23 +316,23 @@ void main() {
     await tester.pumpAndSettle();
 
     expect(find.byKey(const Key('checkout_title')), findsOneWidget);
+    final checkoutScrollable = find
+        .descendant(
+          of: find.byKey(const Key('checkout_scroll_view')),
+          matching: find.byType(Scrollable),
+        )
+        .first;
     await tester.scrollUntilVisible(
       find.text('Price Breakdown'),
       300,
-      scrollable: find.descendant(
-        of: find.byKey(const Key('property_details_scroll_view')),
-        matching: find.byType(Scrollable),
-      ),
+      scrollable: checkoutScrollable,
     );
     expect(find.text('Price Breakdown'), findsOneWidget);
 
     await tester.scrollUntilVisible(
       find.byKey(const Key('payment_method_payAtProperty')),
       -250,
-      scrollable: find.descendant(
-        of: find.byKey(const Key('property_details_scroll_view')),
-        matching: find.byType(Scrollable),
-      ),
+      scrollable: checkoutScrollable,
     );
     await tester.tap(find.byKey(const Key('payment_method_payAtProperty')));
     await tester.pump();
@@ -682,14 +681,18 @@ void main() {
 
     await tester.tap(find.text('Ocean Pearl Hotel'));
     await tester.pumpAndSettle();
-    await tester.scrollUntilVisible(
-      find.byKey(const Key('write_review_button')),
-      300,
-      scrollable: find.descendant(
-        of: find.byKey(const Key('property_details_scroll_view')),
-        matching: find.byType(Scrollable),
-      ),
+    final detailsScrollState = tester.state<ScrollableState>(
+      find
+          .descendant(
+            of: find.byKey(const Key('property_details_scroll_view')),
+            matching: find.byType(Scrollable),
+          )
+          .first,
     );
+    detailsScrollState.position.jumpTo(
+      detailsScrollState.position.maxScrollExtent,
+    );
+    await tester.pumpAndSettle();
     await tester.tap(find.byKey(const Key('write_review_button')));
     await tester.pumpAndSettle();
     await tester.tap(find.byKey(const Key('review_star_5')));
