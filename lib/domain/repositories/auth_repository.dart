@@ -3,7 +3,7 @@ import 'package:bingcook/domain/models/auth_session.dart';
 abstract interface class AuthRepository {
   AuthSession? get currentSession;
 
-  Future<AuthSession> register({
+  Future<void> register({
     required String fullName,
     required String email,
     required String phone,
@@ -20,6 +20,15 @@ abstract interface class AuthRepository {
 
 abstract interface class RestorableAuthRepository {
   Future<void> restoreSession();
+}
+
+abstract interface class EmailVerificationAuthRepository {
+  Future<AuthSession> verifyEmailOtp({
+    required String email,
+    required String otp,
+  });
+
+  Future<void> resendEmailOtp({required String email});
 }
 
 class AuthRepositoryException implements Exception {

@@ -174,25 +174,6 @@ class _LoginViewState extends State<LoginView> {
                               },
                             ),
                             const SizedBox(height: 124),
-                            AppButton(
-                              label: 'Login with Google',
-                              height: 58,
-                              borderRadius: 8,
-                              fontWeight: FontWeight.w700,
-                              backgroundColor: const Color(0xFF42A5F5),
-                              onPressed: () {},
-                              trailing: Container(
-                                width: 26,
-                                height: 26,
-                                padding: const EdgeInsets.all(4),
-                                decoration: const BoxDecoration(
-                                  color: Colors.white,
-                                  shape: BoxShape.circle,
-                                ),
-                                child: Image.asset(AppAssets.google),
-                              ),
-                            ),
-                            const SizedBox(height: 23),
                             Center(
                               child: TextButton(
                                 key: const Key('open_sign_up_button'),

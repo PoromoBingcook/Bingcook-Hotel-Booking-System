@@ -115,8 +115,7 @@ class _SignUpViewState extends State<SignUpView> {
                                 focusNode: _fullNameFocusNode,
                                 onTapOutside: () =>
                                     _validateField(SignUpField.fullName),
-                                onChanged: (value) =>
-                                    viewModel.updateInput(fullName: value),
+                                onChanged: _updateFullName,
                               ),
                               const SizedBox(height: 16),
                               AuthTextField(
@@ -143,17 +142,14 @@ class _SignUpViewState extends State<SignUpView> {
                                 hint: '+1 (555) 000-0000',
                                 iconAsset: AppAssets.phone,
                                 errorText: errors.phone,
-                                keyboardType: TextInputType.phone,
+                                keyboardType: TextInputType.number,
                                 focusNode: _phoneFocusNode,
                                 onTapOutside: () =>
                                     _validateField(SignUpField.phone),
                                 inputFormatters: [
-                                  FilteringTextInputFormatter.allow(
-                                    RegExp(r'[0-9+()\-\s]'),
-                                  ),
+                                  _GroupedPhoneInputFormatter(),
                                 ],
-                                onChanged: (value) =>
-                                    viewModel.updateInput(phone: value),
+                                onChanged: _updatePhone,
                               ),
                               const SizedBox(height: 16),
                               AuthTextField(
@@ -236,22 +232,6 @@ class _SignUpViewState extends State<SignUpView> {
                                   ),
                                 ),
                               ],
-                              const SizedBox(height: 24),
-                              AppButton(
-                                label: 'Login with Google',
-                                backgroundColor: AppColors.secondary,
-                                onPressed: () {},
-                                trailing: Container(
-                                  width: 26,
-                                  height: 26,
-                                  padding: const EdgeInsets.all(4),
-                                  decoration: const BoxDecoration(
-                                    color: Colors.white,
-                                    shape: BoxShape.circle,
-                                  ),
-                                  child: Image.asset(AppAssets.google),
-                                ),
-                              ),
                               const SizedBox(height: 40),
                               TextButton(
                                 key: const Key('open_login_button'),
@@ -310,7 +290,7 @@ class _SignUpViewState extends State<SignUpView> {
     final isValid = await viewModel.submit(
       fullName: _fullNameController.text,
       email: _emailController.text,
-      phone: _phoneController.text,
+      phone: _phoneDigits(_phoneController.text),
       password: _passwordController.text,
       confirmPassword: _confirmPasswordController.text,
     );
@@ -320,7 +300,64 @@ class _SignUpViewState extends State<SignUpView> {
         return;
       }
       FocusScope.of(context).unfocus();
-      Navigator.of(context).pushReplacementNamed(AppRoutes.loginSuccess);
+      Navigator.of(context).pushReplacementNamed(
+        AppRoutes.verifyEmail,
+        arguments: _emailController.text.trim(),
+      );
     }
+  }
+
+  void _updateFullName(String value) {
+    final viewModel = context.read<SignUpViewModel>();
+    viewModel.updateInput(fullName: value);
+    viewModel.validateField(SignUpField.fullName);
+  }
+
+  void _updatePhone(String value) {
+    final viewModel = context.read<SignUpViewModel>();
+    viewModel.updateInput(phone: value);
+    viewModel.validateField(SignUpField.phone);
+  }
+
+  String _phoneDigits(String value) {
+    return value.replaceAll(RegExp(r'\D'), '');
+  }
+}
+
+class _GroupedPhoneInputFormatter extends TextInputFormatter {
+  @override
+  TextEditingValue formatEditUpdate(
+    TextEditingValue oldValue,
+    TextEditingValue newValue,
+  ) {
+    final digits = newValue.text.replaceAll(RegExp(r'\D'), '');
+    final formatted = _formatDigits(digits);
+    return TextEditingValue(
+      text: formatted,
+      selection: TextSelection.collapsed(offset: formatted.length),
+    );
+  }
+
+  String _formatDigits(String digits) {
+    final groups = <String>[];
+    var start = 0;
+    const groupSizes = [4, 3, 3];
+
+    for (final size in groupSizes) {
+      if (start >= digits.length) {
+        break;
+      }
+      final end = start + size > digits.length ? digits.length : start + size;
+      groups.add(digits.substring(start, end));
+      start = end;
+    }
+
+    while (start < digits.length) {
+      final end = start + 3 > digits.length ? digits.length : start + 3;
+      groups.add(digits.substring(start, end));
+      start = end;
+    }
+
+    return groups.join(' ');
   }
 }

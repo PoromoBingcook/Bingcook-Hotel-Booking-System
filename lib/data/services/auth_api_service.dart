@@ -11,13 +11,13 @@ class AuthApiService {
   final http.Client _client;
   final Uri _baseUrl;
 
-  Future<AuthApiResponse> register({
+  Future<void> register({
     required String fullName,
     required String email,
     required String phone,
     required String password,
-  }) {
-    return _postAuth('/api/auth/register', {
+  }) async {
+    await _postCommand('/api/auth/register', {
       'fullName': fullName,
       'email': email,
       'phone': phone,
@@ -52,6 +52,17 @@ class AuthApiService {
     }
   }
 
+  Future<AuthApiResponse> verifyEmailOtp({
+    required String email,
+    required String otp,
+  }) async {
+    return _postAuth('/api/auth/verify-email', {'email': email, 'otp': otp});
+  }
+
+  Future<void> resendEmailOtp({required String email}) async {
+    await _postCommand('/api/auth/resend-email-otp', {'email': email});
+  }
+
   Future<AuthApiResponse> _postAuth(
     String path,
     Map<String, String> body,
@@ -74,6 +85,27 @@ class AuthApiService {
     }
 
     return AuthApiResponse.fromJson(decoded);
+  }
+
+  Future<void> _postCommand(String path, Map<String, String> body) async {
+    final response = await _client.post(
+      _baseUrl.replace(path: path),
+      headers: const {
+        'accept': 'application/json',
+        'content-type': 'application/json',
+      },
+      body: jsonEncode(body),
+    );
+
+    final decoded = response.body.trim().isEmpty
+        ? <String, Object?>{}
+        : _decodeObject(response.body);
+    if (response.statusCode < 200 || response.statusCode >= 300) {
+      throw AuthApiException(
+        _readMessage(decoded) ?? 'Authentication request failed.',
+        statusCode: response.statusCode,
+      );
+    }
   }
 
   Map<String, Object?> _decodeObject(String body) {

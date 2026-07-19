@@ -64,14 +64,12 @@ class FakeAuthRepository implements AuthRepository {
   }
 
   @override
-  Future<AuthSession> register({
+  Future<void> register({
     required String fullName,
     required String email,
     required String phone,
     required String password,
-  }) async {
-    return _session;
-  }
+  }) async {}
 
   static final _session = AuthSession(
     token: 'jwt-token',

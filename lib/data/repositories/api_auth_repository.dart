@@ -4,7 +4,11 @@ import 'package:bingcook/data/services/auth_session_storage.dart';
 import 'package:bingcook/domain/models/auth_session.dart';
 import 'package:bingcook/domain/repositories/auth_repository.dart';
 
-class ApiAuthRepository implements AuthRepository, RestorableAuthRepository {
+class ApiAuthRepository
+    implements
+        AuthRepository,
+        RestorableAuthRepository,
+        EmailVerificationAuthRepository {
   ApiAuthRepository({
     required AuthApiService authApiService,
     AuthSessionStorage? sessionStorage,
@@ -28,13 +32,13 @@ class ApiAuthRepository implements AuthRepository, RestorableAuthRepository {
   }
 
   @override
-  Future<AuthSession> register({
+  Future<void> register({
     required String fullName,
     required String email,
     required String phone,
     required String password,
   }) async {
-    return _runAuthRequest(
+    return _runCommandRequest(
       () => _authApiService.register(
         fullName: fullName,
         email: email,
@@ -79,6 +83,23 @@ class ApiAuthRepository implements AuthRepository, RestorableAuthRepository {
     }
   }
 
+  @override
+  Future<AuthSession> verifyEmailOtp({
+    required String email,
+    required String otp,
+  }) {
+    return _runAuthRequest(
+      () => _authApiService.verifyEmailOtp(email: email, otp: otp),
+    );
+  }
+
+  @override
+  Future<void> resendEmailOtp({required String email}) {
+    return _runCommandRequest(
+      () => _authApiService.resendEmailOtp(email: email),
+    );
+  }
+
   Future<AuthSession> _runAuthRequest(
     Future<AuthApiResponse> Function() request,
   ) async {
@@ -104,6 +125,16 @@ class ApiAuthRepository implements AuthRepository, RestorableAuthRepository {
       await _sessionStorage?.write(session);
     } catch (_) {
       // A storage failure must not turn a successful login into a failure.
+    }
+  }
+
+  Future<void> _runCommandRequest(Future<void> Function() request) async {
+    try {
+      await request();
+    } on AuthApiException catch (error) {
+      throw AuthRepositoryException(error.message);
+    } catch (_) {
+      throw const AuthRepositoryException('Unable to reach BingCook server.');
     }
   }
 

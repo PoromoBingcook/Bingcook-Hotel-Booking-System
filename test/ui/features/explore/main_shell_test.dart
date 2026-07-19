@@ -175,7 +175,10 @@ void main() {
     expect(find.byKey(const Key('saved_stays_title')), findsOneWidget);
     expect(find.text('Ocean Pearl Hotel'), findsOneWidget);
 
-    await tester.tap(find.byKey(const Key('stay_saved_button_$_oceanPearlId')));
+    await tester.drag(
+      find.byKey(const Key('saved_stay_card_$_oceanPearlId')),
+      const Offset(-500, 0),
+    );
     await tester.pumpAndSettle();
 
     expect(savedRepository.savedIds, isEmpty);
@@ -1117,14 +1120,12 @@ class FakeAuthRepository implements AuthRepository {
   }
 
   @override
-  Future<AuthSession> register({
+  Future<void> register({
     required String fullName,
     required String email,
     required String phone,
     required String password,
-  }) async {
-    return _session;
-  }
+  }) async {}
 
   static final _session = AuthSession(
     token: 'jwt-token',

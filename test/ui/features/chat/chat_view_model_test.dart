@@ -191,7 +191,7 @@ class _AuthRepository implements AuthRepository {
   Future<void> logout() => throw UnimplementedError();
 
   @override
-  Future<AuthSession> register({
+  Future<void> register({
     required String fullName,
     required String email,
     required String phone,

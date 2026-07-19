@@ -51,11 +51,24 @@ class FakeAuthApiService implements AuthApiService {
   }
 
   @override
-  Future<AuthApiResponse> register({
+  Future<void> register({
     required String fullName,
     required String email,
     required String phone,
     required String password,
+  }) {
+    throw UnimplementedError();
+  }
+
+  @override
+  Future<void> resendEmailOtp({required String email}) {
+    throw UnimplementedError();
+  }
+
+  @override
+  Future<AuthApiResponse> verifyEmailOtp({
+    required String email,
+    required String otp,
   }) {
     throw UnimplementedError();
   }

@@ -329,14 +329,12 @@ class FakeAuthRepository implements AuthRepository {
   Future<void> logout() async {}
 
   @override
-  Future<AuthSession> register({
+  Future<void> register({
     required String fullName,
     required String email,
     required String phone,
     required String password,
-  }) async {
-    return _defaultSession;
-  }
+  }) async {}
 
   static final _defaultSession = AuthSession(
     token: 'jwt-token',

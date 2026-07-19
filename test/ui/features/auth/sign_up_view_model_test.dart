@@ -40,7 +40,7 @@ void main() {
       final errors = viewModel.validate(
         fullName: 'Jane Cook',
         email: 'jane@example.com',
-        phone: '+84901234567',
+        phone: '0901234567',
         password: 'Password123',
         confirmPassword: 'Different123',
       );
@@ -54,7 +54,7 @@ void main() {
       viewModel.updateInput(
         fullName: 'Jane Cook',
         email: 'jane@example.com',
-        phone: '+84901234567',
+        phone: '0901234567',
         password: 'Password123',
         confirmPassword: 'Different123',
       );
@@ -84,16 +84,16 @@ void main() {
       final viewModel = SignUpViewModel(authRepository: repository);
 
       final result = await viewModel.submit(
-        fullName: 'Jane Cook',
+        fullName: 'Jane Cook2',
         email: 'JANE@example.com',
-        phone: '+84901234567',
+        phone: '0901 234 567',
         password: 'Password123',
         confirmPassword: 'Password123',
       );
 
       expect(result, isTrue);
       expect(repository.registerEmail, 'JANE@example.com');
-      expect(repository.registerPhone, '+84901234567');
+      expect(repository.registerPhone, '0901234567');
       expect(viewModel.errorMessage, isNull);
       expect(viewModel.isSubmitting, isFalse);
     });
@@ -108,7 +108,7 @@ void main() {
       final result = await viewModel.submit(
         fullName: 'Jane Cook',
         email: 'jane@example.com',
-        phone: '+84901234567',
+        phone: '0901234567',
         password: 'Password123',
         confirmPassword: 'Password123',
       );
@@ -140,7 +140,7 @@ class FakeAuthRepository implements AuthRepository {
   Future<void> logout() async {}
 
   @override
-  Future<AuthSession> register({
+  Future<void> register({
     required String fullName,
     required String email,
     required String phone,
@@ -152,7 +152,6 @@ class FakeAuthRepository implements AuthRepository {
     if (error != null) {
       throw error;
     }
-    return _session;
   }
 
   static final _session = AuthSession(

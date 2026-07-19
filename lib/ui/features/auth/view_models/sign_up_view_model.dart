@@ -153,7 +153,7 @@ class SignUpViewModel extends ChangeNotifier {
       await _authRepository.register(
         fullName: fullName.trim(),
         email: email.trim(),
-        phone: phone.trim(),
+        phone: _phoneDigits(phone),
         password: password,
       );
       _isSubmitting = false;
@@ -193,7 +193,13 @@ class SignUpViewModel extends ChangeNotifier {
   }
 
   String? _validateFullName(String value) {
-    return value.trim().isEmpty ? 'Enter your full name' : null;
+    final trimmed = value.trim();
+    if (trimmed.isEmpty) {
+      return 'Enter your full name';
+    }
+    return RegExp(r'^[a-zA-Z0-9 ]+$').hasMatch(trimmed)
+        ? null
+        : 'Full name can only contain letters, numbers, and spaces';
   }
 
   String? _validateEmail(String value) {
@@ -204,7 +210,11 @@ class SignUpViewModel extends ChangeNotifier {
   }
 
   String? _validatePhone(String value) {
-    return value.trim().isEmpty ? 'Enter your phone number' : null;
+    final digits = _phoneDigits(value);
+    if (digits.isEmpty) {
+      return 'Enter your phone number';
+    }
+    return digits.length > 10 ? 'Phone number must be at most 10 digits' : null;
   }
 
   String? _validatePassword(String value) {
@@ -259,5 +269,9 @@ class SignUpViewModel extends ChangeNotifier {
         confirmPassword: error,
       ),
     };
+  }
+
+  String _phoneDigits(String value) {
+    return value.replaceAll(RegExp(r'\D'), '');
   }
 }

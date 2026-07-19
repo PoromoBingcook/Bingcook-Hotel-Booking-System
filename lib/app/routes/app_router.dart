@@ -1,10 +1,13 @@
 import 'package:bingcook/app/dependencies/app_dependencies.dart';
 import 'package:bingcook/app/routes/app_routes.dart';
+import 'package:bingcook/domain/repositories/auth_repository.dart';
 import 'package:bingcook/ui/features/auth/view_models/login_view_model.dart';
 import 'package:bingcook/ui/features/auth/view_models/sign_up_view_model.dart';
+import 'package:bingcook/ui/features/auth/view_models/verify_email_view_model.dart';
 import 'package:bingcook/ui/features/auth/views/login_success_view.dart';
 import 'package:bingcook/ui/features/auth/views/login_view.dart';
 import 'package:bingcook/ui/features/auth/views/sign_up_view.dart';
+import 'package:bingcook/ui/features/auth/views/verify_email_view.dart';
 import 'package:bingcook/ui/features/navigation/views/main_shell.dart';
 import 'package:bingcook/ui/features/staff/views/staff_portal_view.dart';
 import 'package:flutter/material.dart';
@@ -29,6 +32,16 @@ class AppRouter {
                 LoginViewModel(authRepository: dependencies.authRepository),
             child: const LoginView(),
           ),
+          AppRoutes.verifyEmail => ChangeNotifierProvider(
+            create: (_) => VerifyEmailViewModel(
+              authRepository:
+                  dependencies.authRepository is EmailVerificationAuthRepository
+                  ? dependencies.authRepository
+                        as EmailVerificationAuthRepository
+                  : null,
+            ),
+            child: VerifyEmailView(email: _verifyEmailAddress(settings)),
+          ),
           AppRoutes.loginSuccess => const LoginSuccessView(),
           AppRoutes.staffPortal => _buildStaffPortal(context, dependencies),
           AppRoutes.explore => _buildAuthenticatedHome(context, dependencies),
@@ -40,6 +53,11 @@ class AppRouter {
         };
       },
     );
+  }
+
+  String _verifyEmailAddress(RouteSettings settings) {
+    final arguments = settings.arguments;
+    return arguments is String ? arguments : '';
   }
 
   Widget _buildAuthenticatedHome(

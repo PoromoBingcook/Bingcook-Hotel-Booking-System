@@ -48,6 +48,49 @@ void main() {
     expect(find.byKey(const Key('phone_field')), findsOneWidget);
     expect(find.byKey(const Key('password_field')), findsOneWidget);
     expect(find.byKey(const Key('confirm_password_field')), findsOneWidget);
+    expect(find.text('Login with Google'), findsNothing);
+  });
+
+  testWidgets('sign up validates name symbols and formats phone input', (
+    tester,
+  ) async {
+    await tester.pumpWidget(
+      ChangeNotifierProvider(
+        create: (_) => SignUpViewModel(authRepository: FakeAuthRepository()),
+        child: const MaterialApp(home: SignUpView()),
+      ),
+    );
+
+    await tester.enterText(
+      find.byKey(const Key('full_name_field')),
+      'Jane2@ Cook!',
+    );
+    await tester.pump();
+    await tester.enterText(
+      find.byKey(const Key('phone_field')),
+      '01234567890123',
+    );
+    await tester.pump();
+
+    expect(
+      tester
+          .widget<TextField>(find.byKey(const Key('full_name_field')))
+          .controller
+          ?.text,
+      'Jane2@ Cook!',
+    );
+    expect(
+      find.text('Full name can only contain letters, numbers, and spaces'),
+      findsOneWidget,
+    );
+    expect(
+      tester
+          .widget<TextField>(find.byKey(const Key('phone_field')))
+          .controller
+          ?.text,
+      '0123 456 789 012 3',
+    );
+    expect(find.text('Phone number must be at most 10 digits'), findsOneWidget);
   });
 
   testWidgets('restores a saved session and opens the authenticated app', (
@@ -120,6 +163,42 @@ void main() {
     expect(find.text('Enter your phone number'), findsNothing);
   });
 
+  testWidgets('sign up opens email verification after registration', (
+    tester,
+  ) async {
+    await tester.pumpWidget(
+      BingCookApp(
+        initialRoute: AppRoutes.signUp,
+        dependencies: _testDependencies(),
+      ),
+    );
+
+    await tester.enterText(find.byKey(const Key('full_name_field')), 'Jane');
+    await tester.enterText(
+      find.byKey(const Key('email_field')),
+      'jane@example.com',
+    );
+    await tester.enterText(find.byKey(const Key('phone_field')), '0901234567');
+    await tester.enterText(
+      find.byKey(const Key('password_field')),
+      'Password123',
+    );
+    await tester.enterText(
+      find.byKey(const Key('confirm_password_field')),
+      'Password123',
+    );
+    await tester.ensureVisible(find.text('Sign Up'));
+    await tester.tap(find.text('Sign Up'));
+    await tester.pumpAndSettle();
+
+    expect(find.text('Verify Email'), findsOneWidget);
+    final message = tester.widget<Text>(
+      find.byKey(const Key('verify_email_message')),
+    );
+    expect(message.textSpan?.toPlainText(), contains('jane@example.com'));
+    expect(find.byKey(const Key('otp_digit_0')), findsOneWidget);
+  });
+
   testWidgets('sign up login link opens login screen', (tester) async {
     await tester.pumpWidget(
       BingCookApp(
@@ -174,13 +253,13 @@ class FakeAuthRepository implements AuthRepository {
   Future<void> logout() async => _currentSession = null;
 
   @override
-  Future<AuthSession> register({
+  Future<void> register({
     required String fullName,
     required String email,
     required String phone,
     required String password,
   }) async {
-    return _currentSession = _session;
+    _currentSession = _session;
   }
 
   static final _session = AuthSession(
