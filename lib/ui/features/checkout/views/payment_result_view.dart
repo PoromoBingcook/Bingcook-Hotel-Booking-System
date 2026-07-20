@@ -155,52 +155,109 @@ class _EmbeddedPayOSResult extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     return Expanded(
-      child: Column(
-        crossAxisAlignment: CrossAxisAlignment.stretch,
-        children: [
-          Padding(
-            padding: const EdgeInsets.fromLTRB(20, 20, 20, 12),
-            child: Column(
-              children: [
-                const Text(
-                  'PayOS checkout ready',
-                  key: Key('payment_result_title'),
-                  textAlign: TextAlign.center,
-                  style: TextStyle(
-                    color: AppColors.textPrimary,
-                    fontFamily: 'Manrope',
-                    fontSize: 22,
-                    fontWeight: FontWeight.w800,
+      child: ListenableBuilder(
+        listenable: viewModel,
+        builder: (context, _) {
+          if (viewModel.state == PaymentResultState.confirmed) {
+            return _PaymentSuccess(onContinue: onPaymentConfirmed);
+          }
+          return Column(
+            crossAxisAlignment: CrossAxisAlignment.stretch,
+            children: [
+              Padding(
+                padding: const EdgeInsets.fromLTRB(20, 20, 20, 12),
+                child: Column(
+                  children: [
+                    const Text(
+                      'PayOS checkout ready',
+                      key: Key('payment_result_title'),
+                      textAlign: TextAlign.center,
+                      style: TextStyle(
+                        color: AppColors.textPrimary,
+                        fontFamily: 'Manrope',
+                        fontSize: 22,
+                        fontWeight: FontWeight.w800,
+                      ),
+                    ),
+                    const SizedBox(height: 12),
+                    _StatusCard(checkout: checkout),
+                    const SizedBox(height: 10),
+                    _PaymentVerificationBanner(viewModel: viewModel),
+                  ],
+                ),
+              ),
+              Expanded(
+                child: Container(
+                  margin: const EdgeInsets.fromLTRB(20, 0, 20, 20),
+                  clipBehavior: Clip.antiAlias,
+                  decoration: BoxDecoration(
+                    color: Colors.white,
+                    border: Border.all(color: const Color(0xFFE8F0FE)),
+                    borderRadius: BorderRadius.circular(12),
+                  ),
+                  child: checkoutBuilder(
+                    checkoutUri,
+                    viewModel.handlePageFinished,
                   ),
                 ),
-                const SizedBox(height: 12),
-                _StatusCard(checkout: checkout),
-                const SizedBox(height: 10),
-                _PaymentVerificationBanner(
-                  viewModel: viewModel,
-                  onPaymentConfirmed: onPaymentConfirmed,
-                ),
-              ],
-            ),
-          ),
-          Expanded(
-            child: Container(
-              margin: const EdgeInsets.fromLTRB(20, 0, 20, 20),
-              clipBehavior: Clip.antiAlias,
-              decoration: BoxDecoration(
-                color: Colors.white,
-                border: Border.all(color: const Color(0xFFE8F0FE)),
-                borderRadius: BorderRadius.circular(12),
               ),
-              child: checkoutBuilder(checkoutUri, (url) async {
-                final confirmed = await viewModel.handlePageFinished(url);
-                if (confirmed) {
-                  onPaymentConfirmed();
-                }
-              }),
+            ],
+          );
+        },
+      ),
+    );
+  }
+}
+
+class _PaymentSuccess extends StatelessWidget {
+  const _PaymentSuccess({required this.onContinue});
+
+  final VoidCallback onContinue;
+
+  @override
+  Widget build(BuildContext context) {
+    return Center(
+      child: Padding(
+        padding: const EdgeInsets.all(32),
+        child: Column(
+          mainAxisSize: MainAxisSize.min,
+          children: [
+            const Icon(
+              Icons.check_circle_rounded,
+              key: Key('payment_success_check'),
+              color: Color(0xFF16A05D),
+              size: 88,
             ),
-          ),
-        ],
+            const SizedBox(height: 20),
+            const Text(
+              'Transfer successful',
+              key: Key('payment_success_message'),
+              textAlign: TextAlign.center,
+              style: TextStyle(
+                color: AppColors.textPrimary,
+                fontFamily: 'Manrope',
+                fontSize: 24,
+                fontWeight: FontWeight.w800,
+              ),
+            ),
+            const SizedBox(height: 8),
+            const Text(
+              'Your payment has been transferred successfully.',
+              textAlign: TextAlign.center,
+              style: TextStyle(color: AppColors.textSecondary, fontSize: 14),
+            ),
+            const SizedBox(height: 28),
+            SizedBox(
+              width: double.infinity,
+              child: FilledButton.icon(
+                key: const Key('view_bookings_button'),
+                onPressed: onContinue,
+                icon: const Icon(Icons.receipt_long_outlined),
+                label: const Text('View bookings'),
+              ),
+            ),
+          ],
+        ),
       ),
     );
   }
@@ -299,6 +356,14 @@ class _PayOSCheckoutWebViewState extends State<_PayOSCheckoutWebView> {
       ..setJavaScriptMode(JavaScriptMode.unrestricted)
       ..setNavigationDelegate(
         NavigationDelegate(
+          onNavigationRequest: (request) {
+            final uri = Uri.tryParse(request.url);
+            if (uri != null && _isCallbackPath(uri.path)) {
+              widget.onPageFinished(request.url);
+              return NavigationDecision.prevent;
+            }
+            return NavigationDecision.navigate;
+          },
           onPageStarted: (_) {
             if (mounted) {
               setState(() {
@@ -324,6 +389,11 @@ class _PayOSCheckoutWebViewState extends State<_PayOSCheckoutWebView> {
         ),
       )
       ..loadRequest(widget.checkoutUri);
+  }
+
+  bool _isCallbackPath(String path) {
+    return path.endsWith('/api/payments/payos/return') ||
+        path.endsWith('/api/payments/payos/cancel');
   }
 
   @override
@@ -371,13 +441,9 @@ class _PayOSCheckoutWebViewState extends State<_PayOSCheckoutWebView> {
 }
 
 class _PaymentVerificationBanner extends StatelessWidget {
-  const _PaymentVerificationBanner({
-    required this.viewModel,
-    required this.onPaymentConfirmed,
-  });
+  const _PaymentVerificationBanner({required this.viewModel});
 
   final PaymentResultViewModel viewModel;
-  final VoidCallback onPaymentConfirmed;
 
   @override
   Widget build(BuildContext context) {
@@ -463,10 +529,7 @@ class _PaymentVerificationBanner extends StatelessWidget {
                 TextButton(
                   key: const Key('check_payment_status_button'),
                   onPressed: () async {
-                    final confirmed = await viewModel.checkStatus();
-                    if (confirmed) {
-                      onPaymentConfirmed();
-                    }
+                    await viewModel.checkStatus();
                   },
                   child: const Text('Check'),
                 ),

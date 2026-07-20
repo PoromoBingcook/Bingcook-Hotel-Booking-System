@@ -93,10 +93,12 @@ class GuestReviewData {
     required this.rating,
     required this.timeAgo,
     required this.comment,
+    this.id = '',
   });
 
   final String author;
   final int rating;
   final String timeAgo;
   final String comment;
+  final String id;
 }

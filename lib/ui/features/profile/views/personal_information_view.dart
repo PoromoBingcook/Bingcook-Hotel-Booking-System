@@ -1,16 +1,42 @@
-import 'package:bingcook/domain/models/auth_user.dart';
 import 'package:bingcook/ui/core/theme/app_colors.dart';
+import 'package:bingcook/ui/features/profile/view_models/profile_view_model.dart';
 import 'package:flutter/material.dart';
+import 'package:flutter/services.dart';
 
-class PersonalInformationView extends StatelessWidget {
+class PersonalInformationView extends StatefulWidget {
   const PersonalInformationView({
-    required this.user,
+    required this.viewModel,
     required this.onBack,
     super.key,
   });
 
-  final AuthUser? user;
+  final ProfileViewModel viewModel;
   final VoidCallback onBack;
+
+  @override
+  State<PersonalInformationView> createState() =>
+      _PersonalInformationViewState();
+}
+
+class _PersonalInformationViewState extends State<PersonalInformationView> {
+  late final TextEditingController _nameController;
+  late final TextEditingController _phoneController;
+
+  @override
+  void initState() {
+    super.initState();
+    _nameController = TextEditingController(
+      text: widget.viewModel.fullNameValue,
+    );
+    _phoneController = TextEditingController(text: widget.viewModel.phoneValue);
+  }
+
+  @override
+  void dispose() {
+    _nameController.dispose();
+    _phoneController.dispose();
+    super.dispose();
+  }
 
   @override
   Widget build(BuildContext context) {
@@ -22,7 +48,7 @@ class PersonalInformationView extends StatelessWidget {
         leading: IconButton(
           key: const Key('personal_information_back_button'),
           tooltip: 'Back',
-          onPressed: onBack,
+          onPressed: widget.onBack,
           icon: const Icon(Icons.arrow_back_rounded),
         ),
         title: const Text(
@@ -32,65 +58,133 @@ class PersonalInformationView extends StatelessWidget {
       ),
       body: SafeArea(
         top: false,
-        child: ListView(
-          key: const Key('personal_information_view'),
-          padding: const EdgeInsets.all(16),
-          children: [
-            DecoratedBox(
-              decoration: BoxDecoration(
-                color: Colors.white,
-                border: Border.all(color: const Color(0xFFE4E4E4)),
-                borderRadius: BorderRadius.circular(12),
+        child: ListenableBuilder(
+          listenable: widget.viewModel,
+          builder: (context, _) => ListView(
+            key: const Key('personal_information_view'),
+            padding: const EdgeInsets.all(16),
+            children: [
+              _EditableField(
+                fieldKey: const Key('personal_information_full_name_field'),
+                controller: _nameController,
+                icon: Icons.person_outline_rounded,
+                label: 'Full Name',
+                enabled: !widget.viewModel.isSavingProfile,
+                maxLength: 100,
               ),
-              child: Column(
-                children: [
-                  _ReadOnlyInformationRow(
-                    key: const Key('personal_information_full_name_field'),
-                    icon: Icons.person_outline_rounded,
-                    label: 'Full Name',
-                    value: _value(user?.fullName),
-                  ),
-                  const Divider(height: 1),
-                  _ReadOnlyInformationRow(
-                    key: const Key('personal_information_email_field'),
-                    icon: Icons.email_outlined,
-                    label: 'Email',
-                    value: _value(user?.email),
-                  ),
-                  const Divider(height: 1),
-                  _ReadOnlyInformationRow(
-                    key: const Key('personal_information_phone_field'),
-                    icon: Icons.phone_outlined,
-                    label: 'Phone',
-                    value: _value(user?.phone),
-                  ),
-                  const Divider(height: 1),
-                  _ReadOnlyInformationRow(
-                    icon: Icons.badge_outlined,
-                    label: 'Role',
-                    value: _value(user?.role),
-                  ),
-                ],
+              const SizedBox(height: 12),
+              _ReadOnlyField(
+                icon: Icons.email_outlined,
+                label: 'Email',
+                value: widget.viewModel.email,
               ),
-            ),
-          ],
+              const SizedBox(height: 12),
+              _EditableField(
+                fieldKey: const Key('personal_information_phone_field'),
+                controller: _phoneController,
+                icon: Icons.phone_outlined,
+                label: 'Phone',
+                enabled: !widget.viewModel.isSavingProfile,
+                keyboardType: TextInputType.phone,
+                inputFormatters: const [_PhoneFormatter()],
+                maxLength: 20,
+              ),
+              const SizedBox(height: 12),
+              _ReadOnlyField(
+                icon: Icons.badge_outlined,
+                label: 'Role',
+                value: widget.viewModel.roleLabel,
+              ),
+              if (widget.viewModel.errorMessage != null) ...[
+                const SizedBox(height: 14),
+                Text(
+                  widget.viewModel.errorMessage!,
+                  key: const Key('personal_information_error'),
+                  style: const TextStyle(color: AppColors.error),
+                ),
+              ],
+              if (widget.viewModel.successMessage != null) ...[
+                const SizedBox(height: 14),
+                Text(
+                  widget.viewModel.successMessage!,
+                  key: const Key('personal_information_success'),
+                  style: const TextStyle(
+                    color: Color(0xFF168A45),
+                    fontWeight: FontWeight.w700,
+                  ),
+                ),
+              ],
+              const SizedBox(height: 20),
+              FilledButton(
+                key: const Key('personal_information_save_button'),
+                onPressed: widget.viewModel.isSavingProfile
+                    ? null
+                    : () => widget.viewModel.updateProfile(
+                        fullName: _nameController.text,
+                        phone: _phoneController.text,
+                      ),
+                child: widget.viewModel.isSavingProfile
+                    ? const SizedBox.square(
+                        dimension: 20,
+                        child: CircularProgressIndicator(strokeWidth: 2),
+                      )
+                    : const Text('Save changes'),
+              ),
+            ],
+          ),
         ),
       ),
     );
   }
+}
 
-  String _value(String? value) {
-    final trimmed = value?.trim();
-    return trimmed == null || trimmed.isEmpty ? 'Not updated' : trimmed;
+class _EditableField extends StatelessWidget {
+  const _EditableField({
+    required this.fieldKey,
+    required this.controller,
+    required this.icon,
+    required this.label,
+    required this.enabled,
+    required this.maxLength,
+    this.keyboardType,
+    this.inputFormatters,
+  });
+
+  final Key fieldKey;
+  final TextEditingController controller;
+  final IconData icon;
+  final String label;
+  final bool enabled;
+  final int maxLength;
+  final TextInputType? keyboardType;
+  final List<TextInputFormatter>? inputFormatters;
+
+  @override
+  Widget build(BuildContext context) {
+    return TextField(
+      key: fieldKey,
+      controller: controller,
+      enabled: enabled,
+      maxLength: maxLength,
+      keyboardType: keyboardType,
+      inputFormatters: inputFormatters,
+      decoration: InputDecoration(
+        filled: true,
+        fillColor: Colors.white,
+        counterText: '',
+        prefixIcon: Icon(icon, color: AppColors.gray400),
+        labelText: label,
+        border: OutlineInputBorder(borderRadius: BorderRadius.circular(12)),
+      ),
+    );
   }
 }
 
-class _ReadOnlyInformationRow extends StatelessWidget {
-  const _ReadOnlyInformationRow({
+class _ReadOnlyField extends StatelessWidget {
+  const _ReadOnlyField({
     required this.icon,
     required this.label,
     required this.value,
-    super.key,
   });
 
   final IconData icon;
@@ -99,52 +193,28 @@ class _ReadOnlyInformationRow extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
-    return Padding(
-      padding: const EdgeInsets.all(18),
-      child: Row(
-        crossAxisAlignment: CrossAxisAlignment.start,
-        children: [
-          Icon(icon, color: AppColors.gray400, size: 24),
-          const SizedBox(width: 16),
-          Expanded(
-            child: Column(
-              crossAxisAlignment: CrossAxisAlignment.start,
-              children: [
-                Text(
-                  label,
-                  style: const TextStyle(
-                    color: AppColors.gray600,
-                    fontFamily: 'Manrope',
-                    fontSize: 13,
-                    fontWeight: FontWeight.w700,
-                  ),
-                ),
-                const SizedBox(height: 4),
-                Row(
-                  children: [
-                    Expanded(
-                      child: Text(
-                        value,
-                        style: const TextStyle(
-                          color: AppColors.gray900,
-                          fontFamily: 'Manrope',
-                          fontSize: 16,
-                          fontWeight: FontWeight.w700,
-                        ),
-                      ),
-                    ),
-                    const Icon(
-                      Icons.lock_outline_rounded,
-                      color: AppColors.gray400,
-                      size: 18,
-                    ),
-                  ],
-                ),
-              ],
-            ),
-          ),
-        ],
+    return InputDecorator(
+      decoration: InputDecoration(
+        filled: true,
+        fillColor: Colors.white,
+        prefixIcon: Icon(icon, color: AppColors.gray400),
+        suffixIcon: const Icon(Icons.lock_outline_rounded),
+        labelText: label,
+        border: OutlineInputBorder(borderRadius: BorderRadius.circular(12)),
       ),
+      child: Text(value, style: const TextStyle(fontWeight: FontWeight.w700)),
     );
+  }
+}
+
+class _PhoneFormatter extends TextInputFormatter {
+  const _PhoneFormatter();
+
+  @override
+  TextEditingValue formatEditUpdate(
+    TextEditingValue oldValue,
+    TextEditingValue newValue,
+  ) {
+    return RegExp(r'^\+?\d*$').hasMatch(newValue.text) ? newValue : oldValue;
   }
 }

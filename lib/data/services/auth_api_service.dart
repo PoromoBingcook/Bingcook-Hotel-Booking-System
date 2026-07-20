@@ -63,6 +63,30 @@ class AuthApiService {
     await _postCommand('/api/auth/resend-email-otp', {'email': email});
   }
 
+  Future<AuthApiResponse> updateProfile({
+    required String token,
+    required String fullName,
+    required String? phone,
+  }) async {
+    final response = await _client.put(
+      _baseUrl.replace(path: '/api/auth/profile'),
+      headers: {
+        'accept': 'application/json',
+        'authorization': 'Bearer $token',
+        'content-type': 'application/json',
+      },
+      body: jsonEncode({'fullName': fullName, 'phone': phone}),
+    );
+    final decoded = _decodeObject(response.body);
+    if (response.statusCode < 200 || response.statusCode >= 300) {
+      throw AuthApiException(
+        _readMessage(decoded) ?? 'Profile update failed.',
+        statusCode: response.statusCode,
+      );
+    }
+    return AuthApiResponse.fromJson(decoded);
+  }
+
   Future<AuthApiResponse> _postAuth(
     String path,
     Map<String, String> body,

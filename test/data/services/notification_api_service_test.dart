@@ -38,6 +38,36 @@ void main() {
       expect(capturedRequest!.headers['authorization'], 'Bearer jwt-token');
       expect(notifications.single.title, 'Booking Confirmed');
       expect(notifications.single.isRead, isFalse);
+      expect(notifications.single.createdAt.isUtc, isTrue);
+    });
+
+    test('treats timezone-less backend timestamps as UTC', () async {
+      final service = NotificationApiService(
+        client: MockClient((request) async {
+          return http.Response(
+            '''
+[
+  {
+    "id": "notification-1",
+    "title": "Booking Confirmed",
+    "message": "Your stay is confirmed.",
+    "isRead": false,
+    "createdAt": "2026-07-13T09:20:00"
+  }
+]
+''',
+            200,
+            headers: {'content-type': 'application/json'},
+          );
+        }),
+        baseUrl: Uri.parse('http://10.0.2.2:5115'),
+      );
+
+      final notifications = await service.fetchNotifications(
+        token: 'jwt-token',
+      );
+
+      expect(notifications.single.createdAt, DateTime.utc(2026, 7, 13, 9, 20));
     });
 
     test('marks a notification read', () async {

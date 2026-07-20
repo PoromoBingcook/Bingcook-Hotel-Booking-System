@@ -92,6 +92,44 @@ void main() {
       expect(review.comment, isNull);
     });
 
+    test('creates a new review and updates it by review ID', () async {
+      final requests = <http.Request>[];
+      final service = ReviewApiService(
+        client: MockClient((request) async {
+          requests.add(request);
+          return http.Response(
+            jsonEncode({
+              'id': 'review-1',
+              'propertyId': 'property-1',
+              'rating': 5,
+              'comment': 'Great',
+              'createdAt': '2026-07-15T02:00:00Z',
+            }),
+            request.method == 'POST' ? 201 : 200,
+          );
+        }),
+        baseUrl: Uri.parse('http://10.0.2.2:5115'),
+      );
+
+      await service.createReview(
+        token: 'token-1',
+        propertyId: 'property-1',
+        rating: 5,
+        comment: 'Great',
+      );
+      await service.updateReview(
+        token: 'token-1',
+        reviewId: 'review-1',
+        rating: 5,
+        comment: 'Great',
+      );
+
+      expect(requests[0].method, 'POST');
+      expect(requests[0].url.path, '/api/reviews/properties/property-1');
+      expect(requests[1].method, 'PUT');
+      expect(requests[1].url.path, '/api/reviews/review-1');
+    });
+
     test('propagates the server error message', () async {
       final service = ReviewApiService(
         client: MockClient((_) async {

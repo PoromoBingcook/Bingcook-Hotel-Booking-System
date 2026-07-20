@@ -8,7 +8,8 @@ class ApiAuthRepository
     implements
         AuthRepository,
         RestorableAuthRepository,
-        EmailVerificationAuthRepository {
+        EmailVerificationAuthRepository,
+        EditableProfileAuthRepository {
   ApiAuthRepository({
     required AuthApiService authApiService,
     AuthSessionStorage? sessionStorage,
@@ -97,6 +98,26 @@ class ApiAuthRepository
   Future<void> resendEmailOtp({required String email}) {
     return _runCommandRequest(
       () => _authApiService.resendEmailOtp(email: email),
+    );
+  }
+
+  @override
+  Future<AuthSession> updateProfile({
+    required String fullName,
+    required String? phone,
+  }) {
+    final token = _currentSession?.token;
+    if (token == null || token.isEmpty) {
+      throw const AuthRepositoryException(
+        'Please login to update your profile.',
+      );
+    }
+    return _runAuthRequest(
+      () => _authApiService.updateProfile(
+        token: token,
+        fullName: fullName,
+        phone: phone,
+      ),
     );
   }
 

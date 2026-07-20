@@ -25,6 +25,9 @@ class NotificationsView extends StatelessWidget {
               children: [
                 _NotificationsHeader(
                   onBack: onBack,
+                  onClear: viewModel.notifications.isEmpty
+                      ? null
+                      : viewModel.clearDisplayed,
                   onMarkAllRead: viewModel.unreadCount == 0
                       ? null
                       : () => viewModel.markAllRead(),
@@ -42,10 +45,12 @@ class NotificationsView extends StatelessWidget {
 class _NotificationsHeader extends StatelessWidget {
   const _NotificationsHeader({
     required this.onBack,
+    required this.onClear,
     required this.onMarkAllRead,
   });
 
   final VoidCallback onBack;
+  final VoidCallback? onClear;
   final VoidCallback? onMarkAllRead;
 
   @override
@@ -72,7 +77,24 @@ class _NotificationsHeader extends StatelessWidget {
               style: TextStyle(
                 color: AppColors.primaryDark,
                 fontFamily: 'Manrope',
-                fontSize: 24,
+                fontSize: 20,
+                fontWeight: FontWeight.w800,
+              ),
+            ),
+          ),
+          TextButton(
+            key: const Key('notifications_clear_button'),
+            onPressed: onClear,
+            style: TextButton.styleFrom(
+              minimumSize: const Size(48, 40),
+              padding: const EdgeInsets.symmetric(horizontal: 8),
+              tapTargetSize: MaterialTapTargetSize.shrinkWrap,
+            ),
+            child: const Text(
+              'CLEAR',
+              style: TextStyle(
+                color: AppColors.primaryDark,
+                fontSize: 12,
                 fontWeight: FontWeight.w800,
               ),
             ),
@@ -295,9 +317,8 @@ class _NotificationCard extends StatelessWidget {
   }
 
   static String _relativeTime(DateTime createdAt) {
-    final now = DateTime.now();
-    final normalized = createdAt.isUtc ? createdAt.toLocal() : createdAt;
-    final difference = now.difference(normalized);
+    final now = DateTime.now().toUtc();
+    final difference = now.difference(createdAt.toUtc());
     if (difference.inMinutes < 1) {
       return 'now';
     }

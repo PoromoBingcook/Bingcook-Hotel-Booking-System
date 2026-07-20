@@ -10,6 +10,22 @@ abstract interface class ReviewRepository {
   });
 }
 
+abstract interface class MultiReviewRepository {
+  Future<List<PropertyReview>> fetchMyReviews(String propertyId);
+
+  Future<PropertyReview> createReview({
+    required String propertyId,
+    required int rating,
+    String? comment,
+  });
+
+  Future<PropertyReview> updateReview({
+    required String reviewId,
+    required int rating,
+    String? comment,
+  });
+}
+
 class ReviewRepositoryException implements Exception {
   const ReviewRepositoryException(this.message);
 

@@ -35,6 +35,7 @@ void main() {
     );
     final viewModel = PropertyDetailsViewModel(reviewRepository: repository);
     await viewModel.loadMyReview('property-1');
+    viewModel.prepareEditReview('review-1');
     await _openSheet(tester, viewModel: viewModel);
 
     expect(find.text('Edit your review'), findsOneWidget);

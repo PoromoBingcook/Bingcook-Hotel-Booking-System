@@ -62,6 +62,7 @@ class SearchView extends StatelessWidget {
                             SearchCalendar(
                               checkIn: viewModel.checkIn,
                               checkOut: viewModel.checkOut,
+                              minimumDate: viewModel.minimumDate,
                               onDateSelected: viewModel.selectDate,
                             ),
                             const SizedBox(height: 20),

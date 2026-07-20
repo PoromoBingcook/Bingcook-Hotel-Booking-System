@@ -71,8 +71,14 @@ void main() {
     await tester.tap(find.byKey(const Key('finish_payos_return')));
     await tester.pump();
 
-    expect(confirmedCalls, 1);
+    expect(confirmedCalls, 0);
     expect(viewModel.state, PaymentResultState.confirmed);
+    expect(find.byKey(const Key('payment_success_check')), findsOneWidget);
+    expect(find.text('Transfer successful'), findsOneWidget);
+    expect(find.byKey(const Key('finish_payos_return')), findsNothing);
+
+    await tester.tap(find.byKey(const Key('view_bookings_button')));
+    expect(confirmedCalls, 1);
   });
 
   testWidgets('shows the server-owned payment expiry countdown', (

@@ -72,6 +72,15 @@ class FakeAuthApiService implements AuthApiService {
   }) {
     throw UnimplementedError();
   }
+
+  @override
+  Future<AuthApiResponse> updateProfile({
+    required String token,
+    required String fullName,
+    String? phone,
+  }) {
+    throw UnimplementedError();
+  }
 }
 
 class FakeAuthSessionStorage implements AuthSessionStorage {

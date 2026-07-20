@@ -53,6 +53,7 @@ class ProductRoom {
     required this.id,
     required this.name,
     required this.maxGuests,
+    required this.availableRooms,
     required this.pricePerNight,
     required this.imageUrl,
     required this.features,
@@ -62,6 +63,7 @@ class ProductRoom {
   final String id;
   final String name;
   final int maxGuests;
+  final int availableRooms;
   final double pricePerNight;
   final String? imageUrl;
   final List<String> features;
@@ -81,10 +83,12 @@ class ProductReview {
     required this.rating,
     required this.timeAgo,
     required this.comment,
+    this.id = '',
   });
 
   final String author;
   final int rating;
   final String timeAgo;
   final String comment;
+  final String id;
 }

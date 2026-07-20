@@ -25,9 +25,9 @@ class _PropertyReviewSheetState extends State<PropertyReviewSheet> {
   @override
   void initState() {
     super.initState();
-    _isEditing = widget.viewModel.myReview != null;
+    _isEditing = widget.viewModel.editingReview != null;
     _commentController = TextEditingController(
-      text: widget.viewModel.myReview?.comment ?? '',
+      text: widget.viewModel.editingReview?.comment ?? '',
     );
   }
 

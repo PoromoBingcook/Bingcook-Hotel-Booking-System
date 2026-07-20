@@ -525,6 +525,9 @@ void main() {
 
     await tester.tap(find.byKey(const Key('payos_complete_button')));
     await tester.pumpAndSettle();
+    expect(find.text('Transfer successful'), findsOneWidget);
+    await tester.tap(find.byKey(const Key('view_bookings_button')));
+    await tester.pumpAndSettle();
 
     expect(find.text('My Reservations'), findsOneWidget);
     expect(find.text('Active'), findsOneWidget);
@@ -709,7 +712,7 @@ void main() {
       find.byKey(const Key('property_details_scroll_view')),
       findsOneWidget,
     );
-    expect(find.byKey(const Key('edit_review_button')), findsOneWidget);
+    expect(find.byKey(const Key('write_review_button')), findsOneWidget);
     expect(find.text('4 reviews'), findsOneWidget);
   });
 }
@@ -1219,6 +1222,7 @@ class FakeProductRepository implements ProductRepository {
           id: 'deluxe-ocean-view',
           name: 'Deluxe Ocean View',
           maxGuests: 2,
+          availableRooms: 3,
           pricePerNight: 85,
           imageUrl: null,
           features: ['King Bed', 'Balcony', 'AC', 'Free Wifi'],

@@ -130,23 +130,17 @@ class RoomOptionCard extends StatelessWidget {
                     const SizedBox(height: 9),
                     Row(
                       children: [
-                        Icon(
-                          room.policyPositive
-                              ? Icons.check_circle_outline_rounded
-                              : Icons.history_rounded,
-                          color: room.policyPositive
-                              ? AppColors.success
-                              : AppColors.textSecondary,
+                        const Icon(
+                          Icons.error_outline_rounded,
+                          color: AppColors.error,
                           size: 18,
                         ),
                         const SizedBox(width: 4),
                         Expanded(
                           child: Text(
-                            room.policy,
-                            style: TextStyle(
-                              color: room.policyPositive
-                                  ? AppColors.success
-                                  : AppColors.textSecondary,
+                            'We have ${room.availableRooms} left',
+                            style: const TextStyle(
+                              color: AppColors.error,
                               fontSize: 13,
                               fontWeight: FontWeight.w600,
                             ),

@@ -134,6 +134,28 @@ class FakeReviewApiService implements ReviewApiService {
     if (error != null) throw error;
     return review!;
   }
+
+  @override
+  Future<List<ReviewApiResponse>> fetchMyReviews({
+    required String token,
+    required String propertyId,
+  }) async => review == null ? const [] : [review!];
+
+  @override
+  Future<ReviewApiResponse> createReview({
+    required String token,
+    required String propertyId,
+    required int rating,
+    required String? comment,
+  }) async => review!;
+
+  @override
+  Future<ReviewApiResponse> updateReview({
+    required String token,
+    required String reviewId,
+    required int rating,
+    required String? comment,
+  }) async => review!;
 }
 
 class FakeAuthRepository implements AuthRepository {

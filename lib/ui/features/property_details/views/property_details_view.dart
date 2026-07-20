@@ -255,21 +255,18 @@ class PropertyDetailsView extends StatelessWidget {
                               ),
                               const SizedBox(height: 12),
                               OutlinedButton.icon(
-                                key: Key(
-                                  viewModel.myReview == null
-                                      ? 'write_review_button'
-                                      : 'edit_review_button',
-                                ),
+                                key: const Key('write_review_button'),
                                 onPressed: viewModel.isLoadingReview
                                     ? null
-                                    : () => _openReviewSheet(context),
+                                    : () {
+                                        viewModel.prepareNewReview();
+                                        _openReviewSheet(context);
+                                      },
                                 icon: const Icon(Icons.rate_review_outlined),
                                 label: Text(
                                   viewModel.isLoadingReview
                                       ? 'Loading your review...'
-                                      : viewModel.myReview == null
-                                      ? 'Write a review'
-                                      : 'Edit your review',
+                                      : 'Write a review',
                                 ),
                               ),
                               const SizedBox(height: 24),
@@ -288,6 +285,18 @@ class PropertyDetailsView extends StatelessWidget {
                                   ),
                                   child: PropertyGuestReview(
                                     review: data.reviews[index],
+                                    onEdit:
+                                        viewModel.ownsReview(
+                                          data.reviews[index].id,
+                                        )
+                                        ? () {
+                                            if (viewModel.prepareEditReview(
+                                              data.reviews[index].id,
+                                            )) {
+                                              _openReviewSheet(context);
+                                            }
+                                          }
+                                        : null,
                                   ),
                                 ),
                             ],

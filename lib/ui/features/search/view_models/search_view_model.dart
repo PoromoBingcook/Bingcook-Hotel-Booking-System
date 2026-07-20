@@ -3,9 +3,8 @@ import 'package:flutter/foundation.dart';
 
 class SearchViewModel extends ChangeNotifier {
   SearchViewModel({DateTime? now}) {
-    final baseDate = _normalize(
-      now ?? DateTime.now(),
-    ).add(const Duration(days: 1));
+    _minimumDate = _normalize(now ?? DateTime.now());
+    final baseDate = _minimumDate.add(const Duration(days: 1));
     _checkIn = baseDate;
     _checkOut = baseDate.add(const Duration(days: 3));
   }
@@ -43,6 +42,7 @@ class SearchViewModel extends ChangeNotifier {
   static const maxAllowedPrice = 5000000.0;
 
   String _destination = '';
+  late final DateTime _minimumDate;
   late DateTime _checkIn;
   DateTime? _checkOut;
   int _adults = 2;
@@ -54,6 +54,7 @@ class SearchViewModel extends ChangeNotifier {
   final Set<String> _selectedAmenities = {'Self check-in'};
 
   String get destination => _destination;
+  DateTime get minimumDate => _minimumDate;
   DateTime get checkIn => _checkIn;
   DateTime? get checkOut => _checkOut;
   int get adults => _adults;
@@ -93,6 +94,9 @@ class SearchViewModel extends ChangeNotifier {
 
   void selectDate(DateTime date) {
     final normalizedDate = _normalize(date);
+    if (normalizedDate.isBefore(_minimumDate)) {
+      return;
+    }
 
     if (_checkOut != null) {
       _checkIn = normalizedDate;

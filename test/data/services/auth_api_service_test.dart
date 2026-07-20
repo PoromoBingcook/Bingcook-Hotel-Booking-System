@@ -152,6 +152,32 @@ void main() {
       expect(capturedRequest!.body, contains('"email":"jane@example.com"'));
     });
 
+    test('updateProfile puts authenticated profile fields', () async {
+      late http.Request capturedRequest;
+      final service = AuthApiService(
+        client: MockClient((request) async {
+          capturedRequest = request;
+          return http.Response(
+            '{"user":{"id":"user-1","fullName":"Jane New","email":"jane@example.com","phone":"0901234567","role":"Customer"},"token":"new-token"}',
+            200,
+          );
+        }),
+        baseUrl: Uri.parse('http://10.0.2.2:5115'),
+      );
+
+      final response = await service.updateProfile(
+        token: 'old-token',
+        fullName: 'Jane New',
+        phone: '0901234567',
+      );
+
+      expect(capturedRequest.method, 'PUT');
+      expect(capturedRequest.url.path, '/api/auth/profile');
+      expect(capturedRequest.headers['authorization'], 'Bearer old-token');
+      expect(response.user.fullName, 'Jane New');
+      expect(response.token, 'new-token');
+    });
+
     test('throws AuthApiException with server message on conflict', () async {
       final service = AuthApiService(
         client: MockClient((request) async {

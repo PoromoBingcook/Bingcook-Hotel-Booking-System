@@ -15,7 +15,7 @@ class NotificationResponse {
       title: _readString(json['title']),
       message: _readString(json['message']),
       isRead: json['isRead'] == true,
-      createdAt: DateTime.parse(_readString(json['createdAt'])),
+      createdAt: _readUtcDateTime(json['createdAt']),
     );
   }
 
@@ -40,5 +40,22 @@ class NotificationResponse {
       return value;
     }
     throw const FormatException('Unable to read notification response.');
+  }
+
+  static DateTime _readUtcDateTime(Object? value) {
+    final parsed = DateTime.parse(_readString(value));
+    if (parsed.isUtc) {
+      return parsed;
+    }
+    return DateTime.utc(
+      parsed.year,
+      parsed.month,
+      parsed.day,
+      parsed.hour,
+      parsed.minute,
+      parsed.second,
+      parsed.millisecond,
+      parsed.microsecond,
+    );
   }
 }

@@ -31,6 +31,13 @@ abstract interface class EmailVerificationAuthRepository {
   Future<void> resendEmailOtp({required String email});
 }
 
+abstract interface class EditableProfileAuthRepository {
+  Future<AuthSession> updateProfile({
+    required String fullName,
+    required String? phone,
+  });
+}
+
 class AuthRepositoryException implements Exception {
   const AuthRepositoryException(this.message);
 

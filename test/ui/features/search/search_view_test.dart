@@ -54,6 +54,16 @@ void main() {
     expect(find.text('Select date'), findsOneWidget);
   });
 
+  testWidgets('disables calendar dates before today', (tester) async {
+    await tester.pumpWidget(buildView());
+
+    final pastDay = tester.widget<InkWell>(
+      find.byKey(const Key('calendar_day_10')),
+    );
+
+    expect(pastDay.onTap, isNull);
+  });
+
   testWidgets('guest controls respect boundaries and update counts', (
     tester,
   ) async {

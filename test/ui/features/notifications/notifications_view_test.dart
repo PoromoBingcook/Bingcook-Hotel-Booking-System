@@ -49,6 +49,26 @@ void main() {
     );
 
     expect(find.text('No notifications yet.'), findsOneWidget);
+    expect(find.text('CLEAR'), findsOneWidget);
+  });
+
+  testWidgets('clears notifications from the current UI only', (tester) async {
+    final repository = FakeNotificationRepository();
+    final viewModel = NotificationsViewModel(
+      notificationRepository: repository,
+    );
+    await viewModel.load();
+
+    await tester.pumpWidget(
+      MaterialApp(
+        home: NotificationsView(viewModel: viewModel, onBack: () {}),
+      ),
+    );
+    await tester.tap(find.byKey(const Key('notifications_clear_button')));
+    await tester.pump();
+
+    expect(find.text('No notifications yet.'), findsOneWidget);
+    expect(repository.markAllReadCalled, isFalse);
   });
 }
 

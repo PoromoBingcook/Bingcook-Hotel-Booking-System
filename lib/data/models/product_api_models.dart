@@ -267,6 +267,7 @@ class ProductRoomResponse {
     required this.id,
     required this.name,
     required this.maxGuests,
+    required this.availableRooms,
     required this.pricePerNight,
     required this.imageUrl,
     required this.features,
@@ -281,6 +282,7 @@ class ProductRoomResponse {
         fallback: 'Available Room',
       ),
       maxGuests: ProductListItemResponse._readInt(json['maxGuests']),
+      availableRooms: ProductListItemResponse._readInt(json['availableRooms']),
       pricePerNight: ProductListItemResponse._readDouble(json['pricePerNight']),
       imageUrl: ProductListItemResponse._readOptionalString(json['imageUrl']),
       features: ProductListItemResponse._readStringList(json['features']),
@@ -294,6 +296,7 @@ class ProductRoomResponse {
   final String id;
   final String name;
   final int maxGuests;
+  final int availableRooms;
   final double pricePerNight;
   final String? imageUrl;
   final List<String> features;
@@ -304,6 +307,7 @@ class ProductRoomResponse {
       id: id,
       name: name,
       maxGuests: maxGuests,
+      availableRooms: availableRooms,
       pricePerNight: pricePerNight,
       imageUrl: imageUrl,
       features: List.unmodifiable(features),
@@ -339,6 +343,7 @@ class ProductReviewResponse {
     required this.rating,
     required this.timeAgo,
     required this.comment,
+    this.id = '',
   });
 
   factory ProductReviewResponse.fromJson(Map<String, Object?> json) {
@@ -356,6 +361,7 @@ class ProductReviewResponse {
         json['comment'],
         fallback: '',
       ),
+      id: ProductListItemResponse._readString(json['id'], fallback: ''),
     );
   }
 
@@ -363,6 +369,7 @@ class ProductReviewResponse {
   final int rating;
   final String timeAgo;
   final String comment;
+  final String id;
 
   ProductReview toDomain() {
     return ProductReview(
@@ -370,6 +377,7 @@ class ProductReviewResponse {
       rating: rating,
       timeAgo: timeAgo,
       comment: comment,
+      id: id,
     );
   }
 }

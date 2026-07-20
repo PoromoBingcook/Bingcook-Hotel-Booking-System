@@ -114,6 +114,36 @@ void main() {
       expect(query.checkOut, DateTime(2026, 8, 13));
       expect(query.guests, 3);
     });
+
+    test('clamps configured past dates to today', () {
+      final viewModel = PropertyDetailsViewModel(
+        reviewRepository: FakeReviewRepository(),
+        now: DateTime(2026, 7, 17, 18),
+      );
+      final query = ProductSearchQuery(
+        checkIn: DateTime(2026, 7, 10),
+        checkOut: DateTime(2026, 7, 12),
+      );
+
+      viewModel.configure(query);
+
+      expect(viewModel.checkIn, DateTime(2026, 7, 17));
+      expect(viewModel.checkOut, DateTime(2026, 7, 18));
+    });
+
+    test('ignores a date range that starts before today', () {
+      final viewModel = PropertyDetailsViewModel(
+        reviewRepository: FakeReviewRepository(),
+        now: DateTime(2026, 7, 17),
+      );
+
+      viewModel.updateDates(
+        DateTimeRange(start: DateTime(2026, 7, 16), end: DateTime(2026, 7, 19)),
+      );
+
+      expect(viewModel.checkIn, DateTime(2026, 7, 18));
+      expect(viewModel.checkOut, DateTime(2026, 7, 19));
+    });
   });
 }
 

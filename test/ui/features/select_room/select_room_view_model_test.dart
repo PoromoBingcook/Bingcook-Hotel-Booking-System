@@ -78,6 +78,7 @@ const _room = RoomOptionData(
   imageAsset: AppAssets.deluxeOceanView,
   name: 'Deluxe Ocean View',
   maxGuests: 3,
+  availableRooms: 4,
   pricePerNight: 100,
   features: ['AC'],
   policy: 'Instant Booking',

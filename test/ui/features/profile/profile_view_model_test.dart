@@ -36,12 +36,31 @@ void main() {
       expect(viewModel.errorMessage, 'Unable to logout.');
       expect(viewModel.isLoggingOut, isFalse);
     });
+
+    test('updates and trims personal information', () async {
+      final repository = FakeAuthRepository();
+      final viewModel = ProfileViewModel(authRepository: repository);
+
+      expect(
+        await viewModel.updateProfile(
+          fullName: '  Jane New  ',
+          phone: '0901234567',
+        ),
+        isTrue,
+      );
+      expect(repository.updatedName, 'Jane New');
+      expect(repository.updatedPhone, '0901234567');
+      expect(viewModel.successMessage, 'Personal information updated.');
+    });
   });
 }
 
-class FakeAuthRepository implements AuthRepository {
+class FakeAuthRepository
+    implements AuthRepository, EditableProfileAuthRepository {
   bool logoutCalled = false;
   AuthRepositoryException? logoutError;
+  String? updatedName;
+  String? updatedPhone;
 
   @override
   AuthSession? get currentSession => _session;
@@ -70,6 +89,16 @@ class FakeAuthRepository implements AuthRepository {
     required String phone,
     required String password,
   }) async {}
+
+  @override
+  Future<AuthSession> updateProfile({
+    required String fullName,
+    String? phone,
+  }) async {
+    updatedName = fullName;
+    updatedPhone = phone;
+    return _session;
+  }
 
   static final _session = AuthSession(
     token: 'jwt-token',

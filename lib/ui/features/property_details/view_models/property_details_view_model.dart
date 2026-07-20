@@ -10,17 +10,21 @@ class PropertyDetailsViewModel extends ChangeNotifier {
     DateTime? now,
   }) : _reviewRepository = reviewRepository {
     final today = _dateOnly(now ?? DateTime.now());
+    _minimumCheckIn = today;
     _defaultCheckIn = today.add(const Duration(days: 1));
     _checkIn = _defaultCheckIn;
     _checkOut = _checkIn.add(const Duration(days: 1));
   }
 
   final ReviewRepository _reviewRepository;
+  late final DateTime _minimumCheckIn;
   late final DateTime _defaultCheckIn;
   late DateTime _checkIn;
   late DateTime _checkOut;
   int _guests = 2;
   PropertyReview? _myReview;
+  List<PropertyReview> _myReviews = const [];
+  PropertyReview? _editingReview;
   int _selectedRating = 0;
   bool _isLoadingReview = false;
   bool _isSubmittingReview = false;
@@ -31,17 +35,23 @@ class PropertyDetailsViewModel extends ChangeNotifier {
   DateTime get checkOut => _checkOut;
   int get guests => _guests;
   PropertyReview? get myReview => _myReview;
+  List<PropertyReview> get myReviews => List.unmodifiable(_myReviews);
+  PropertyReview? get editingReview => _editingReview;
   int get selectedRating => _selectedRating;
   bool get isLoadingReview => _isLoadingReview;
   bool get isSubmittingReview => _isSubmittingReview;
   String? get errorMessage => _errorMessage;
 
   void configure(ProductSearchQuery query) {
-    final checkIn = query.checkIn ?? _defaultCheckIn;
+    final requestedCheckIn = _dateOnly(query.checkIn ?? _defaultCheckIn);
+    final checkIn = requestedCheckIn.isBefore(_minimumCheckIn)
+        ? _minimumCheckIn
+        : requestedCheckIn;
     final requestedCheckOut = query.checkOut;
     final checkOut =
-        requestedCheckOut != null && requestedCheckOut.isAfter(checkIn)
-        ? requestedCheckOut
+        requestedCheckOut != null &&
+            _dateOnly(requestedCheckOut).isAfter(checkIn)
+        ? _dateOnly(requestedCheckOut)
         : checkIn.add(const Duration(days: 1));
     final guests = query.guests != null && query.guests! > 0
         ? query.guests!
@@ -58,13 +68,16 @@ class PropertyDetailsViewModel extends ChangeNotifier {
   }
 
   void updateDates(DateTimeRange range) {
-    if (!range.end.isAfter(range.start) ||
-        (_checkIn == range.start && _checkOut == range.end)) {
+    final start = _dateOnly(range.start);
+    final end = _dateOnly(range.end);
+    if (start.isBefore(_minimumCheckIn) ||
+        !end.isAfter(start) ||
+        (_checkIn == start && _checkOut == end)) {
       return;
     }
 
-    _checkIn = range.start;
-    _checkOut = range.end;
+    _checkIn = start;
+    _checkOut = end;
     notifyListeners();
   }
 
@@ -97,16 +110,30 @@ class PropertyDetailsViewModel extends ChangeNotifier {
   Future<void> loadMyReview(String propertyId) async {
     _reviewPropertyId = propertyId;
     _myReview = null;
+    _myReviews = const [];
+    _editingReview = null;
     _selectedRating = 0;
     _errorMessage = null;
     _isLoadingReview = true;
     notifyListeners();
 
     try {
-      final review = await _reviewRepository.fetchMyReview(propertyId);
+      final repository = _reviewRepository;
+      final multiRepository = repository is MultiReviewRepository
+          ? repository as MultiReviewRepository
+          : null;
+      final List<PropertyReview> reviews;
+      if (multiRepository != null) {
+        reviews = await multiRepository.fetchMyReviews(propertyId);
+      } else {
+        final review = await repository.fetchMyReview(propertyId);
+        reviews = review == null ? const [] : [review];
+      }
       if (_reviewPropertyId != propertyId) return;
-      _myReview = review;
-      _selectedRating = review?.rating ?? 0;
+      _myReviews = reviews;
+      _myReview = reviews.isEmpty ? null : reviews.first;
+      _editingReview = null;
+      _selectedRating = _myReview?.rating ?? 0;
     } on ReviewRepositoryException catch (error) {
       if (_reviewPropertyId != propertyId) return;
       _errorMessage = error.message;
@@ -116,6 +143,34 @@ class PropertyDetailsViewModel extends ChangeNotifier {
         notifyListeners();
       }
     }
+  }
+
+  bool ownsReview(String reviewId) {
+    return reviewId.isNotEmpty &&
+        _myReviews.any((review) => review.id == reviewId);
+  }
+
+  void prepareNewReview() {
+    _editingReview = null;
+    _selectedRating = 0;
+    _errorMessage = null;
+    notifyListeners();
+  }
+
+  bool prepareEditReview(String reviewId) {
+    PropertyReview? ownedReview;
+    for (final review in _myReviews) {
+      if (review.id == reviewId) {
+        ownedReview = review;
+        break;
+      }
+    }
+    if (ownedReview == null) return false;
+    _editingReview = ownedReview;
+    _selectedRating = ownedReview.rating;
+    _errorMessage = null;
+    notifyListeners();
+    return true;
   }
 
   void selectRating(int rating) {
@@ -141,15 +196,41 @@ class PropertyDetailsViewModel extends ChangeNotifier {
     notifyListeners();
 
     try {
-      final saved = await _reviewRepository.saveReview(
-        propertyId: propertyId,
-        rating: _selectedRating,
-        comment: trimmedComment == null || trimmedComment.isEmpty
-            ? null
-            : trimmedComment,
-      );
+      final normalizedComment = trimmedComment == null || trimmedComment.isEmpty
+          ? null
+          : trimmedComment;
+      final repository = _reviewRepository;
+      final multiRepository = repository is MultiReviewRepository
+          ? repository as MultiReviewRepository
+          : null;
+      final editingReview = _editingReview;
+      final PropertyReview saved = multiRepository != null
+          ? editingReview == null
+                ? await multiRepository.createReview(
+                    propertyId: propertyId,
+                    rating: _selectedRating,
+                    comment: normalizedComment,
+                  )
+                : await multiRepository.updateReview(
+                    reviewId: editingReview.id,
+                    rating: _selectedRating,
+                    comment: normalizedComment,
+                  )
+          : await repository.saveReview(
+              propertyId: propertyId,
+              rating: _selectedRating,
+              comment: normalizedComment,
+            );
       _reviewPropertyId = propertyId;
       _myReview = saved;
+      if (editingReview == null) {
+        _myReviews = [saved, ..._myReviews];
+      } else {
+        _myReviews = _myReviews
+            .map((review) => review.id == saved.id ? saved : review)
+            .toList(growable: false);
+      }
+      _editingReview = saved;
       _selectedRating = saved.rating;
       return true;
     } on ReviewRepositoryException catch (error) {

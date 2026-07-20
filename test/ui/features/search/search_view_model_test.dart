@@ -40,6 +40,15 @@ void main() {
       expect(viewModel.checkOut, isNull);
     });
 
+    test('ignores dates before today', () {
+      final viewModel = _newViewModel();
+
+      viewModel.selectDate(DateTime(2023, 6, 10));
+
+      expect(viewModel.checkIn, DateTime(2023, 6, 12));
+      expect(viewModel.checkOut, DateTime(2023, 6, 15));
+    });
+
     test('completes an open range with a later date', () {
       final viewModel = _newViewModel()
         ..selectDate(DateTime(2023, 6, 18))

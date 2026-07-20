@@ -309,7 +309,7 @@ class _MainShellState extends State<MainShell> {
     return Scaffold(
       body: _showPersonalInformation
           ? PersonalInformationView(
-              user: widget.authRepository.currentSession?.user,
+              viewModel: _profileViewModel,
               onBack: () => setState(() => _showPersonalInformation = false),
             )
           : _selectedChatViewModel != null
@@ -796,6 +796,7 @@ class _MainShellState extends State<MainShell> {
       reviews: details.reviews
           .map(
             (review) => GuestReviewData(
+              id: review.id,
               author: review.author,
               rating: review.rating,
               timeAgo: review.timeAgo,
@@ -872,6 +873,7 @@ class _MainShellState extends State<MainShell> {
       imageUrl: room.imageUrl,
       name: room.name,
       maxGuests: room.maxGuests,
+      availableRooms: room.availableRooms,
       pricePerNight: room.pricePerNight.round(),
       features: room.features,
       policy: room.policy,

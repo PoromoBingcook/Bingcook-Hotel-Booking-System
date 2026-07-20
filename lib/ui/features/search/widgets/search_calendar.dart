@@ -5,12 +5,14 @@ class SearchCalendar extends StatelessWidget {
   const SearchCalendar({
     required this.checkIn,
     required this.checkOut,
+    required this.minimumDate,
     required this.onDateSelected,
     super.key,
   });
 
   final DateTime checkIn;
   final DateTime? checkOut;
+  final DateTime minimumDate;
   final ValueChanged<DateTime> onDateSelected;
 
   static const _weekdays = ['Su', 'Mo', 'Tu', 'We', 'Th', 'Fr', 'Sa'];
@@ -105,6 +107,7 @@ class SearchCalendar extends StatelessWidget {
 
               final day = index - firstWeekday + 1;
               final date = DateTime(year, month, day);
+              final isEnabled = !date.isBefore(minimumDate);
               final isStart = _isSameDay(date, checkIn);
               final isEnd = checkOut != null && _isSameDay(date, checkOut!);
               final isInRange =
@@ -118,7 +121,8 @@ class SearchCalendar extends StatelessWidget {
                 isStart: isStart,
                 isEnd: isEnd,
                 isInRange: isInRange,
-                onTap: () => onDateSelected(date),
+                isEnabled: isEnabled,
+                onTap: isEnabled ? () => onDateSelected(date) : null,
               );
             },
           ),
@@ -184,6 +188,7 @@ class _CalendarDay extends StatelessWidget {
     required this.isStart,
     required this.isEnd,
     required this.isInRange,
+    required this.isEnabled,
     required this.onTap,
   });
 
@@ -192,7 +197,8 @@ class _CalendarDay extends StatelessWidget {
   final bool isStart;
   final bool isEnd;
   final bool isInRange;
-  final VoidCallback onTap;
+  final bool isEnabled;
+  final VoidCallback? onTap;
 
   @override
   Widget build(BuildContext context) {
@@ -200,6 +206,7 @@ class _CalendarDay extends StatelessWidget {
 
     return Semantics(
       button: true,
+      enabled: isEnabled,
       label: '$monthName $day',
       selected: isEndpoint || isInRange,
       child: InkWell(
@@ -223,6 +230,8 @@ class _CalendarDay extends StatelessWidget {
                   ? Colors.white
                   : isInRange
                   ? AppColors.primaryDark
+                  : !isEnabled
+                  ? AppColors.gray400
                   : AppColors.slate800,
               fontSize: 12,
               fontWeight: isEndpoint ? FontWeight.w700 : FontWeight.w500,

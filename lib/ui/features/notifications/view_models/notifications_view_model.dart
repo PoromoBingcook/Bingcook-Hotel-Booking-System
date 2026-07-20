@@ -9,6 +9,7 @@ class NotificationsViewModel extends ChangeNotifier {
 
   final NotificationRepository _notificationRepository;
   List<NotificationItem> _notifications = const [];
+  final Set<String> _hiddenNotificationIds = {};
   bool _isLoading = false;
   bool _hasLoaded = false;
   String? _errorMessage;
@@ -30,7 +31,8 @@ class NotificationsViewModel extends ChangeNotifier {
     notifyListeners();
 
     try {
-      _notifications = await _notificationRepository.fetchNotifications();
+      final fetched = await _notificationRepository.fetchNotifications();
+      _notifications = _latestVisible(fetched);
       _hasLoaded = true;
       _isLoading = false;
       notifyListeners();
@@ -48,6 +50,18 @@ class NotificationsViewModel extends ChangeNotifier {
   }
 
   Future<void> refresh() => load();
+
+  void clearDisplayed() {
+    if (_notifications.isEmpty) {
+      return;
+    }
+    _hiddenNotificationIds.addAll(
+      _notifications.map((notification) => notification.id),
+    );
+    _notifications = const [];
+    _errorMessage = null;
+    notifyListeners();
+  }
 
   Future<void> markRead(String notificationId) async {
     final index = _notifications.indexWhere(
@@ -96,5 +110,14 @@ class NotificationsViewModel extends ChangeNotifier {
       _errorMessage = 'Unable to update notifications.';
       notifyListeners();
     }
+  }
+
+  List<NotificationItem> _latestVisible(List<NotificationItem> items) {
+    final latest = items.toList(growable: false)
+      ..sort((left, right) => right.createdAt.compareTo(left.createdAt));
+    return latest
+        .take(5)
+        .where((item) => !_hiddenNotificationIds.contains(item.id))
+        .toList(growable: false);
   }
 }

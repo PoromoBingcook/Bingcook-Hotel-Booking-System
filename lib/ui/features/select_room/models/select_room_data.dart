@@ -36,6 +36,7 @@ class RoomOptionData {
     required this.imageAsset,
     required this.name,
     required this.maxGuests,
+    required this.availableRooms,
     required this.pricePerNight,
     required this.features,
     required this.policy,
@@ -49,6 +50,7 @@ class RoomOptionData {
   final String? imageUrl;
   final String name;
   final int maxGuests;
+  final int availableRooms;
   final int pricePerNight;
   final List<String> features;
   final String policy;
