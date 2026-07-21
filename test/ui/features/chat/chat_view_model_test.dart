@@ -101,6 +101,34 @@ void main() {
     expect(viewModel.messages.single.body, 'Your room is ready.');
     viewModel.dispose();
   });
+  test(
+    'does not duplicate a sent message that arrives from realtime first',
+    () async {
+      final realtime = _ChatRealtimeService();
+      final repository =
+          _ChatRepository(
+              conversations: [_conversation(propertyId: 'selected-property')],
+            )
+            ..onSendCreated = (message) async {
+              realtime.add(message);
+              await Future<void>.delayed(Duration.zero);
+            };
+      final viewModel = ChatViewModel(
+        chatRepository: repository,
+        authRepository: _AuthRepository(),
+        realtimeService: realtime,
+        initialPropertyId: 'selected-property',
+      );
+      await viewModel.load();
+
+      final sent = await viewModel.send('sure');
+
+      expect(sent, isTrue);
+      expect(viewModel.messages, hasLength(1));
+      expect(viewModel.messages.single.body, 'sure');
+      viewModel.dispose();
+    },
+  );
 }
 
 ChatConversation _conversation({required String propertyId}) =>
@@ -123,6 +151,7 @@ class _ChatRepository implements ChatRepository {
   String? loadedConversationId;
   String? markedConversationId;
   String? sentBody;
+  FutureOr<void> Function(ChatMessage message)? onSendCreated;
 
   @override
   Future<ChatConversation> createConversation({
@@ -157,7 +186,7 @@ class _ChatRepository implements ChatRepository {
     required String body,
   }) async {
     sentBody = body;
-    return ChatMessage(
+    final message = ChatMessage(
       id: 'message-1',
       conversationId: conversationId,
       senderUserId: 'customer-1',
@@ -165,6 +194,9 @@ class _ChatRepository implements ChatRepository {
       body: body,
       createdAt: DateTime(2026, 7, 6, 10),
     );
+    final callback = onSendCreated;
+    if (callback != null) await callback(message);
+    return message;
   }
 }
 
