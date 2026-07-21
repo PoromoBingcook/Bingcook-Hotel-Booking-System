@@ -92,6 +92,7 @@ class AppRouter {
     return StaffPortalView(
       authRepository: dependencies.authRepository,
       chatRepository: dependencies.chatRepository,
+      chatRealtimeService: dependencies.chatRealtimeService,
       onLoggedOut: () {
         Navigator.of(
           context,

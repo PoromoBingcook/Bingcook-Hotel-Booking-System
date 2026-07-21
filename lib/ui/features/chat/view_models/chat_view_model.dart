@@ -85,9 +85,7 @@ class ChatViewModel extends ChangeNotifier {
     _messageSubscription = realtimeService
         .watchConversation(conversation.id)
         .listen((message) {
-          if (_messages.any((existing) => existing.id == message.id)) return;
-          _messages = [..._messages, message];
-          notifyListeners();
+          if (!_addMessage(message)) return;
           unawaited(_chatRepository.markRead(conversationId: conversation.id));
         });
   }
@@ -129,7 +127,7 @@ class ChatViewModel extends ChangeNotifier {
         conversationId: conversation.id,
         body: trimmed,
       );
-      _messages = [..._messages, message];
+      _addMessage(message);
       return true;
     } on ChatRepositoryException catch (error) {
       _errorMessage = error.message;
@@ -141,5 +139,12 @@ class ChatViewModel extends ChangeNotifier {
       _isSending = false;
       notifyListeners();
     }
+  }
+
+  bool _addMessage(ChatMessage message) {
+    if (_messages.any((existing) => existing.id == message.id)) return false;
+    _messages = [..._messages, message];
+    notifyListeners();
+    return true;
   }
 }

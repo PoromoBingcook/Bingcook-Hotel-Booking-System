@@ -2,6 +2,7 @@ import 'dart:async';
 
 import 'package:bingcook/domain/repositories/auth_repository.dart';
 import 'package:bingcook/domain/repositories/chat_repository.dart';
+import 'package:bingcook/domain/services/chat_realtime_service.dart';
 import 'package:bingcook/ui/core/theme/app_colors.dart';
 import 'package:bingcook/ui/features/chat/view_models/chat_view_model.dart';
 import 'package:bingcook/ui/features/chat/views/chat_view.dart';
@@ -15,12 +16,14 @@ class StaffPortalView extends StatefulWidget {
     required this.authRepository,
     required this.chatRepository,
     required this.onLoggedOut,
+    this.chatRealtimeService,
     super.key,
   });
 
   final AuthRepository authRepository;
   final ChatRepository chatRepository;
   final VoidCallback onLoggedOut;
+  final ChatRealtimeService? chatRealtimeService;
 
   @override
   State<StaffPortalView> createState() => _StaffPortalViewState();
@@ -107,6 +110,7 @@ class _StaffPortalViewState extends State<StaffPortalView> {
         chatRepository: widget.chatRepository,
         authRepository: widget.authRepository,
         initialConversation: preview.conversation,
+        realtimeService: widget.chatRealtimeService,
       );
     });
   }
