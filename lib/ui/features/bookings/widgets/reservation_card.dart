@@ -2,6 +2,7 @@ import 'package:bingcook/domain/models/booking.dart';
 import 'package:bingcook/ui/core/constants/app_assets.dart';
 import 'package:bingcook/ui/core/theme/app_colors.dart';
 import 'package:bingcook/ui/features/bookings/views/reservation_map_view.dart';
+import 'package:bingcook/ui/shared/widgets/app_network_image.dart';
 import 'package:flutter/material.dart';
 
 class ReservationCard extends StatelessWidget {
@@ -764,15 +765,10 @@ class _ReservationImage extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
-    final imageUrl = url;
-    if (imageUrl == null || !imageUrl.startsWith('http')) {
-      return Image.asset(AppAssets.oceanPearlHotel, fit: BoxFit.cover);
-    }
-    return Image.network(
-      imageUrl,
-      fit: BoxFit.cover,
-      errorBuilder: (context, error, stackTrace) =>
-          Image.asset(AppAssets.oceanPearlHotel, fit: BoxFit.cover),
+    return AppNetworkImage(
+      imageUrl: url?.startsWith('http') == true ? url : null,
+      sourceWidth: 480,
+      fallback: Image.asset(AppAssets.oceanPearlHotel, fit: BoxFit.cover),
     );
   }
 }

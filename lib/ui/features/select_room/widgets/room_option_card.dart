@@ -1,6 +1,7 @@
 import 'package:bingcook/ui/core/theme/app_colors.dart';
 import 'package:bingcook/ui/core/utils/currency_formatter.dart';
 import 'package:bingcook/ui/features/select_room/models/select_room_data.dart';
+import 'package:bingcook/ui/shared/widgets/app_network_image.dart';
 import 'package:flutter/material.dart';
 
 class RoomOptionCard extends StatelessWidget {
@@ -186,16 +187,10 @@ class _RoomImage extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
-    final imageUrl = room.imageUrl;
-    if (imageUrl == null) {
-      return Image.asset(room.imageAsset, fit: BoxFit.cover);
-    }
-
-    return Image.network(
-      imageUrl,
-      fit: BoxFit.cover,
-      errorBuilder: (_, _, _) =>
-          Image.asset(room.imageAsset, fit: BoxFit.cover),
+    return AppNetworkImage(
+      imageUrl: room.imageUrl,
+      sourceWidth: 800,
+      fallback: Image.asset(room.imageAsset, fit: BoxFit.cover),
     );
   }
 }
