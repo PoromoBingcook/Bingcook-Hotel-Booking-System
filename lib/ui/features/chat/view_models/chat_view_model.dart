@@ -11,16 +11,19 @@ class ChatViewModel extends ChangeNotifier {
     required ChatRepository chatRepository,
     required AuthRepository authRepository,
     ChatRealtimeService? realtimeService,
+    Duration? refreshInterval,
     this.initialPropertyId = '11111111-1111-1111-1111-111111111111',
     this.initialBookingId,
     this.initialConversation,
   }) : _chatRepository = chatRepository,
        _authRepository = authRepository,
-       _realtimeService = realtimeService;
+       _realtimeService = realtimeService,
+       _refreshInterval = refreshInterval;
 
   final ChatRepository _chatRepository;
   final AuthRepository _authRepository;
   final ChatRealtimeService? _realtimeService;
+  final Duration? _refreshInterval;
   final String initialPropertyId;
   final String? initialBookingId;
   final ChatConversation? initialConversation;
@@ -31,6 +34,8 @@ class ChatViewModel extends ChangeNotifier {
   bool _isSending = false;
   String? _errorMessage;
   StreamSubscription<ChatMessage>? _messageSubscription;
+  Timer? _refreshTimer;
+  bool _isRefreshing = false;
 
   ChatConversation? get conversation => _conversation;
   List<ChatMessage> get messages => List.unmodifiable(_messages);
@@ -67,6 +72,7 @@ class ChatViewModel extends ChangeNotifier {
       );
       await _chatRepository.markRead(conversationId: _conversation!.id);
       _listenForMessages();
+      _startRefreshTimer();
     } on ChatRepositoryException catch (error) {
       _errorMessage = error.message;
     } catch (_) {
@@ -93,6 +99,7 @@ class ChatViewModel extends ChangeNotifier {
   @override
   void dispose() {
     unawaited(_messageSubscription?.cancel());
+    _refreshTimer?.cancel();
     super.dispose();
   }
 
@@ -146,5 +153,38 @@ class ChatViewModel extends ChangeNotifier {
     _messages = [..._messages, message];
     notifyListeners();
     return true;
+  }
+
+  void _startRefreshTimer() {
+    final refreshInterval = _refreshInterval;
+    if (refreshInterval == null) return;
+    _refreshTimer?.cancel();
+    // ponytail: polling fallback, remove when staff SignalR delivery is reliable.
+    _refreshTimer = Timer.periodic(
+      refreshInterval,
+      (_) => unawaited(_refreshMessages()),
+    );
+  }
+
+  Future<void> _refreshMessages() async {
+    final conversation = _conversation;
+    if (conversation == null || _isRefreshing) return;
+    _isRefreshing = true;
+    try {
+      final messages = await _chatRepository.fetchMessages(
+        conversationId: conversation.id,
+      );
+      var changed = false;
+      for (final message in messages) {
+        changed = _addMessage(message) || changed;
+      }
+      if (changed) {
+        await _chatRepository.markRead(conversationId: conversation.id);
+      }
+    } catch (_) {
+      // Keep the current chat visible; manual refresh/back remains available.
+    } finally {
+      _isRefreshing = false;
+    }
   }
 }

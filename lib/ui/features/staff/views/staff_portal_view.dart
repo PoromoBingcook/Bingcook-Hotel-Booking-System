@@ -33,6 +33,7 @@ class _StaffPortalViewState extends State<StaffPortalView> {
   late final StaffPortalViewModel _viewModel;
   int _selectedIndex = 0;
   ChatViewModel? _activeChat;
+  Timer? _dashboardRefreshTimer;
 
   @override
   void initState() {
@@ -42,10 +43,16 @@ class _StaffPortalViewState extends State<StaffPortalView> {
       authRepository: widget.authRepository,
     );
     unawaited(_viewModel.load());
+    _dashboardRefreshTimer = Timer.periodic(const Duration(seconds: 4), (_) {
+      if (!mounted || _activeChat != null) return;
+      // ponytail: polling fallback, replace with a staff conversations stream when available.
+      unawaited(_viewModel.load());
+    });
   }
 
   @override
   void dispose() {
+    _dashboardRefreshTimer?.cancel();
     _activeChat?.dispose();
     _viewModel.dispose();
     super.dispose();
@@ -111,6 +118,7 @@ class _StaffPortalViewState extends State<StaffPortalView> {
         authRepository: widget.authRepository,
         initialConversation: preview.conversation,
         realtimeService: widget.chatRealtimeService,
+        refreshInterval: const Duration(seconds: 2),
       );
     });
   }
