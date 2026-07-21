@@ -8,6 +8,7 @@ import 'package:bingcook/ui/features/property_details/widgets/property_guest_rev
 import 'package:bingcook/ui/features/property_details/widgets/property_review_summary.dart';
 import 'package:bingcook/ui/features/property_details/widgets/property_review_sheet.dart';
 import 'package:bingcook/ui/features/select_room/models/select_room_data.dart';
+import 'package:bingcook/ui/shared/widgets/app_network_image.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter_map/flutter_map.dart';
 import 'package:latlong2/latlong.dart';
@@ -350,15 +351,11 @@ class _PropertyImage extends StatelessWidget {
     final imageUrl = data.imageUrls.isNotEmpty
         ? data.imageUrls.first
         : data.imageUrl;
-    if (imageUrl != null && imageUrl.isNotEmpty) {
-      return Image.network(
-        imageUrl,
-        fit: BoxFit.cover,
-        errorBuilder: (context, error, stackTrace) => _FallbackImage(data),
-      );
-    }
-
-    return _FallbackImage(data);
+    return AppNetworkImage(
+      imageUrl: imageUrl,
+      sourceWidth: 1200,
+      fallback: _FallbackImage(data),
+    );
   }
 }
 

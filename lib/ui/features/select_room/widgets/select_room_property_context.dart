@@ -1,5 +1,6 @@
 import 'package:bingcook/ui/core/theme/app_colors.dart';
 import 'package:bingcook/ui/features/select_room/models/select_room_data.dart';
+import 'package:bingcook/ui/shared/widgets/app_network_image.dart';
 import 'package:flutter/material.dart';
 
 class SelectRoomPropertyContext extends StatelessWidget {
@@ -91,18 +92,13 @@ class _PropertyImage extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
-    final imageUrl = data.propertyImageUrl;
-    if (imageUrl != null && imageUrl.isNotEmpty) {
-      return Image.network(
-        imageUrl,
-        width: 56,
-        height: 56,
-        fit: BoxFit.cover,
-        errorBuilder: (context, error, stackTrace) => _FallbackImage(data),
-      );
-    }
-
-    return _FallbackImage(data);
+    return AppNetworkImage(
+      imageUrl: data.propertyImageUrl,
+      width: 56,
+      height: 56,
+      sourceWidth: 168,
+      fallback: _FallbackImage(data),
+    );
   }
 }
 

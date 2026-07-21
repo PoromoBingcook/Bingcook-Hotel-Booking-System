@@ -2,6 +2,7 @@ import 'package:bingcook/ui/core/theme/app_colors.dart';
 import 'package:bingcook/ui/core/utils/currency_formatter.dart';
 import 'package:bingcook/ui/features/explore/models/stay_card_data.dart';
 import 'package:bingcook/ui/features/saved/view_models/saved_stays_view_model.dart';
+import 'package:bingcook/ui/shared/widgets/app_network_image.dart';
 import 'package:flutter/material.dart';
 
 class SavedStaysView extends StatelessWidget {
@@ -301,19 +302,13 @@ class _SavedStayImage extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
-    final imageUrl = data.imageUrl;
-    if (imageUrl != null && imageUrl.isNotEmpty) {
-      return Image.network(
-        imageUrl,
-        width: 142,
-        height: 112,
-        fit: BoxFit.cover,
-        errorBuilder: (context, error, stackTrace) =>
-            _SavedFallbackImage(data: data),
-      );
-    }
-
-    return _SavedFallbackImage(data: data);
+    return AppNetworkImage(
+      imageUrl: data.imageUrl,
+      width: 142,
+      height: 112,
+      sourceWidth: 426,
+      fallback: _SavedFallbackImage(data: data),
+    );
   }
 }
 

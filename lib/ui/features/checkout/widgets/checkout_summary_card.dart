@@ -1,6 +1,7 @@
 import 'package:bingcook/ui/core/constants/app_assets.dart';
 import 'package:bingcook/ui/core/theme/app_colors.dart';
 import 'package:bingcook/ui/features/checkout/models/checkout_data.dart';
+import 'package:bingcook/ui/shared/widgets/app_network_image.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter_svg/flutter_svg.dart';
 
@@ -154,16 +155,11 @@ class _PropertyImage extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
-    final imageUrl = data.propertyImageUrl;
-    if (imageUrl != null && imageUrl.isNotEmpty) {
-      return Image.network(
-        imageUrl,
-        fit: BoxFit.cover,
-        errorBuilder: (context, error, stackTrace) => _FallbackImage(data),
-      );
-    }
-
-    return _FallbackImage(data);
+    return AppNetworkImage(
+      imageUrl: data.propertyImageUrl,
+      sourceWidth: 480,
+      fallback: _FallbackImage(data),
+    );
   }
 }
 
