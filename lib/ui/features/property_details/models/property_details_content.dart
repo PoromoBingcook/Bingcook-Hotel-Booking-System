@@ -39,7 +39,7 @@ abstract final class PropertyDetailsContent {
         : stay.amenities
               .map(
                 (amenity) => PropertyAmenityData(
-                  type: _amenityTypeFor(amenity),
+                  type: propertyAmenityTypeFor(amenity),
                   label: amenity,
                 ),
               )
@@ -70,20 +70,6 @@ abstract final class PropertyDetailsContent {
       return stay.location;
     }
     return '${stay.city} - ${stay.address}';
-  }
-
-  static PropertyAmenityType _amenityTypeFor(String amenity) {
-    final normalized = amenity.toLowerCase();
-    if (normalized.contains('pool')) {
-      return PropertyAmenityType.pool;
-    }
-    if (normalized.contains('gym') || normalized.contains('fitness')) {
-      return PropertyAmenityType.gym;
-    }
-    if (normalized.contains('park')) {
-      return PropertyAmenityType.parking;
-    }
-    return PropertyAmenityType.wifi;
   }
 
   static const _fallbackAmenities = [
