@@ -777,7 +777,10 @@ class _MainShellState extends State<MainShell> {
       amenities: details.amenities
           .map(
             (label) =>
-                PropertyAmenityData(type: _amenityType(label), label: label),
+                PropertyAmenityData(
+                  type: propertyAmenityTypeFor(label),
+                  label: label,
+                ),
           )
           .toList(growable: false),
       rooms: rooms,
@@ -895,20 +898,6 @@ class _MainShellState extends State<MainShell> {
       1 => AppAssets.doubleRoom,
       _ => AppAssets.executiveSuite,
     };
-  }
-
-  PropertyAmenityType _amenityType(String label) {
-    final normalized = label.toLowerCase();
-    if (normalized.contains('pool') || normalized.contains('swim')) {
-      return PropertyAmenityType.pool;
-    }
-    if (normalized.contains('gym') || normalized.contains('fitness')) {
-      return PropertyAmenityType.gym;
-    }
-    if (normalized.contains('parking')) {
-      return PropertyAmenityType.parking;
-    }
-    return PropertyAmenityType.wifi;
   }
 
   String _dateRangeForDates(DateTime checkIn, DateTime checkOut) {

@@ -58,6 +58,21 @@ class PropertyAmenitiesGrid extends StatelessWidget {
       PropertyAmenityType.pool => Icons.pool_rounded,
       PropertyAmenityType.gym => Icons.fitness_center_rounded,
       PropertyAmenityType.parking => Icons.local_parking_rounded,
+      PropertyAmenityType.selfCheckIn => Icons.key_rounded,
+      PropertyAmenityType.airConditioning => Icons.ac_unit_rounded,
+      PropertyAmenityType.breakfast => Icons.breakfast_dining_rounded,
+      PropertyAmenityType.pets => Icons.pets_rounded,
+      PropertyAmenityType.restaurant => Icons.restaurant_rounded,
+      PropertyAmenityType.spa => Icons.spa_rounded,
+      PropertyAmenityType.airportShuttle => Icons.airport_shuttle_rounded,
+      PropertyAmenityType.laundry => Icons.local_laundry_service_rounded,
+      PropertyAmenityType.bar => Icons.local_bar_rounded,
+      PropertyAmenityType.roomService => Icons.room_service_rounded,
+      PropertyAmenityType.beach => Icons.beach_access_rounded,
+      PropertyAmenityType.kitchen => Icons.kitchen_rounded,
+      PropertyAmenityType.television => Icons.tv_rounded,
+      PropertyAmenityType.elevator => Icons.elevator_rounded,
+      PropertyAmenityType.generic => Icons.check_circle_outline_rounded,
     };
   }
 }
